@@ -1,0 +1,13 @@
+Colocar nesta pasta do Apêndice E:
+
+
+Fase 1:
+1. Modelos da interface de usuário de baixa fidelidade.
+Protótipos de baixa fidelidade são mais simples e simulam elementos gráficos rudimentares.
+
+Fase 2:
+2. Modelos de interface de usuário de média fidelidade.
+Protótipos de média fidelidade apresentam maior detalhamento visual e funcional, permitindo uma visualização mais realista das telas e seus componentes. E
+São úteis para validar arquitetura de informação e fluxos de navegação mais complexos. 
+
+

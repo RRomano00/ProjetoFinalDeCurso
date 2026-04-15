@@ -1,0 +1,2 @@
+1.Nesta pasta devem ser colocados todos os arquivos de codificação, separados por camadas de front-end e back-end.
+2.Os arquivos devem ser colocados compactados e sem códigos temporários.
