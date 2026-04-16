@@ -2,7 +2,7 @@
 
 **Plataforma web para reporte de incidentes urbanos e gestão de zeladoria pública.**
 
-O **Fala, Cidade!** é uma solução digital desenvolvida para estreitar a comunicação entre os cidadãos de Santa Rita do Sapucaí e a administração municipal. Através desta plataforma, munícipes podem registrar ocorrências de infraestrutura (como buracos, iluminação e limpeza) de forma identificada ou anônima, permitindo que a prefeitura realize uma gestão eficiente e baseada em dados.
+O **Fala, Cidade!** é uma solução digital desenvolvida para estreitar a comunicação entre os cidadãos de Santa Rita do Sapucaí e a administração municipal. Através desta plataforma, cidadões podem registrar ocorrências de infraestrutura (como buracos, iluminação e limpeza) de forma identificada ou anônima, permitindo que a prefeitura realize uma gestão eficiente e baseada em dados.
 
 ---
 
@@ -49,7 +49,7 @@ O **Fala, Cidade!** é uma solução digital desenvolvida para estreitar a comun
 
 ### Passos
 1. **Clonar o repositório:**
-   git clone [https://github.com/RRomano00/ProjetoFinalDeCurso.git](https://github.com/RRomano00/ProjetoFinalDeCurso.git)
+   git clone https://github.com/RRomano00/ProjetoFinalDeCurso.git
 2. Configurar o Backend:
  * Acesse a pasta /backend.
  * Configure as credenciais do banco no arquivo application.properties.
