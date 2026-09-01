@@ -18,3 +18,6 @@ dist/
 *.rar
 *.bak
 .~lock.*
+
+# Preferencias de visualizacao do Ideas Modeler
+*.simp.user
