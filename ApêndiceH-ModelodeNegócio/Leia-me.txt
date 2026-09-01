@@ -1,0 +1,4 @@
+Colocar nesta pasta do Apêndice:
+Criar o modelo de negócios utilizando Canvas.
+Utilize o modelo disponível no portal do Sebrae:https://sebraecanvas.com/
+

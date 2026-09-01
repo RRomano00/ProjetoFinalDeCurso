@@ -1,0 +1,5 @@
+Colocar nesta pasta do Apêndice:
+
+Fase 3: preencher o arquivo com as descrições dos casos de testes e resultados dos testes após a aplicação desses.
+
+Fase 4: atualizar o plano de testes e incluir os arquivos dos testes automatizados.
