@@ -2,7 +2,7 @@
 
 **Plataforma web para reporte de incidentes urbanos e gestão de zeladoria pública.**
 
-O **Fala, Cidade!** é uma solução digital desenvolvida para estreitar a comunicação entre os cidadãos de Santa Rita do Sapucaí e a administração municipal. Através desta plataforma, cidadões podem registrar ocorrências de infraestrutura (como buracos, iluminação e limpeza) de forma identificada ou anônima, permitindo que a prefeitura realize uma gestão eficiente e baseada em dados.
+O **Fala, Cidade!** é uma solução digital desenvolvida para estreitar a comunicação entre os cidadãos de Santa Rita do Sapucaí e a administração municipal. Através desta plataforma, cidadãos podem registrar ocorrências de infraestrutura (como buracos, iluminação e limpeza) de forma identificada ou anônima, permitindo que a prefeitura realize uma gestão eficiente e baseada em dados.
 
 ---
 
@@ -15,9 +15,9 @@ O **Fala, Cidade!** é uma solução digital desenvolvida para estreitar a comun
 * **API RESTful**
 
 ### Frontend
-* **Angular 21**
+* **Angular 19.2** (componentes standalone, lazy loading)
 * **Progressive Web App (PWA)** (Suporte para instalação em dispositivos móveis)
-* **TypeScript** & **Tailwind CSS**
+* **TypeScript** & **CSS próprio** (custom properties, tema claro/escuro)
 
 ### Ferramentas de Gestão e Design
 * **Git** (Versionamento)
@@ -51,13 +51,13 @@ O **Fala, Cidade!** é uma solução digital desenvolvida para estreitar a comun
 1. **Clonar o repositório:**
    git clone https://github.com/RRomano00/ProjetoFinalDeCurso.git
 2. Configurar o Backend:
- * Acesse a pasta /backend.
- * Configure as credenciais do banco no arquivo application.properties.
+ * Acesse a pasta `Codificação/backend`.
+ * Copie `src/main/resources/application.properties.example` para `application.properties` e preencha as credenciais do banco, do Cloudinary, do SMTP e o segredo do JWT (`app.jwt.secret`). O arquivo real não é versionado.
  * Execute o projeto via Maven ou sua IDE de preferência.
 
 3. Configurar o Frontend:
 
- * Acesse a pasta /frontend.
+ * Acesse a pasta `Codificação/front-end`.
  * Execute npm install para as dependências.
 
  * Execute ng serve para iniciar o servidor de desenvolvimento.
