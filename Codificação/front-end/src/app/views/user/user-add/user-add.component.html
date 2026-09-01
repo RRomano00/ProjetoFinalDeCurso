@@ -1,0 +1,94 @@
+<div class="page-create">
+  <div class="page-header">
+    <h1>Criar Usuário</h1>
+    <p>Adicione um novo funcionário ou administrador ao sistema</p>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="create()" class="form-card">
+
+    <div class="form-section">
+      <div class="form-section-title">Dados do Usuário</div>
+
+      <div class="form-grid">
+        <div class="field-group">
+          <label>Nome completo <span class="required">*</span></label>
+          <input type="text" formControlName="fullname" placeholder="Nome completo" class="form-input"
+            [class.input-error]="form.controls['fullname'].touched && form.controls['fullname'].invalid">
+          <span class="field-error"
+            *ngIf="form.controls['fullname'].touched && form.controls['fullname'].invalid">
+            Nome é obrigatório (mínimo 2 caracteres).
+          </span>
+        </div>
+
+        <div class="field-group">
+          <label>E-mail <span class="required">*</span></label>
+          <input type="email" formControlName="email" placeholder="usuario@email.com" class="form-input"
+            [class.input-error]="form.controls['email'].touched && form.controls['email'].invalid">
+          <span class="field-error"
+            *ngIf="form.controls['email'].touched && form.controls['email'].hasError('required')">
+            E-mail é obrigatório.
+          </span>
+          <span class="field-error"
+            *ngIf="form.controls['email'].touched && form.controls['email'].hasError('email')">
+            E-mail inválido.
+          </span>
+        </div>
+
+        <div class="field-group">
+          <label>Município <span class="required">*</span></label>
+          <input type="text" formControlName="city" placeholder="Município de atuação" class="form-input"
+            [class.input-error]="form.controls['city'].touched && form.controls['city'].invalid">
+          <span class="field-error"
+            *ngIf="form.controls['city'].touched && form.controls['city'].invalid">
+            Município é obrigatório.
+          </span>
+        </div>
+
+        <div class="field-group">
+          <label>Perfil <span class="required">*</span></label>
+          <select formControlName="role" class="form-input">
+            <option *ngFor="let r of roles" [value]="r.value">{{ r.label }}</option>
+          </select>
+          <p class="field-hint">
+            Funcionários e administradores deverão configurar o
+            <strong>autenticador de dois fatores</strong> no primeiro acesso.
+            O funcionário verá apenas as ocorrências do município informado.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-section-title">Senha</div>
+      <div class="form-grid">
+        <div class="field-group">
+          <label>Senha <span class="required">*</span></label>
+          <input type="password" formControlName="password" placeholder="••••••••" class="form-input"
+            [class.input-error]="form.controls['password'].touched && form.controls['password'].invalid">
+          <span class="field-error"
+            *ngIf="form.controls['password'].touched && form.controls['password'].invalid">
+            Mínimo 8 caracteres com letra, número e caractere especial.
+          </span>
+        </div>
+
+        <div class="field-group">
+          <label>Confirmar Senha <span class="required">*</span></label>
+          <input type="password" formControlName="repeatPassword" placeholder="••••••••" class="form-input"
+            [class.input-error]="form.controls['repeatPassword'].touched && !passwordsMatch()">
+          <span class="field-error"
+            *ngIf="form.controls['repeatPassword'].touched && !passwordsMatch()">
+            As senhas não coincidem.
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <a routerLink="/" class="btn-secondary">Cancelar</a>
+      <button type="submit" class="btn-primary" [disabled]="loading">
+        {{ loading ? 'Criando...' : 'Criar Usuário' }}
+      </button>
+    </div>
+
+  </form>
+</div>

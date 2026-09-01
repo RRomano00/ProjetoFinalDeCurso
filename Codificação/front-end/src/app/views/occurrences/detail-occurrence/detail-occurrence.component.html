@@ -1,0 +1,167 @@
+<div class="page-container">
+  <div *ngIf="loading" class="loading-state">Carregando...</div>
+
+  <div *ngIf="!loading && occurrence">
+    <div class="page-header">
+      <h1>Ocorrência #{{ occurrence.protocolNumber }}</h1>
+      <button (click)="back()" class="btn-secondary">← Voltar</button>
+    </div>
+
+    <div class="detail-card">
+      <div class="detail-header">
+        <div class="detail-badges">
+          <span class="badge badge-{{ occurrence.status.toLowerCase() }}">
+            {{ statusLabel(occurrence.status) }}
+          </span>
+          <span class="badge-type"
+                [style.background]="typeColor(occurrence.type) + '18'"
+                [style.color]="typeColor(occurrence.type)"
+                [style.border-color]="typeColor(occurrence.type) + '40'">
+            {{ typeLabel(occurrence.type) }}
+          </span>
+          <span class="priority">Prioridade: {{ occurrence.priority }}</span>
+        </div>
+        <div class="detail-badges">
+          <span class="support-chip" title="Cidadãos que apoiam esta ocorrência">
+            🤝 {{ supportCount }} {{ supportCount === 1 ? 'apoio' : 'apoios' }}
+          </span>
+          <button *ngIf="canSupport" class="btn-support" [class.supported]="supportedByMe"
+                  [disabled]="supporting || supportedByMe" (click)="support()">
+            {{ supportedByMe ? '✓ Você apoia' : (supporting ? 'Apoiando...' : '🤝 Apoiar') }}
+          </button>
+          <span *ngIf="occurrence.anonymous" class="badge-anonymous">🔒 Anônima</span>
+        </div>
+      </div>
+
+      <div class="detail-section" *ngIf="occurrence.title">
+        <h3>Título</h3>
+        <p>{{ occurrence.title }}</p>
+      </div>
+
+      <div class="detail-section">
+        <h3>Descrição</h3>
+        <p>{{ occurrence.description }}</p>
+      </div>
+
+      <div class="detail-section">
+        <h3>Localização</h3>
+        <p>{{ occurrence.street }}{{ occurrence.number ? ', ' + occurrence.number : '' }}, {{ occurrence.neighborhood }} — {{ occurrence.city }}</p>
+        <p *ngIf="occurrence.addressReference" class="address-reference">📍 Referência: {{ occurrence.addressReference }}</p>
+        <div id="detail-map" class="detail-map"></div>
+      </div>
+
+      <div *ngIf="occurrence.media?.length || occurrence.urlMedia" class="detail-section">
+        <h3>Foto{{ (occurrence.media?.length || 1) > 1 ? 's' : '' }}</h3>
+        <!-- RF07: galeria com todas as fotos anexadas -->
+        <div class="photo-gallery" *ngIf="occurrence.media?.length; else singlePhoto">
+          <img *ngFor="let m of occurrence.media" [src]="m.url" alt="Foto da ocorrência" class="occurrence-photo" />
+        </div>
+        <ng-template #singlePhoto>
+          <img [src]="occurrence.urlMedia" alt="Foto da ocorrência" class="occurrence-photo" />
+        </ng-template>
+        <div *ngIf="occurrence.imageBlurred" class="blur-warning">
+          ⚠️ A foto pode estar borrada.
+        </div>
+      </div>
+
+      <!-- RN03/RF11: linha do tempo de status (inclui justificativa do indeferimento) -->
+      <div *ngIf="history.length > 0" class="detail-section">
+        <h3>Histórico</h3>
+        <div class="history-item" *ngFor="let h of history">
+          <span class="history-status badge badge-{{ h.newStatus.toLowerCase() }}">{{ statusLabel(h.newStatus) }}</span>
+          <div class="history-info">
+            <span class="history-date">{{ h.changedAt | date:'dd/MM/yyyy HH:mm' }}
+              <ng-container *ngIf="h.changedByName"> — por {{ h.changedByName }}</ng-container>
+            </span>
+            <span class="history-obs" *ngIf="h.observation">
+              {{ h.newStatus === 'INDEFERIDA' ? 'Justificativa' : 'Mensagem da equipe' }}: {{ h.observation }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="!occurrence.anonymous" class="detail-section">
+        <h3>Registrado por</h3>
+        <p>{{ occurrence.fullname || occurrence.email }}</p>
+      </div>
+
+      <!-- RF12: encadeamento de duplicatas (visível para a equipe) -->
+      <div *ngIf="canUpdateStatus && groupSize > 1" class="detail-section">
+        <h3>Ocorrências agrupadas ({{ groupSize }})</h3>
+        <p class="group-hint">Registros do mesmo problema num raio de 50 m, encadeados automaticamente.</p>
+        <div class="group-item" *ngFor="let g of group">
+          <a [routerLink]="['/occurrence/detail', g.id]" class="group-protocol"
+             [class.current]="g.id === occurrence.id">
+            {{ g.protocolNumber }}{{ g.id === occurrence.id ? ' (esta)' : '' }}
+          </a>
+          <span class="group-title-txt">{{ g.title || (g.description | slice:0:40) }}</span>
+          <span class="badge badge-{{ g.status.toLowerCase() }}">{{ statusLabel(g.status) }}</span>
+        </div>
+      </div>
+
+      <div *ngIf="canUpdateStatus" class="detail-actions">
+        <h3>Ações</h3>
+
+        <!-- Mensagem opcional ao cidadão (vai no e-mail de mudança de status e no histórico) -->
+        <div class="staff-message"
+             *ngIf="occurrence.status === 'PENDENTE' || occurrence.status === 'EM_ANDAMENTO'">
+          <label for="staffMsg">Mensagem ao cidadão (opcional)</label>
+          <textarea id="staffMsg" [(ngModel)]="staffMessage" rows="2" maxlength="300"
+                    placeholder="Escreva uma mensagem que será enviada por e-mail junto com a mudança de status..."></textarea>
+          <div class="preset-chips">
+            <button type="button" class="preset-chip" *ngFor="let m of presetMessages"
+                    (click)="applyPreset(m)">{{ m }}</button>
+          </div>
+          <!-- RF12: aplicar a mudança a todo o grupo de duplicatas -->
+          <label class="group-check" *ngIf="groupSize > 1">
+            <input type="checkbox" [(ngModel)]="applyToGroup" />
+            Aplicar a todas as {{ groupSize }} ocorrências agrupadas (os autores serão notificados)
+          </label>
+        </div>
+        <button *ngIf="occurrence.status === 'PENDENTE'"
+                (click)="updateToInProgress()" [disabled]="updating" class="btn-action">
+          {{ updating ? 'Atualizando...' : '▶ Iniciar Atendimento' }}
+        </button>
+        <button *ngIf="occurrence.status === 'EM_ANDAMENTO'"
+                (click)="updateToConclude()" [disabled]="updating" class="btn-action btn-success">
+          {{ updating ? 'Atualizando...' : '✓ Marcar como Atendida' }}
+        </button>
+        <span *ngIf="occurrence.status === 'ATENDIDA'" class="concluded-label">✓ Ocorrência concluída</span>
+
+        <ng-container *ngIf="occurrence.status === 'PENDENTE' || occurrence.status === 'EM_ANDAMENTO'">
+          <button *ngIf="!showRejectForm"
+                  (click)="showRejectForm = true" [disabled]="updating" class="btn-action btn-danger">
+            ✕ Indeferir Ocorrência
+          </button>
+          <div *ngIf="showRejectForm" class="reject-form">
+            <label for="rejectObs">Justificativa (obrigatória)</label>
+            <textarea id="rejectObs" [(ngModel)]="rejectObservation" rows="3"
+                      placeholder="Descreva o motivo do indeferimento..."></textarea>
+            <div class="reject-form-actions">
+              <button (click)="updateToRejected()" [disabled]="updating" class="btn-action btn-danger">
+                {{ updating ? 'Salvando...' : 'Confirmar Indeferimento' }}
+              </button>
+              <button (click)="showRejectForm = false; rejectObservation = ''" class="btn-secondary">
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </ng-container>
+
+        <span *ngIf="occurrence.status === 'INDEFERIDA'" class="rejected-label">✕ Ocorrência Indeferida</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- RF11: visitante tentou apoiar → precisa entrar -->
+  <div class="login-prompt-overlay" *ngIf="showLoginPrompt" (click)="showLoginPrompt = false">
+    <div class="login-prompt-card" (click)="$event.stopPropagation()">
+      <h2>🤝 Quer apoiar esta ocorrência?</h2>
+      <p>Para apoiar é preciso ter uma conta. Entre ou cadastre-se — leva menos de um minuto.</p>
+      <div class="login-prompt-actions">
+        <button class="btn-secondary" (click)="showLoginPrompt = false">Agora não</button>
+        <button class="btn-action" (click)="goToLogin()">Fazer login</button>
+      </div>
+    </div>
+  </div>
+</div>

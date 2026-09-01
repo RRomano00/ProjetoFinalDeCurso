@@ -1,0 +1,20 @@
+# Segredos: senha do banco, Cloudinary e App Password do Gmail
+**/application.properties
+
+# Ambiente do agente
+.claude/
+
+# Artefatos de build e dependências
+target/
+node_modules/
+dist/
+.angular/
+
+# Configuração de IDE
+.idea/
+.vscode/
+
+# Temporários
+*.rar
+*.bak
+.~lock.*

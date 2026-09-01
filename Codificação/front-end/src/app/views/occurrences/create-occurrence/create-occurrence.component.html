@@ -1,0 +1,204 @@
+<div class="page-container">
+  <!-- Modal do código de rastreamento anônimo -->
+  @if (trackingCode) {
+    <div class="modal-overlay">
+      <div class="modal-card">
+        <div class="modal-icon">🔒</div>
+        <h2>Ocorrência Registrada!</h2>
+        <p>Como sua ocorrência é anônima, guarde o código abaixo para acompanhar o status:</p>
+        <div class="tracking-code">{{ trackingCode }}</div>
+        <p class="tracking-warning">⚠️ Este código não será exibido novamente.</p>
+        <button class="btn-primary" (click)="dismissTrackingCode()">Entendido</button>
+      </div>
+    </div>
+  }
+
+  <div class="page-header">
+    <h1>Nova Ocorrência</h1>
+    <a routerLink="/occurrence/list" class="btn-secondary">← Voltar</a>
+  </div>
+
+  <form (ngSubmit)="create()" [formGroup]="form" class="occurrence-form">
+
+    <!-- 1. Dados da ocorrência -->
+    <div class="form-section">
+      <h3>Dados da ocorrência</h3>
+
+      <div class="form-group">
+        <label>Título *</label>
+        <input type="text" formControlName="title"
+               placeholder="Ex.: Buraco na Rua das Flores perto da escola" />
+        <span *ngIf="form.get('title')?.touched && form.get('title')?.invalid" class="field-error">
+          Título é obrigatório (mínimo 5 caracteres).
+        </span>
+      </div>
+
+      <div class="form-group" style="margin-top:1rem">
+        <label>Descreva a situação *</label>
+        <textarea formControlName="description" rows="4"
+          placeholder="Descreva a ocorrência com o máximo de detalhes possível..."></textarea>
+        <span *ngIf="form.get('description')?.touched && form.get('description')?.invalid" class="field-error">
+          Descrição deve ter ao menos 10 caracteres.
+        </span>
+      </div>
+    </div>
+
+    <!-- 2. Categoria da ocorrência -->
+    <div class="form-section">
+      <h3>Categoria da ocorrência</h3>
+      <div class="form-group">
+        <label>Categoria *</label>
+        <select formControlName="type">
+          <option value="">Selecione...</option>
+          <option *ngFor="let t of occurrenceTypes" [value]="t.value">{{ t.label }}</option>
+        </select>
+        <span *ngIf="form.get('type')?.touched && form.get('type')?.invalid" class="field-error">
+          Categoria é obrigatória.
+        </span>
+      </div>
+    </div>
+
+    <!-- 3. Localização -->
+    <div class="form-section">
+      <h3>Localização</h3>
+
+      <!-- Mapa: clique para marcar o local; o endereço é preenchido automaticamente (RF09) -->
+      <div class="map-select-wrapper">
+        <div class="map-hint" [class.loading]="geocodeStatus === 'loading'" [class.success]="geocodeStatus === 'success'">
+          <span *ngIf="geocodeStatus === 'loading'" class="spinner-sm"></span>
+          <span *ngIf="geocodeStatus === 'idle'">📍 Clique no mapa para marcar o local da ocorrência.</span>
+          <span *ngIf="geocodeStatus === 'loading'">Buscando endereço...</span>
+          <span *ngIf="geocodeStatus === 'success'">✓ Endereço preenchido. Confira e informe o número.</span>
+        </div>
+        <div id="create-map"></div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Logradouro *</label>
+          <input type="text" formControlName="street" placeholder="Rua das Flores" />
+          <span *ngIf="form.get('street')?.touched && form.get('street')?.invalid" class="field-error">
+            Logradouro é obrigatório.
+          </span>
+        </div>
+        <div class="form-group form-group-sm">
+          <label>Número</label>
+          <input type="text" formControlName="number" placeholder="100" />
+        </div>
+      </div>
+
+      <div class="form-row" style="margin-top:1rem">
+        <div class="form-group">
+          <label>Bairro *</label>
+          <input type="text" formControlName="neighborhood" placeholder="Centro" />
+          <span *ngIf="form.get('neighborhood')?.touched && form.get('neighborhood')?.invalid" class="field-error">
+            Bairro é obrigatório.
+          </span>
+        </div>
+        <div class="form-group">
+          <label>Cidade *</label>
+          <input type="text" formControlName="city" />
+          <span *ngIf="form.get('city')?.touched && form.get('city')?.invalid" class="field-error">
+            Cidade é obrigatória.
+          </span>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-top:1rem">
+        <label>Referência</label>
+        <input type="text" formControlName="addressReference"
+               placeholder="Ex.: Em frente ao mercado X, próximo ao parque..." />
+      </div>
+
+      <!-- RF16: duplicatas próximas (mesmo tipo, raio de 50 m) -->
+      <div class="duplicates-panel" *ngIf="nearbyDuplicates.length > 0">
+        <div class="duplicates-title">
+          ⚠️ Já existe{{ nearbyDuplicates.length > 1 ? 'm' : '' }}
+          {{ nearbyDuplicates.length }} ocorrência{{ nearbyDuplicates.length > 1 ? 's' : '' }}
+          desse tipo perto desse local
+        </div>
+        <p class="duplicates-hint">
+          Você pode <strong>apoiar</strong> uma ocorrência existente em vez de registrar outra igual —
+          isso ajuda a prefeitura a priorizar o problema.
+        </p>
+        <div class="duplicate-item" *ngFor="let d of nearbyDuplicates">
+          <div class="duplicate-info">
+            <span class="duplicate-protocol">{{ d.protocolNumber }}</span>
+            <span class="duplicate-desc">{{ d.title || (d.description | slice:0:60) }}</span>
+          </div>
+          <div class="duplicate-actions">
+            <a [routerLink]="['/occurrence/detail', d.id]" class="btn-mini-link">Ver</a>
+            <button type="button" class="btn-mini-support"
+                    [class.supported]="d.id != null && supportedIds.has(d.id)"
+                    [disabled]="supportingId === d.id || (d.id != null && supportedIds.has(d.id))"
+                    (click)="supportDuplicate(d)">
+              {{ d.id != null && supportedIds.has(d.id) ? '✓ Apoiado' : (supportingId === d.id ? '...' : '🤝 Apoiar') }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. Fotos da ocorrência (RF07/RF08/RF20) -->
+    <div class="form-section">
+      <h3>Fotos (opcional — até {{ MAX_PHOTOS }})</h3>
+      <p class="photo-note">Rostos são desfocados automaticamente para preservar a privacidade (LGPD).</p>
+
+      <!-- Miniaturas das fotos já enviadas -->
+      <div class="photo-grid" *ngIf="photos.length > 0">
+        <div class="photo-thumb" *ngFor="let ph of photos; let i = index">
+          <img [src]="ph.url" alt="Foto {{ i + 1 }}" />
+          <span *ngIf="ph.imageBlurred" class="photo-warn">⚠️ borrada</span>
+          <button type="button" class="btn-thumb-remove" (click)="removePhoto(i)" title="Remover foto">✕</button>
+        </div>
+      </div>
+
+      <div *ngIf="photoState === 'idle' && photos.length < MAX_PHOTOS" class="photo-picker">
+        <label class="btn-upload">
+          📷 {{ photos.length === 0 ? 'Selecionar foto' : 'Adicionar outra foto' }}
+          <input type="file" accept="image/*" (change)="onPhotoSelected($event)" hidden />
+        </label>
+      </div>
+
+      <div *ngIf="photoState === 'uploading'" class="photo-status">
+        <span class="spinner-sm"></span> Enviando e processando a foto...
+      </div>
+
+      <div *ngIf="photoState === 'rejected' || photoState === 'error'" class="photo-error">
+        <span>{{ photoMessage }}</span>
+        <button type="button" class="btn-link-remove" (click)="dismissPhotoError()">Tentar outra foto</button>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <!-- RF08: visitante registra sempre como anônimo -->
+      <label class="checkbox-label" *ngIf="!isVisitor">
+        <input type="checkbox" formControlName="anonymous" />
+        Registrar como anônimo (você receberá um código de rastreamento)
+      </label>
+      <p class="visitor-note" *ngIf="isVisitor">
+        🔒 Você está como visitante: a ocorrência será registrada de forma <strong>anônima</strong>
+        e você receberá um código de rastreamento.
+      </p>
+    </div>
+
+    <div class="form-actions">
+      <a routerLink="/occurrence/list" class="btn-secondary">Cancelar</a>
+      <button type="submit" class="btn-primary" [disabled]="loading">
+        {{ loading ? 'Registrando...' : 'Registrar Ocorrência' }}
+      </button>
+    </div>
+  </form>
+
+  <!-- RF11: visitante tentou apoiar → precisa entrar -->
+  <div class="login-prompt-overlay" *ngIf="showLoginPrompt" (click)="showLoginPrompt = false">
+    <div class="login-prompt-card" (click)="$event.stopPropagation()">
+      <h2>🤝 Quer apoiar esta ocorrência?</h2>
+      <p>Para apoiar é preciso ter uma conta. Entre ou cadastre-se — leva menos de um minuto.</p>
+      <div class="login-prompt-actions">
+        <button type="button" class="btn-secondary" (click)="showLoginPrompt = false">Agora não</button>
+        <button type="button" class="btn-primary" (click)="goToLogin()">Fazer login</button>
+      </div>
+    </div>
+  </div>
+</div>

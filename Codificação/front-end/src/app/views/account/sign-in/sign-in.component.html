@@ -1,0 +1,181 @@
+<div class="auth-wrapper">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="logo-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24"
+          fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
+          <circle cx="12" cy="10" r="3"/>
+        </svg>
+      </div>
+      <h1>Fala, Cidade!</h1>
+      <p>Sistema de Ocorrências Cívicas</p>
+    </div>
+
+    <!-- ── STEP 1: Credenciais ── -->
+    @if (step === 'credentials') {
+      <form class="auth-form" (ngSubmit)="login()">
+        <p *ngIf="isLoginIncorrect" class="error-msg">
+          E-mail e/ou senha incorretos.
+        </p>
+
+        <div class="field-group">
+          <label for="email">E-mail</label>
+          <div class="input-wrapper">
+            <span class="input-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="20" height="16" x="2" y="4" rx="2"/>
+                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+              </svg>
+            </span>
+            <input type="email" id="email" [formControl]="email" placeholder="seu@email.com" autocomplete="email" />
+          </div>
+          <span *ngIf="email.touched && email.invalid" class="field-error">E-mail inválido.</span>
+        </div>
+
+        <div class="field-group">
+          <label for="password">Senha</label>
+          <div class="input-wrapper">
+            <span class="input-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+            </span>
+            <input type="password" id="password" [formControl]="password" placeholder="••••••••" autocomplete="current-password" />
+          </div>
+        </div>
+
+        <button type="submit" [disabled]="loading" class="btn-primary btn-full">
+          {{ loading ? 'Aguarde...' : 'Entrar' }}
+        </button>
+
+        <!-- RF08/RF11: acesso sem conta (leitura + ocorrência anônima) -->
+        <button type="button" class="btn-anonymous btn-full" (click)="enterAnonymous()">
+          👤 Entrar como Usuário Anônimo
+        </button>
+
+        <div class="auth-links">
+          <a routerLink="/account/recover-password">Esqueci minha senha</a>
+          <a routerLink="/account/sign-up">Criar conta</a>
+        </div>
+      </form>
+    }
+
+    <!-- ── Seleção de método (usuário tem app E e-mail) ── -->
+    @if (step === 'mfa-select') {
+      <div class="mfa-section">
+        <div class="mfa-icon">🔐</div>
+        <h2>Verificação em Duas Etapas</h2>
+        <p>Como você quer receber/validar o código de verificação?</p>
+
+        <button (click)="chooseMethod('APP')" class="btn-method">
+          <span class="btn-method-icon">📱</span>
+          <span class="btn-method-text">
+            <strong>Aplicativo autenticador</strong>
+            <small>Use o código do Google Authenticator / Authy</small>
+          </span>
+        </button>
+
+        <button (click)="chooseMethod('EMAIL')" class="btn-method">
+          <span class="btn-method-icon">✉️</span>
+          <span class="btn-method-text">
+            <strong>E-mail</strong>
+            <small>Enviaremos um código para o seu e-mail</small>
+          </span>
+        </button>
+
+        <button (click)="backToLogin()" class="btn-link-back">← Voltar para o login</button>
+      </div>
+    }
+
+    <!-- ── Verificação do código (app ou e-mail) ── -->
+    @if (step === 'mfa-verify') {
+      <div class="mfa-section">
+        <div class="mfa-icon">{{ mfaMethod === 'EMAIL' ? '✉️' : '🔐' }}</div>
+        <h2>Verificação em Duas Etapas</h2>
+        <p *ngIf="mfaMethod === 'EMAIL'">Digite o código de 6 dígitos que enviamos para o seu e-mail.</p>
+        <p *ngIf="mfaMethod === 'APP'">Digite o código de 6 dígitos gerado pelo seu aplicativo autenticador.</p>
+
+        <p *ngIf="mfaError" class="error-msg">
+          Código inválido ou expirado. Tente novamente.
+        </p>
+
+        <div class="field-group">
+          <label>Código de verificação</label>
+          <input type="text" [formControl]="totpCode"
+            placeholder="000000" maxlength="6"
+            inputmode="numeric" class="totp-input" />
+        </div>
+
+        <button (click)="verifyMfa()" [disabled]="loading || totpCode.invalid" class="btn-primary btn-full">
+          {{ loading ? 'Verificando...' : 'Confirmar' }}
+        </button>
+
+        <!-- Reenviar código (somente e-mail; habilita após 15s) -->
+        <button *ngIf="mfaMethod === 'EMAIL'"
+                (click)="resendCode()" [disabled]="resendCountdown > 0" class="btn-resend">
+          {{ resendCountdown > 0 ? ('Reenviar código em ' + resendCountdown + 's') : 'Reenviar código' }}
+        </button>
+
+        <button (click)="backToLogin()" class="btn-link-back">← Voltar para o login</button>
+      </div>
+    }
+
+    <!-- ── STEP 2b: Setup obrigatório — QR Code ── -->
+    @if (step === 'mfa-setup') {
+      <div class="mfa-section">
+        <div class="mfa-icon">📱</div>
+        <h2>Configure o Autenticador</h2>
+        <p>
+          Sua conta requer autenticação em dois fatores. Abra o
+          <strong>Google Authenticator</strong> ou <strong>Authy</strong>
+          e escaneie o QR Code abaixo.
+        </p>
+
+        <div class="qr-container">
+          <img [src]="qrCodeImgUrl" alt="QR Code para Google Authenticator" class="qr-code" />
+        </div>
+
+        <details class="manual-entry">
+          <summary>Não consigo escanear o QR Code</summary>
+          <p>Digite esta chave manualmente no aplicativo:</p>
+          <code class="secret-key">{{ secret }}</code>
+        </details>
+
+        <button (click)="continueToConfirm()" class="btn-primary btn-full">
+          Já escaneei — Continuar
+        </button>
+      </div>
+    }
+
+    <!-- ── STEP 3: Confirmar primeiro código ── -->
+    @if (step === 'mfa-confirm') {
+      <div class="mfa-section">
+        <div class="mfa-icon">✅</div>
+        <h2>Confirme o Código</h2>
+        <p>
+          Digite o código de 6 dígitos que o aplicativo mostrou
+          após escanear o QR Code para ativar o 2FA.
+        </p>
+
+        <p *ngIf="mfaError" class="error-msg">
+          Código inválido. Verifique o app autenticador.
+        </p>
+
+        <div class="field-group">
+          <label>Código TOTP</label>
+          <input type="text" [formControl]="totpCode"
+            placeholder="000000" maxlength="6"
+            inputmode="numeric" class="totp-input" />
+        </div>
+
+        <button (click)="confirmSetup()" [disabled]="loading || totpCode.invalid" class="btn-primary btn-full">
+          {{ loading ? 'Ativando...' : 'Ativar 2FA e Entrar' }}
+        </button>
+      </div>
+    }
+
+  </div>
+</div>

@@ -1,0 +1,37 @@
+<router-outlet></router-outlet>
+
+<!-- Controles de acessibilidade fixos em todas as telas (RF18) -->
+<div class="a11y-controls" [class.is-dark]="isDark">
+  <button class="a11y-btn font-btn" (click)="decreaseFont()" [disabled]="fontIndex === 0"
+          title="Diminuir fonte" aria-label="Diminuir tamanho da fonte">
+    A<span class="sign">−</span>
+  </button>
+  <button class="a11y-btn font-btn font-reset" (click)="resetFont()" [disabled]="fontIndex === defaultFontIndex"
+          title="Restaurar tamanho padrão" aria-label="Restaurar tamanho padrão da fonte">
+    A
+  </button>
+  <button class="a11y-btn font-btn font-btn-plus" (click)="increaseFont()" [disabled]="fontIndex === fontSteps.length - 1"
+          title="Aumentar fonte" aria-label="Aumentar tamanho da fonte">
+    A<span class="sign">+</span>
+  </button>
+
+  <span class="a11y-divider"></span>
+
+  <button class="a11y-btn theme-toggle" (click)="toggleTheme()"
+          title="Alternar tema claro/escuro" aria-label="Alternar tema claro ou escuro">
+    <span class="icon-wrap">
+      <!-- Sol (visível no modo escuro: clique para clarear) -->
+      <svg class="icon sun" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="4"/>
+        <path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/>
+        <path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>
+      </svg>
+      <!-- Lua (visível no modo claro: clique para escurecer) -->
+      <svg class="icon moon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+      </svg>
+    </span>
+  </button>
+</div>

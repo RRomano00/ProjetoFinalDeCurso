@@ -1,0 +1,56 @@
+spring.application.name=Fala-Cidade
+
+spring.profiles.active=jwt
+
+server.port=8080
+
+# ============================================================
+# Banco de dados
+# ============================================================
+spring.datasource.name=fala_cidade
+spring.datasource.base.url=jdbc:postgresql://localhost:5432/
+spring.datasource.url=jdbc:postgresql://localhost:5432/${spring.datasource.name}
+spring.datasource.username=postgres
+spring.datasource.password=ALTERE_AQUI
+
+# ============================================================
+# Cloudinary – upload e verificação de desfoque
+# Preencha com suas credenciais reais
+# ============================================================
+cloudinary.cloud-name=di6sspnza
+cloudinary.api-key=ALTERE_AQUI
+cloudinary.api-secret=ALTERE_AQUI
+# Desfoque de TEXTO/placas via add-on OCR. true = liga (precisa do add-on "OCR Text
+# Detection and Extraction" ativo). false = desliga (mantém só o desfoque de rostos).
+# Deixe false enquanto o add-on de OCR não estiver ativo, para a imagem não quebrar.
+cloudinary.blur-plates=true
+
+# ============================================================
+# E-mail (Gmail SMTP) – RF05 recuperação de senha
+# Preencha com seu e-mail e App Password do Google
+# ============================================================
+spring.mail.host=smtp.gmail.com
+spring.mail.port=587
+spring.mail.username=ALTERE_AQUI
+spring.mail.password=ALTERE_AQUI
+spring.mail.properties.mail.smtp.auth=true
+spring.mail.properties.mail.smtp.starttls.enable=true
+
+# URL base da aplicação (usada nos links de e-mail)
+app.base-url=http://localhost:8080
+
+# E-mail da equipe que recebe as mensagens do formulário "Contato"
+app.contact-recipient=ALTERE_AQUI
+
+# Tempo de expiração do token de recuperação de senha (minutos)
+app.password-reset.expiration-minutes=30
+
+# ============================================================
+# Upload de arquivos (imagens das ocorrências)
+# ============================================================
+spring.servlet.multipart.enabled=true
+spring.servlet.multipart.max-file-size=10MB
+spring.servlet.multipart.max-request-size=10MB
+
+# Segredo de assinatura dos tokens JWT (HS256, 32+ caracteres)
+app.jwt.secret=ALTERE_AQUI

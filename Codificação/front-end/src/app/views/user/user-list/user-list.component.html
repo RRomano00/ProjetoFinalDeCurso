@@ -1,0 +1,47 @@
+<div class="page-container">
+  <div class="page-header">
+    <div>
+      <h1>Usuários</h1>
+      <p>Gerencie as contas cadastradas no sistema</p>
+    </div>
+    <a routerLink="/user/add" class="btn-primary">+ Criar Usuário</a>
+  </div>
+
+  <div *ngIf="loading" class="loading-state">Carregando...</div>
+
+  <div class="table-card" *ngIf="!loading">
+    <table class="user-table">
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>E-mail</th>
+          <th>Perfil</th>
+          <th>Município</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let u of users" [class.inactive-row]="!u.active">
+          <td class="cell-name">{{ u.fullname }}</td>
+          <td class="cell-email">{{ u.email }}</td>
+          <td><span class="role-pill role-{{ u.role?.toLowerCase() }}">{{ roleLabel(u.role) }}</span></td>
+          <td>{{ u.city || '—' }}</td>
+          <td>
+            <span class="status-pill" [class.on]="u.active">{{ u.active ? 'Ativo' : 'Inativo' }}</span>
+          </td>
+          <td class="cell-actions">
+            <!-- Admin não inativa a própria conta por aqui -->
+            <button *ngIf="u.id !== myId" class="btn-toggle" [class.danger]="u.active"
+                    [disabled]="togglingId === u.id" (click)="toggleActive(u)">
+              {{ togglingId === u.id ? '...' : (u.active ? 'Inativar' : 'Ativar') }}
+            </button>
+            <span *ngIf="u.id === myId" class="self-label">você</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div *ngIf="users.length === 0" class="empty-state">Nenhum usuário encontrado.</div>
+  </div>
+</div>

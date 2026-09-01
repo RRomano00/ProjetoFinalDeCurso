@@ -1,0 +1,223 @@
+<div class="page-stats" *ngIf="!loading; else loadingTpl">
+
+  <div class="page-header">
+    <div>
+      <h1>Estatísticas</h1>
+      <p>Visão geral de todas as ocorrências registradas</p>
+    </div>
+    <span class="total-badge">{{ total }} ocorrência{{ total !== 1 ? 's' : '' }}</span>
+  </div>
+
+  <!-- Filtros da dashboard (data, localização e tipo) -->
+  <div class="stats-filters">
+    <div class="filter-field">
+      <label>De</label>
+      <input type="date" [(ngModel)]="filterDateFrom" />
+    </div>
+    <div class="filter-field">
+      <label>Até</label>
+      <input type="date" [(ngModel)]="filterDateTo" />
+    </div>
+    <div class="filter-field">
+      <label>Localização (bairro)</label>
+      <select [(ngModel)]="filterNeighborhood">
+        <option value="">Todos os bairros</option>
+        <option *ngFor="let n of neighborhoodOptions" [value]="n">{{ n }}</option>
+      </select>
+    </div>
+    <div class="filter-field">
+      <label>Tipo de ocorrência</label>
+      <select [(ngModel)]="filterType">
+        <option value="">Todos os tipos</option>
+        <option *ngFor="let t of typeOptions" [value]="t.value">{{ t.label }}</option>
+      </select>
+    </div>
+    <button class="btn-clear-filters" (click)="clearFilters()" [disabled]="!hasActiveFilters">
+      Limpar filtros
+    </button>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-top">
+        <div class="kpi-icon blue">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+          </svg>
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-num">{{ total }}</span>
+          <span class="kpi-lbl">Total</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-top">
+        <div class="kpi-icon red">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+          </svg>
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-num red">{{ pending }}</span>
+          <span class="kpi-lbl">Pendentes</span>
+        </div>
+      </div>
+      <div class="kpi-bar-mini" *ngIf="total > 0">
+        <div class="kpi-bar-fill red" [style.width.%]="(pending/total)*100"></div>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-top">
+        <div class="kpi-icon yellow">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 4 23 10 17 10"/>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+          </svg>
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-num yellow">{{ inProgress }}</span>
+          <span class="kpi-lbl">Em Andamento</span>
+        </div>
+      </div>
+      <div class="kpi-bar-mini" *ngIf="total > 0">
+        <div class="kpi-bar-fill yellow" [style.width.%]="(inProgress/total)*100"></div>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-top">
+        <div class="kpi-icon green">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+          </svg>
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-num green">{{ resolved }}</span>
+          <span class="kpi-lbl">Atendidas</span>
+        </div>
+      </div>
+      <div class="kpi-bar-mini" *ngIf="total > 0">
+        <div class="kpi-bar-fill green" [style.width.%]="(resolved/total)*100"></div>
+      </div>
+    </div>
+
+    <div class="kpi-card kpi-highlight">
+      <div class="kpi-top">
+        <div class="kpi-icon purple">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
+          </svg>
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-num purple">{{ resolutionRate }}%</span>
+          <span class="kpi-lbl">Taxa de Resolução</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- RF13: tempo médio de resolução -->
+    <div class="kpi-card">
+      <div class="kpi-top">
+        <div class="kpi-icon blue">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+          </svg>
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-num blue">{{ avgResolutionDays }}</span>
+          <span class="kpi-lbl">Tempo Médio de Resolução</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Gráficos -->
+  <div class="charts-row">
+
+    <!-- Donut: distribuição por status -->
+    <div class="chart-card donut-card">
+      <div class="chart-header"><h2>Distribuição por Status</h2></div>
+      <div class="donut-empty" *ngIf="total === 0"><p>Sem dados</p></div>
+      <div class="donut-body" *ngIf="total > 0">
+        <svg viewBox="0 0 120 120" class="donut-svg">
+          <circle cx="60" cy="60" r="54" fill="none" stroke="#f3f4f6" stroke-width="16"/>
+          <circle *ngFor="let s of donutSlices" cx="60" cy="60" r="54" fill="none"
+            [attr.stroke]="s.color" stroke-width="16"
+            [attr.stroke-dasharray]="s.dash + ' ' + (donutCirc - s.dash)"
+            [attr.stroke-dashoffset]="s.offset" stroke-linecap="butt"/>
+          <text x="60" y="55" text-anchor="middle" class="donut-center-num">{{ resolutionRate }}%</text>
+          <text x="60" y="69" text-anchor="middle" class="donut-center-lbl">Resolvidas</text>
+        </svg>
+        <div class="donut-legend">
+          <div class="legend-row" *ngFor="let s of donutSlices">
+            <span class="legend-dot" [style.background]="s.color"></span>
+            <span class="legend-label">{{ s.label }}</span>
+            <span class="legend-val">{{ s.value }}</span>
+            <span class="legend-pct">{{ s.pct }}%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Barras: por tipo -->
+    <div class="chart-card bar-card">
+      <div class="chart-header"><h2>Ocorrências por Tipo</h2></div>
+      <div class="empty-chart" *ngIf="barChartData.length === 0"><p>Sem dados</p></div>
+      <div class="bar-list" *ngIf="barChartData.length > 0">
+        <div class="bar-row" *ngFor="let b of barChartData">
+          <span class="bar-label" [title]="b.label">{{ b.label }}</span>
+          <div class="bar-track">
+            <div class="bar-fill" [style.width.%]="b.pct" [style.background]="b.color"></div>
+          </div>
+          <span class="bar-val">{{ b.value }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top Bairros -->
+  <div class="charts-row">
+    <div class="chart-card bairros-card" style="width:100%">
+      <div class="chart-header">
+        <h2>Top Bairros</h2>
+        <span class="chart-hint">por número de ocorrências</span>
+      </div>
+      <div class="empty-chart" *ngIf="topNeighborhoods.length === 0"><p>Sem dados</p></div>
+      <div class="bairro-list" *ngIf="topNeighborhoods.length > 0">
+        <div class="bairro-row" *ngFor="let n of topNeighborhoods; let i = index">
+          <span class="bairro-rank"
+            [ngClass]="{'rank-gold':i===0,'rank-silver':i===1,'rank-bronze':i===2}">
+            {{ i + 1 }}
+          </span>
+          <div class="bairro-info">
+            <div class="bairro-name-row">
+              <span class="bairro-name">{{ n.neighborhood }}</span>
+              <span class="bairro-total">{{ n.total }}</span>
+            </div>
+            <div class="bairro-track">
+              <div class="bairro-fill" [style.width.%]="n.pct"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<ng-template #loadingTpl>
+  <div class="loading-state">
+    <div class="spinner"></div>
+    <p>Carregando estatísticas...</p>
+  </div>
+</ng-template>

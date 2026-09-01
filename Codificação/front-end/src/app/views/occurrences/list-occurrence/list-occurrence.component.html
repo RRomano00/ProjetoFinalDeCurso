@@ -1,0 +1,109 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1>Ocorrências</h1>
+    <div class="header-actions">
+      <button (click)="openProtocolModal()" class="btn-secondary">🔎 Acompanhar ocorrência anônima</button>
+      <a routerLink="/occurrence/create" class="btn-primary">+ Nova Ocorrência</a>
+    </div>
+  </div>
+
+  <div class="filters">
+    <input type="text" [(ngModel)]="searchProtocol" (ngModelChange)="applyFilters()"
+           placeholder="Filtrar por protocolo..." class="filter-input" />
+    <select [(ngModel)]="filterStatus" (ngModelChange)="applyFilters()" class="filter-select">
+      <option value="">Todos os status</option>
+      <option *ngFor="let s of statusOptions" [value]="s">{{ statusLabel(s) }}</option>
+    </select>
+    <!-- RF12: agrupamento de ocorrências semelhantes -->
+    <select [(ngModel)]="groupBy" class="filter-select">
+      <option value="">Sem agrupamento</option>
+      <option value="type">Agrupar por categoria</option>
+      <option value="neighborhood">Agrupar por bairro</option>
+      <option value="status">Agrupar por status</option>
+    </select>
+    <button (click)="clearFilters()" class="btn-secondary">Limpar</button>
+  </div>
+
+  <!-- Popup: acompanhar ocorrência por protocolo (inclusive anônimas) -->
+  @if (showProtocolModal) {
+    <div class="modal-overlay" (click)="closeProtocolModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <h2>Acompanhar ocorrência anônima</h2>
+        <p>Digite o código de acompanhamento gerado ao registrar a ocorrência anônima (ex: UXNLTPSU).</p>
+        <input type="text" [(ngModel)]="trackingCodeInput" placeholder="UXNLTPSU"
+               class="filter-input" (keyup.enter)="searchByCode()" />
+        <div class="modal-actions">
+          <button class="btn-secondary" (click)="closeProtocolModal()">Cancelar</button>
+          <button class="btn-primary" [disabled]="searchingProtocol" (click)="searchByCode()">
+            {{ searchingProtocol ? 'Buscando...' : 'Buscar' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <div *ngIf="loading" class="loading-state">Carregando...</div>
+
+  <div *ngIf="!loading && filtered.length === 0" class="empty-state">
+    Nenhuma ocorrência encontrada.
+  </div>
+
+  <!-- Card de ocorrência (usado na grade simples e nos grupos) -->
+  <ng-template #occurrenceCard let-o>
+    <a [routerLink]="['/occurrence/detail', o.id]" class="occurrence-card">
+      <div class="card-header">
+        <span class="protocol">{{ o.protocolNumber }}</span>
+        <span class="badge" [ngClass]="statusClass(o.status)">{{ statusLabel(o.status) }}</span>
+      </div>
+
+      <h3 class="card-title">{{ o.title || 'Ocorrência' }}</h3>
+      <p class="card-description">{{ o.description | slice:0:120 }}{{ o.description.length > 120 ? '...' : '' }}</p>
+
+      <div class="card-tags">
+        <span class="badge-type"
+              [style.background]="typeColor(o.type) + '18'"
+              [style.color]="typeColor(o.type)"
+              [style.border-color]="typeColor(o.type) + '40'">
+          {{ typeLabel(o.type) }}
+        </span>
+        <span class="priority-pill" [ngClass]="priorityClass(o.priority || '')">
+          {{ o.priority }}
+        </span>
+      </div>
+
+      <div class="card-footer">
+        <span class="card-city">
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
+          </svg>
+          {{ o.city }}
+        </span>
+        <span class="card-link">Ver detalhes →</span>
+      </div>
+    </a>
+  </ng-template>
+
+  <!-- Sem agrupamento: grade única -->
+  <div class="occurrence-grid" *ngIf="!loading && !groupBy">
+    <ng-container *ngFor="let o of filtered">
+      <ng-container *ngTemplateOutlet="occurrenceCard; context: { $implicit: o }" />
+    </ng-container>
+  </div>
+
+  <!-- RF12: agrupado por categoria/bairro/status -->
+  <div *ngIf="!loading && groupBy" class="group-list">
+    <section class="occurrence-group" *ngFor="let g of groups">
+      <div class="group-header">
+        <span class="group-dot" *ngIf="g.color" [style.background]="g.color"></span>
+        <h2 class="group-title">{{ g.label }}</h2>
+        <span class="group-count">{{ g.items.length }}</span>
+      </div>
+      <div class="occurrence-grid">
+        <ng-container *ngFor="let o of g.items">
+          <ng-container *ngTemplateOutlet="occurrenceCard; context: { $implicit: o }" />
+        </ng-container>
+      </div>
+    </section>
+  </div>
+</div>

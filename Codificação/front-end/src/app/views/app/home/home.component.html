@@ -1,0 +1,120 @@
+<div class="page-home">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="welcome-block">
+      <h1>Bem-vindo(a), {{ username }}!</h1>
+      <p>Acompanhe as ocorrências da sua cidade</p>
+    </div>
+    <a routerLink="/occurrence/create" class="btn-primary">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10" />
+        <path d="M12 8v8" />
+        <path d="M8 12h8" />
+      </svg>
+      Nova Ocorrência
+    </a>
+  </div>
+
+  <!-- Body: lista + mapa -->
+  <div class="home-body">
+
+    <!-- Coluna esquerda: ocorrências recentes -->
+    <div class="incidents-col">
+      <h2 class="col-title">Ocorrências Recentes</h2>
+      <div class="incident-list">
+        <a *ngFor="let o of occurrences.slice(0,5)"
+           [routerLink]="['/occurrence/detail', o.id]"
+           class="incident-card">
+          <div class="incident-top">
+            <span class="incident-id">{{ o.protocolNumber }}</span>
+            <span class="status-badge" [ngClass]="{
+                'badge-open':     o.status === 'PENDENTE',
+                'badge-progress': o.status === 'EM_ANDAMENTO',
+                'badge-done':     o.status === 'ATENDIDA',
+                'badge-rejected': o.status === 'INDEFERIDA'
+              }">
+              <span class="badge-dot"></span>
+              {{ statusLabel(o.status) }}
+            </span>
+          </div>
+          <div class="incident-title">{{ o.title || (o.description | slice:0:60) }}</div>
+          <div class="incident-desc" *ngIf="o.title">{{ o.description | slice:0:70 }}{{ o.description.length > 70 ? '...' : '' }}</div>
+          <div class="incident-meta">
+            <span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+                <circle cx="12" cy="10" r="3" />
+              </svg>
+              {{ o.street || '' }} {{ o.neighborhood ? ', ' + o.neighborhood : '' }}
+            </span>
+          </div>
+          <div class="incident-tag" *ngIf="o.type">
+            {{ o.type.replaceAll('_', ' ') }}
+          </div>
+        </a>
+
+        <div class="empty-incidents" *ngIf="occurrences.length === 0 && !loadingMap">
+          Nenhuma ocorrência encontrada.
+        </div>
+      </div>
+    </div>
+
+    <!-- Coluna direita: mapa + stats -->
+    <div class="map-col">
+      <h2 class="col-title">Mapa de Ocorrências</h2>
+
+      <!-- RF21: filtros do mapa por bairro, categoria e status -->
+      <div class="map-filters">
+        <select [(ngModel)]="mapFilterNeighborhood" (ngModelChange)="refreshMarkers()">
+          <option value="">Todos os bairros</option>
+          <option *ngFor="let b of mapNeighborhoodOptions" [value]="b">{{ b }}</option>
+        </select>
+        <select [(ngModel)]="mapFilterType" (ngModelChange)="refreshMarkers()">
+          <option value="">Todas as categorias</option>
+          <option *ngFor="let t of mapTypeOptions" [value]="t.value">{{ t.label }}</option>
+        </select>
+        <select [(ngModel)]="mapFilterStatus" (ngModelChange)="refreshMarkers()">
+          <option value="">Todos os status</option>
+          <option *ngFor="let st of mapStatusOptions" [value]="st">{{ statusLabel(st) }}</option>
+        </select>
+        <button type="button" class="btn-clear-map" (click)="clearMapFilters()" [disabled]="!hasMapFilters">
+          Limpar
+        </button>
+      </div>
+
+      <div class="map-wrapper">
+        <div id="incident-map"></div>
+        <div class="map-loading" *ngIf="loadingMap">
+          <div class="spinner"></div>
+          <span>Carregando marcadores...</span>
+        </div>
+        <div class="map-legend">
+          <span class="legend-item"><span class="dot red"></span> Pendente</span>
+          <span class="legend-item"><span class="dot yellow"></span> Em Andamento</span>
+          <span class="legend-item"><span class="dot green"></span> Atendida</span>
+          <span class="legend-item"><span class="dot gray"></span> Indeferida</span>
+        </div>
+      </div>
+
+      <!-- Estatísticas rápidas -->
+      <div class="quick-stats">
+        <h3>Estatísticas Rápidas</h3>
+        <div class="stat-row">
+          <span>Total de Ocorrências</span>
+          <span class="stat-num">{{ totalOccurrences }}</span>
+        </div>
+        <div class="stat-row">
+          <span>Atendidas</span>
+          <span class="stat-num green">{{ resolvedCount }}</span>
+        </div>
+        <div class="stat-row">
+          <span>Pendentes</span>
+          <span class="stat-num red">{{ pendingCount }}</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
