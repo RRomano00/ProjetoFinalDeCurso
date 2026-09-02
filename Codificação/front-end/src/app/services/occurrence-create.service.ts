@@ -11,10 +11,10 @@ export class OccurrenceCreateService {
     return firstValueFrom(this.http.post<any>(`${environment.api_endpoint}/occurrence`, occurrence));
   }
 
-  /** Inicia o upload da foto (multipart). Retorna { uploadId }. */
-  uploadMedia(file: File, type: string): Promise<{ uploadId: string }> {
+  async uploadMedia(file: File, type: string): Promise<{ uploadId: string }> {
+    const blob = new Blob([await file.arrayBuffer()], { type: file.type });
     const form = new FormData();
-    form.append('file', file);
+    form.append('file', blob, file.name);
     form.append('type', type);
     return firstValueFrom(
       this.http.post<{ uploadId: string }>(`${environment.api_endpoint}/occurrence/upload-media`, form)
