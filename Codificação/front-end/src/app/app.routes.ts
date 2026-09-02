@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authenticationGuard } from './services/security/guard/authentication.guard';
+import { authenticationGuard, staffGuard } from './services/security/guard/authentication.guard';
 
 export const routes: Routes = [
   // ── Autenticação (público) ───────────────────────────────────────────────
@@ -54,6 +54,7 @@ export const routes: Routes = [
       },
       {
         path: 'occurrence/statistics',
+        canActivate: [staffGuard],
         loadComponent: () =>
           import('./views/occurrences/statistics/statistics.component')
             .then(m => m.StatisticsComponent)

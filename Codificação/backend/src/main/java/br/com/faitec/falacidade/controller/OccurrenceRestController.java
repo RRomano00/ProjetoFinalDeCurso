@@ -17,6 +17,8 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
+import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -40,12 +42,26 @@ public class OccurrenceRestController {
         this.emailService       = emailService;
     }
 
+    /** Envios de foto por IP por dia — o endpoint é público (visitante anexa foto sem conta). */
+    private static final int MAX_UPLOADS_PER_DAY_PER_IP = 20;
+    // ponytail: contador em memória com lock global; se rodar em mais de uma instância,
+    // mover para o banco como em OccurrenceDao.countTodayAnonymousByIp.
+    private final Map<String, Integer> uploadsByIp = new HashMap<>();
+    private int uploadCounterDay = LocalDate.now().getDayOfYear();
+
     @PostMapping("/upload-media")
     public ResponseEntity<Map<String, String>> uploadMedia(
             @RequestParam("file") MultipartFile file,
-            @RequestParam("type") Occurrence.OccurrenceType type) {
+            @RequestParam("type") Occurrence.OccurrenceType type,
+            HttpServletRequest request) {
         if (file == null || file.isEmpty())
             return ResponseEntity.badRequest().body(Map.of("error", "Nenhum arquivo enviado."));
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("image/"))
+            return ResponseEntity.badRequest().body(Map.of("error", "Envie um arquivo de imagem."));
+        if (uploadLimitReached(extractClientIp(request)))
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(Map.of(
+                "error", "Limite de " + MAX_UPLOADS_PER_DAY_PER_IP + " envios de foto por dia atingido."));
         byte[] bytes;
         try { bytes = file.getBytes(); }
         catch (IOException e) {
@@ -76,8 +92,14 @@ public class OccurrenceRestController {
     }
 
     @PostMapping
-    public ResponseEntity<CreateOccurrenceResponseDto> create(
-            @Valid @RequestBody CreateOccurrenceDto dto, HttpServletRequest request) {
+    public ResponseEntity<?> create(
+            @Valid @RequestBody CreateOccurrenceDto dto, HttpServletRequest request,
+            Authentication auth) {
+        // O autor vem sempre do token: o e-mail do corpo só sinaliza "quero me identificar"
+        // (em branco = anônima). Sem token a ocorrência é obrigatoriamente anônima — impede
+        // registrar ocorrência (e disparar e-mail) em nome de terceiros.
+        boolean identified = dto.getEmail() != null && !dto.getEmail().isBlank();
+        dto.setEmail(auth != null && identified ? auth.getName() : null);
         try {
             String clientIp = extractClientIp(request);
             CreateOccurrenceResponseDto response = occurrenceService.createOccurrence(dto.toOccurrence(), clientIp);
@@ -92,7 +114,10 @@ public class OccurrenceRestController {
             }
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (IllegalStateException e) {
-            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).build();
+            // RF07/RF08: diz qual limite diário estourou e quando ele é renovado — a contagem
+            // é por dia do servidor (DATE(created_at) = CURRENT_DATE), logo zera à meia-noite.
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(Map.of(
+                "error", e.getMessage() + ". Você poderá registrar novamente à meia-noite (00:00)."));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
         }
@@ -261,6 +286,16 @@ public class OccurrenceRestController {
         if (auth == null) return null;
         try { return userService.findByEmail(auth.getName()); }
         catch (Exception e) { return null; }
+    }
+
+    /** Conta os envios do dia por IP; reinicia a contagem na virada do dia. */
+    private synchronized boolean uploadLimitReached(String ip) {
+        int today = LocalDate.now().getDayOfYear();
+        if (today != uploadCounterDay) {
+            uploadCounterDay = today;
+            uploadsByIp.clear();
+        }
+        return uploadsByIp.merge(ip, 1, Integer::sum) > MAX_UPLOADS_PER_DAY_PER_IP;
     }
 
     private String extractClientIp(HttpServletRequest request) {

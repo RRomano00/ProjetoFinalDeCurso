@@ -10,3 +10,12 @@ export const authenticationGuard: CanActivateFn = () => {
   router.navigate(['/account/sign-in']);
   return false;
 };
+
+/** RF a.8/b.1: a dashboard de estatísticas é da equipe (Funcionário/Administrador). */
+export const staffGuard: CanActivateFn = () => {
+  const router = inject(Router);
+  const role   = localStorage.getItem('role');
+  if (role === 'EMPLOYEE' || role === 'ADMINISTRATOR') return true;
+  router.navigate(['/']);
+  return false;
+};

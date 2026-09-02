@@ -222,9 +222,10 @@ export class CreateOccurrenceComponent implements OnInit, AfterViewInit, OnDestr
     try {
       const { uploadId } = await this.occurrenceCreateService.uploadMedia(file, this.form.value.type);
       await this.pollUpload(uploadId);
-    } catch {
+    } catch (err: any) {
       this.photoState = 'error';
-      this.photoMessage = 'Falha ao enviar a foto. Tente novamente.';
+      // 400 (não é imagem) e 429 (limite diário por IP) vêm com a mensagem do back-end.
+      this.photoMessage = err?.error?.error || 'Falha ao enviar a foto. Tente novamente.';
     } finally {
       input.value = '';
     }
@@ -310,9 +311,10 @@ export class CreateOccurrenceComponent implements OnInit, AfterViewInit, OnDestr
         this.toastr.success(`Ocorrência registrada! Protocolo: ${res?.protocolNumber || ''}`);
         this.router.navigate(['/occurrence/list']);
       }
-    } catch {
+    } catch (err: any) {
       this.loading = false;
-      this.toastr.error('Erro ao registrar a ocorrência. Tente novamente.');
+      // 429 traz o limite diário atingido e o horário em que ele é renovado.
+      this.toastr.error(err?.error?.error || 'Erro ao registrar a ocorrência. Tente novamente.');
     }
   }
 
