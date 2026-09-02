@@ -9,3 +9,10 @@ Para a pesquisa aplicada aos potenciais usuários:
 Comprovantes aceitos para outras atividades, caso sejam realizadas:
 declaração assinada da entidade parceira, lista de presença, ata de reunião,
 fotografias datadas e relatório da atividade com carga horária.
+
+Conteúdo atual desta pasta:
+- Pesquisa_Perfis_Usuarios_FalaCidade_.pdf — instrumento aplicado e compilação
+  das respostas (pesquisa on-line por Google Forms, 7 participantes).
+- Respostas.pdf — respostas obtidas, exportadas do formulário (24 páginas).
+Ambos são os mesmos arquivos do Apêndice G, aqui reproduzidos como comprovante
+da atividade de extensão.
