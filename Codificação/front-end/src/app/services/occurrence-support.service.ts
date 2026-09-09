@@ -9,7 +9,7 @@ export interface SupportInfo {
   supportedByMe: boolean;
 }
 
-/** RF16: detecção de duplicatas próximas (50 m) e apoio a ocorrências. */
+/** Detecção de duplicatas próximas (50 m) e apoio a ocorrências. */
 @Injectable({ providedIn: 'root' })
 export class OccurrenceSupportService {
   private base = `${environment.api_endpoint}/occurrence`;
@@ -28,7 +28,10 @@ export class OccurrenceSupportService {
     return firstValueFrom(this.http.get<SupportInfo>(`${this.base}/${id}/support`));
   }
 
-  /** Registra o apoio do usuário logado. */
+  mySupports(): Promise<number[]> {
+    return firstValueFrom(this.http.get<number[]>(`${this.base}/support/mine`));
+  }
+
   support(id: number | string): Promise<SupportInfo> {
     return firstValueFrom(this.http.post<SupportInfo>(`${this.base}/${id}/support`, {}));
   }

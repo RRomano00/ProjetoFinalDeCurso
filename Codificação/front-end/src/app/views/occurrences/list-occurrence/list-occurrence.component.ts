@@ -3,6 +3,7 @@ import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { OccurrenceReadService } from '../../../services/occurrence-read.service';
+import { OccurrenceSupportService } from '../../../services/occurrence-support.service';
 import { Occurrence } from '../../../domain/model/occurrence';
 import { typeLabel, typeColor, statusLabel, statusClass, priorityClass } from '../../../domain/occurrence-labels';
 import { ToastrService } from 'ngx-toastr';
@@ -21,19 +22,29 @@ export class ListOccurrenceComponent implements OnInit {
   searchProtocol = '';
   filterStatus   = '';
   filterType     = '';
+  filterMine     = false;
 
-  /** RF12: agrupamento de ocorrências semelhantes ('' = sem agrupamento). */
+  supportedIds = new Set<number>();
+  supportingId: number | null = null;
+
+  private readonly userRole = localStorage.getItem('role') || '';
+  private readonly myEmail  = localStorage.getItem('email') || '';
+
+  get isVisitor(): boolean { return !localStorage.getItem('token'); }
+  get canSupport(): boolean { return this.userRole === 'CITIZEN' || this.isVisitor; }
+  get canFilterMine(): boolean { return this.userRole === 'CITIZEN'; }
+
   groupBy: '' | 'type' | 'neighborhood' | 'status' = '';
 
   statusOptions = ['PENDENTE', 'EM_ANDAMENTO', 'ATENDIDA', 'INDEFERIDA'];
 
-  // Acompanhamento de ocorrência ANÔNIMA pelo código gerado (ex: UXNLTPSU)
   showProtocolModal = false;
   trackingCodeInput = '';
   searchingProtocol = false;
 
   constructor(
     private occurrenceReadService: OccurrenceReadService,
+    private occurrenceSupportService: OccurrenceSupportService,
     private router: Router,
     private toastr: ToastrService
   ) {}
@@ -47,6 +58,40 @@ export class ListOccurrenceComponent implements OnInit {
     } finally {
       this.loading = false;
     }
+    await this.loadMySupports();
+  }
+
+  private async loadMySupports() {
+    if (this.isVisitor) return;
+    try {
+      this.supportedIds = new Set(await this.occurrenceSupportService.mySupports());
+    } catch {
+      this.supportedIds = new Set();
+    }
+  }
+
+  isSupported(id?: number): boolean {
+    return id != null && this.supportedIds.has(id);
+  }
+
+  async support(o: Occurrence) {
+    if (this.isVisitor) {
+      this.toastr.info('Entre na sua conta para apoiar uma ocorrência.');
+      this.router.navigate(['/account/sign-in']);
+      return;
+    }
+    if (o.id == null || this.isSupported(o.id) || this.supportingId != null) return;
+    this.supportingId = o.id;
+    try {
+      const info = await this.occurrenceSupportService.support(o.id);
+      o.supportCount = info.count;
+      this.supportedIds.add(o.id);
+      this.toastr.success('Apoio registrado. Obrigado!');
+    } catch {
+      this.toastr.error('Não foi possível registrar o apoio.');
+    } finally {
+      this.supportingId = null;
+    }
   }
 
   applyFilters() {
@@ -55,7 +100,8 @@ export class ListOccurrenceComponent implements OnInit {
         o.protocolNumber?.toLowerCase().includes(this.searchProtocol.toLowerCase());
       const matchStatus = !this.filterStatus || o.status === this.filterStatus;
       const matchType   = !this.filterType   || o.type   === this.filterType;
-      return matchProtocol && matchStatus && matchType;
+      const matchMine   = !this.filterMine   || (!!o.email && o.email === this.myEmail);
+      return matchProtocol && matchStatus && matchType && matchMine;
     });
   }
 
@@ -63,11 +109,11 @@ export class ListOccurrenceComponent implements OnInit {
     this.searchProtocol = '';
     this.filterStatus   = '';
     this.filterType     = '';
+    this.filterMine     = false;
     this.groupBy        = '';
     this.filtered = [...this.occurrences];
   }
 
-  /** RF12: agrupa as ocorrências filtradas pelo critério escolhido. */
   get groups(): { label: string; color: string | null; items: Occurrence[] }[] {
     if (!this.groupBy) return [];
     const map = new Map<string, Occurrence[]>();
@@ -90,7 +136,6 @@ export class ListOccurrenceComponent implements OnInit {
       .sort((a, b) => b.items.length - a.items.length);   // grupos maiores primeiro
   }
 
-  // ── Acompanhar ocorrência anônima pelo código gerado (popup) ──
   openProtocolModal() { this.showProtocolModal = true; this.trackingCodeInput = ''; }
   closeProtocolModal() { this.showProtocolModal = false; }
 
@@ -113,7 +158,6 @@ export class ListOccurrenceComponent implements OnInit {
     }
   }
 
-  // Labels e cores compartilhados (domain/occurrence-labels)
   statusLabel   = statusLabel;
   statusClass   = statusClass;
   priorityClass = priorityClass;

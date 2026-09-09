@@ -17,6 +17,11 @@ public class OccurrencePostgresDao implements OccurrenceDao {
 
     public OccurrencePostgresDao(Connection connection) { this.connection = connection; }
 
+    private static final String SELECT_FIELDS =
+        "SELECT o.*, u.fullname, u.email AS user_email, " +
+        "(SELECT COUNT(*) FROM occurrence_support s WHERE s.occurrence_id = o.id) AS support_count " +
+        "FROM occurrence o ";
+
     private String generateProtocol() {
         String date = java.time.LocalDate.now().toString().replace("-", "");
         String rand = UUID.randomUUID().toString().replace("-", "").substring(0, 5).toUpperCase();
@@ -82,9 +87,9 @@ public class OccurrencePostgresDao implements OccurrenceDao {
                 return id;
             }
         } catch (SQLException e) { rollback(); throw new RuntimeException("Erro ao inserir ocorrência", e); }
+        finally { restoreAutoCommit(); }
     }
 
-    /** RF07: grava as fotos anexadas na tabela occurrence_media. */
     private void insertMedia(int occurrenceId, List<OccurrenceMedia> media) throws SQLException {
         if (media == null || media.isEmpty()) return;
         String sql = "INSERT INTO occurrence_media(occurrence_id, url, cloudinary_public_id, image_blurred) VALUES(?,?,?,?)";
@@ -102,13 +107,12 @@ public class OccurrencePostgresDao implements OccurrenceDao {
     }
 
     @Override public GetOccurrenceDto readById(int id) {
-        GetOccurrenceDto dto = queryOne("SELECT o.*,u.fullname,u.email AS user_email FROM occurrence o " +
+        GetOccurrenceDto dto = queryOne(SELECT_FIELDS +
                         "LEFT JOIN users u ON o.users_id=u.id WHERE o.id=?", id);
         if (dto != null) dto.setMedia(readMedia(id));
         return dto;
     }
 
-    /** RF07: fotos da ocorrência (carregadas só no detalhe). */
     private List<OccurrenceMedia> readMedia(int occurrenceId) {
         List<OccurrenceMedia> list = new ArrayList<>();
         String sql = "SELECT url, cloudinary_public_id, image_blurred FROM occurrence_media WHERE occurrence_id=? ORDER BY id";
@@ -122,11 +126,10 @@ public class OccurrencePostgresDao implements OccurrenceDao {
         return list;
     }
 
-    /** RF12: todas as ocorrências do grupo (raiz + encadeadas), mais antiga primeiro. */
     @Override
     public List<GetOccurrenceDto> readGroup(int rootId) {
         List<GetOccurrenceDto> list = new ArrayList<>();
-        String sql = "SELECT o.*,u.fullname,u.email AS user_email FROM occurrence o " +
+        String sql = SELECT_FIELDS +
                      "LEFT JOIN users u ON o.users_id=u.id " +
                      "WHERE o.id=? OR o.group_id=? ORDER BY o.created_at";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
@@ -162,24 +165,24 @@ public class OccurrencePostgresDao implements OccurrenceDao {
     }
 
     @Override public List<GetOccurrenceDto> readall() {
-        return queryList("SELECT o.*,u.fullname,u.email AS user_email FROM occurrence o " +
+        return queryList(SELECT_FIELDS +
                          "LEFT JOIN users u ON o.users_id=u.id ORDER BY o.created_at DESC");
     }
 
     @Override public GetOccurrenceDto readByProtocolNumber(String protocol) {
-        return queryOne("SELECT o.*,u.fullname,u.email AS user_email FROM occurrence o " +
+        return queryOne(SELECT_FIELDS +
                         "LEFT JOIN users u ON o.users_id=u.id WHERE o.protocol_number=?", protocol);
     }
 
     @Override public GetOccurrenceDto findByAnonymousTrackingCodeHash(String hash) {
-        return queryOne("SELECT o.*,u.fullname,u.email AS user_email FROM occurrence o " +
+        return queryOne(SELECT_FIELDS +
                         "LEFT JOIN users u ON o.users_id=u.id WHERE o.anonymous_tracking_code_hash=?", hash);
     }
 
     @Override public List<GetOccurrenceDto> findNearby(double lat, double lon, String type, double radius) {
         double dLat = radius / 111_111.0;
         double dLon = radius / (111_111.0 * Math.cos(Math.toRadians(lat)));
-        String sql  = "SELECT o.*,u.fullname,u.email AS user_email FROM occurrence o " +
+        String sql  = SELECT_FIELDS +
                       "LEFT JOIN users u ON o.users_id=u.id " +
                       "WHERE o.status NOT IN ('ATENDIDA','INDEFERIDA') AND o.type=? " +
                       "AND o.latitude BETWEEN ? AND ? AND o.longitude BETWEEN ? AND ?";
@@ -216,6 +219,7 @@ public class OccurrencePostgresDao implements OccurrenceDao {
             }
             connection.commit();
         } catch (SQLException e) { rollback(); throw new RuntimeException("Erro ao atualizar status", e); }
+        finally { restoreAutoCommit(); }
     }
 
     private void simpleUpdate(int id, String status) {
@@ -261,6 +265,7 @@ public class OccurrencePostgresDao implements OccurrenceDao {
         o.setPriority(Occurrence.Priority.valueOf(rs.getString("priority")));
         o.setAnonymous(rs.getBoolean("is_anonymous"));
         int gid = rs.getInt("group_id"); if (!rs.wasNull()) o.setGroupId(gid);
+        o.setSupportCount(rs.getInt("support_count"));
         o.setEmail(rs.getString("user_email"));
         o.setFullname(rs.getString("fullname"));
         Timestamp cat = rs.getTimestamp("created_at"); if (cat != null) o.setCreatedAt(cat.toLocalDateTime());
@@ -271,7 +276,7 @@ public class OccurrencePostgresDao implements OccurrenceDao {
     @Override
     public List<GetOccurrenceDto> readAllByUserEmail(String email) {
         List<GetOccurrenceDto> list = new ArrayList<>();
-        String sql = "SELECT o.*,u.fullname,u.email AS user_email FROM occurrence o " +
+        String sql = SELECT_FIELDS +
                      "LEFT JOIN users u ON o.users_id=u.id " +
                      "WHERE u.email=? ORDER BY o.created_at DESC";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
@@ -285,7 +290,7 @@ public class OccurrencePostgresDao implements OccurrenceDao {
     @Override
     public List<GetOccurrenceDto> readAllByCity(String city) {
         List<GetOccurrenceDto> list = new ArrayList<>();
-        String sql = "SELECT o.*,u.fullname,u.email AS user_email FROM occurrence o " +
+        String sql = SELECT_FIELDS +
                      "LEFT JOIN users u ON o.users_id=u.id " +
                      "WHERE o.city=? ORDER BY o.created_at DESC";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
@@ -317,6 +322,10 @@ public class OccurrencePostgresDao implements OccurrenceDao {
             ResultSet rs = ps.executeQuery();
             return rs.next() ? rs.getInt(1) : 0;
         } catch (SQLException e) { throw new RuntimeException("Erro ao contar ocorrências anônimas do dia", e); }
+    }
+
+    private void restoreAutoCommit() {
+        try { connection.setAutoCommit(true); } catch (SQLException ignored) {}
     }
 
     private void rollback() { try { connection.rollback(); } catch (SQLException ignored) {} }

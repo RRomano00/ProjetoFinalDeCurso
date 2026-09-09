@@ -3,7 +3,6 @@ package br.com.faitec.falacidade.domain.dto.occurrence;
 import br.com.faitec.falacidade.domain.Occurrence;
 import java.time.LocalDateTime;
 
-/** DTO de leitura de ocorrência — GET /api/occurrence e /api/occurrence/{id}. */
 public class GetOccurrenceDto {
     private int                      id;
     private String                   protocolNumber, title, description;
@@ -11,14 +10,13 @@ public class GetOccurrenceDto {
     private Double                   latitude, longitude;
     private String                   urlMedia;
     private boolean                  imageBlurred;
-    /** RF07: todas as fotos anexadas (carregado só no detalhe). */
     private java.util.List<br.com.faitec.falacidade.domain.OccurrenceMedia> media;
     private Occurrence.OccurrenceStatus  status;
     private Occurrence.OccurrenceType    type;
     private Occurrence.Priority      priority;
     private boolean                  anonymous;
-    /** RF12: id da ocorrência raiz do grupo de duplicatas (null = não agrupada). */
     private Integer                  groupId;
+    private int                      supportCount;
     private String                   email, fullname;
     private LocalDateTime            createdAt, updatedAt;
 
@@ -56,6 +54,8 @@ public class GetOccurrenceDto {
     public void                    setType(Occurrence.OccurrenceType v){ this.type = v; }
     public Occurrence.Priority     getPriority()        { return priority; }
     public void                    setPriority(Occurrence.Priority v){ this.priority = v; }
+    public int                     getSupportCount()    { return supportCount; }
+    public void                    setSupportCount(int v){ this.supportCount = v; }
     public boolean                 isAnonymous()        { return anonymous; }
     public void                    setAnonymous(boolean v){ this.anonymous = v; }
     public Integer                 getGroupId()         { return groupId; }

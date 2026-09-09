@@ -55,6 +55,8 @@ public class UserPostgresDao implements UserDao {
         } catch (SQLException e) {
             rollback();
             throw new RuntimeException("Erro ao inserir usuário: " + e.getMessage(), e);
+        } finally {
+            restoreAutoCommit();
         }
     }
 
@@ -247,6 +249,11 @@ public class UserPostgresDao implements UserDao {
         u.setMfaSecret(secret);
 
         return u;
+    }
+
+    /** Devolve a conexão ao autocommit: a Connection é um bean único compartilhado pelos DAOs. */
+    private void restoreAutoCommit() {
+        try { connection.setAutoCommit(true); } catch (SQLException ignored) {}
     }
 
     private void rollback() {

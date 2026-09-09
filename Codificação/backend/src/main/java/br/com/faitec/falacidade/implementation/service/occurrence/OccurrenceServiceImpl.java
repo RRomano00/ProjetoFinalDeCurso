@@ -59,7 +59,6 @@ public class OccurrenceServiceImpl implements OccurrenceService {
                 throw new IllegalStateException("Limite de " + MAX_IDENTIFIED_PER_DAY + " ocorrências por dia atingido");
         }
 
-        // RF12: encadeia automaticamente com duplicata ativa (50 m + mesma categoria)
         assignGroup(entity);
 
         int id = occurrenceDao.add(entity);
@@ -67,7 +66,6 @@ public class OccurrenceServiceImpl implements OccurrenceService {
         return new CreateOccurrenceResponseDto(id, entity.getProtocolNumber(), plainCode, entity.isAnonymous());
     }
 
-    /** RF12: se existe duplicata ativa próxima, aponta group_id para a raiz do grupo dela. */
     private void assignGroup(Occurrence entity) {
         if (entity.getLatitude() == null || entity.getLongitude() == null || entity.getType() == null) return;
         List<GetOccurrenceDto> nearby = occurrenceDao.findNearby(
@@ -131,8 +129,6 @@ public class OccurrenceServiceImpl implements OccurrenceService {
         return occurrenceDao.findNearby(lat, lon, type.name(), DUPLICATE_RADIUS_METERS);
     }
 
-    // ── RF16: apoio a ocorrências ──
-
     @Override
     public boolean supportOccurrence(int occurrenceId, int citizenId) {
         if (occurrenceId < 0 || citizenId <= 0) return false;
@@ -147,6 +143,11 @@ public class OccurrenceServiceImpl implements OccurrenceService {
     }
 
     @Override
+    public List<Integer> getSupportedOccurrenceIds(int citizenId) {
+        return citizenId > 0 ? supportDao.findOccurrenceIdsByCitizen(citizenId) : List.of();
+    }
+
+    @Override
     public boolean hasSupported(int occurrenceId, int citizenId) {
         return occurrenceId >= 0 && citizenId > 0 && supportDao.hasSupported(occurrenceId, citizenId);
     }
@@ -155,8 +156,6 @@ public class OccurrenceServiceImpl implements OccurrenceService {
     public List<br.com.faitec.falacidade.domain.dto.occurrence.OccurrenceHistoryDto> getHistory(int occurrenceId) {
         return occurrenceId >= 0 ? occurrenceDao.readHistory(occurrenceId) : List.of();
     }
-
-    // ── RF12: grupo de duplicatas + mudança de status com notificação ──
 
     @Override
     public List<GetOccurrenceDto> getGroup(int occurrenceId) {
@@ -182,7 +181,6 @@ public class OccurrenceServiceImpl implements OccurrenceService {
         }
     }
 
-    /** Envia o e-mail de mudança de status ao autor identificado (falha não interrompe o fluxo). */
     private void notifyAuthor(GetOccurrenceDto o, String newStatus, String message) {
         if (o.isAnonymous() || isBlank(o.getEmail())) return;
         try {

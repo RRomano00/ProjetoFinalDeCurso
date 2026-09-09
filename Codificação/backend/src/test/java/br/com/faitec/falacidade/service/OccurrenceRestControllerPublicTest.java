@@ -4,6 +4,8 @@ import br.com.faitec.falacidade.controller.OccurrenceRestController;
 import br.com.faitec.falacidade.domain.Occurrence;
 import br.com.faitec.falacidade.domain.dto.occurrence.CreateOccurrenceDto;
 import br.com.faitec.falacidade.domain.dto.occurrence.CreateOccurrenceResponseDto;
+import br.com.faitec.falacidade.domain.dto.occurrence.GetOccurrenceDto;
+import br.com.faitec.falacidade.domain.UserModel;
 import br.com.faitec.falacidade.port.service.email.EmailService;
 import br.com.faitec.falacidade.port.service.media.MediaUploadService;
 import br.com.faitec.falacidade.port.service.occurrence.OccurrenceService;
@@ -23,6 +25,9 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+
+import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.*;
@@ -146,6 +151,132 @@ class OccurrenceRestControllerPublicTest {
                 assertThat(upload(image()).getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
             assertThat(upload(image()).getStatusCode()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
             verify(mediaUploadService, times(20)).uploadAsync(any(), any(), anyString());
+        }
+    }
+
+    @Nested
+    @DisplayName("GET /api/occurrence – escopo da listagem")
+    class ListingScope {
+
+        private GetOccurrenceDto occurrence(int id, String authorEmail) {
+            GetOccurrenceDto o = new GetOccurrenceDto();
+            o.setId(id);
+            o.setEmail(authorEmail);
+            o.setFullname("Autor " + id);
+            return o;
+        }
+
+        private Authentication authAs(String email, UserModel.UserRole role) {
+            return new UsernamePasswordAuthenticationToken(email, null,
+                List.of(new SimpleGrantedAuthority("ROLE_" + role.name())));
+        }
+
+        private List<GetOccurrenceDto> listAs(Authentication auth) {
+            return sut.getAll(auth).getBody();
+        }
+
+        @Test
+        @DisplayName("cidadão vê TODAS as ocorrências, não apenas as próprias")
+        void citizenSeesEveryOccurrence() {
+            when(occurrenceService.findAll()).thenReturn(List.of(
+                occurrence(1, "joao@email.com"), occurrence(2, "maria@email.com")));
+
+            assertThat(listAs(authAs("joao@email.com", UserModel.UserRole.CITIZEN))).hasSize(2);
+            verify(occurrenceService, never()).findAllByUserEmail(anyString());
+        }
+
+        @Test
+        @DisplayName("cidadão não recebe os dados de quem criou as ocorrências de terceiros")
+        void citizenDoesNotSeeOtherAuthors() {
+            when(occurrenceService.findAll()).thenReturn(List.of(occurrence(2, "maria@email.com")));
+
+            GetOccurrenceDto other = listAs(authAs("joao@email.com", UserModel.UserRole.CITIZEN)).get(0);
+            assertThat(other.getEmail()).isNull();
+            assertThat(other.getFullname()).isNull();
+        }
+
+        @Test
+        @DisplayName("cidadão continua vendo os próprios dados na própria ocorrência (RN05)")
+        void citizenStillSeesOwnData() {
+            when(occurrenceService.findAll()).thenReturn(List.of(occurrence(1, "joao@email.com")));
+
+            GetOccurrenceDto mine = listAs(authAs("joao@email.com", UserModel.UserRole.CITIZEN)).get(0);
+            assertThat(mine.getEmail()).isEqualTo("joao@email.com");
+        }
+
+        @Test
+        @DisplayName("visitante sem token vê todas, sempre com o autor oculto")
+        void visitorSeesAllMasked() {
+            when(occurrenceService.findAll()).thenReturn(List.of(
+                occurrence(1, "joao@email.com"), occurrence(2, "maria@email.com")));
+
+            assertThat(listAs(null))
+                .hasSize(2)
+                .allSatisfy(o -> {
+                    assertThat(o.getEmail()).isNull();
+                    assertThat(o.getFullname()).isNull();
+                });
+        }
+
+        @Test
+        @DisplayName("administrador vê todas COM os dados do autor")
+        void administratorKeepsAuthorData() {
+            when(occurrenceService.findAll()).thenReturn(List.of(occurrence(1, "joao@email.com")));
+
+            GetOccurrenceDto o = listAs(authAs("admin@email.com", UserModel.UserRole.ADMINISTRATOR)).get(0);
+            assertThat(o.getEmail()).isEqualTo("joao@email.com");
+            assertThat(o.getFullname()).isNotNull();
+        }
+
+        @Test
+        @DisplayName("funcionário vê apenas as ocorrências do município vinculado")
+        void employeeStaysScopedToCity() {
+            UserModel employee = new UserModel();
+            employee.setCity("Santa Rita do Sapucaí");
+            when(userService.findByEmail("func@email.com")).thenReturn(employee);
+            when(occurrenceService.findAllByCity("Santa Rita do Sapucaí"))
+                .thenReturn(List.of(occurrence(1, "joao@email.com")));
+
+            assertThat(listAs(authAs("func@email.com", UserModel.UserRole.EMPLOYEE))).hasSize(1);
+            verify(occurrenceService, never()).findAll();
+        }
+    }
+
+    @Nested
+    @DisplayName("GET /api/occurrence/support/mine")
+    class MySupports {
+
+        @Test
+        @DisplayName("sem token devolve lista vazia, sem consultar apoios")
+        void anonymousGetsEmptyList() {
+            assertThat(sut.mySupports(null).getBody()).isEmpty();
+            verify(occurrenceService, never()).getSupportedOccurrenceIds(anyInt());
+        }
+
+        @Test
+        @DisplayName("a rota /support/mine não é capturada pelo mapeamento /{id}")
+        void routeIsNotShadowedByIdMapping() throws Exception {
+            org.springframework.test.web.servlet.MockMvc mvc =
+                org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup(sut).build();
+
+            mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                    .get("/api/occurrence/support/mine"))
+               .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isOk())
+               .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content().json("[]"));
+
+            verifyNoInteractions(occurrenceService);
+        }
+
+        @Test
+        @DisplayName("com token devolve os ids apoiados pelo usuário")
+        void authenticatedGetsSupportedIds() {
+            UserModel user = new UserModel();
+            user.setId(7);
+            when(userService.findByEmail("joao@email.com")).thenReturn(user);
+            when(occurrenceService.getSupportedOccurrenceIds(7)).thenReturn(List.of(3, 9));
+
+            Authentication auth = new UsernamePasswordAuthenticationToken("joao@email.com", null, List.of());
+            assertThat(sut.mySupports(auth).getBody()).containsExactly(3, 9);
         }
     }
 }

@@ -7,6 +7,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -296,6 +297,47 @@ class UserPostgresDaoTest {
             verify(ps).setString(1, "Maria");
             verify(ps).setInt(8, 1);
             verify(ps).execute();
+        }
+    }
+
+    @Nested
+    @DisplayName("autocommit da conexão compartilhada")
+    class AutoCommitState {
+
+        private UserModel citizen() {
+            UserModel user = new UserModel();
+            user.setPassword("$2a$HASH");
+            user.setFullname("Teste");
+            user.setEmail("teste@email.com");
+            user.setRole(UserModel.UserRole.CITIZEN);
+            return user;
+        }
+
+        @Test
+        @DisplayName("devolve a conexão ao autocommit depois de inserir")
+        void restoresAutoCommitAfterInsert() throws Exception {
+            when(connection.prepareStatement(anyString(), eq(Statement.RETURN_GENERATED_KEYS))).thenReturn(ps);
+            when(ps.getGeneratedKeys()).thenReturn(generatedKeys);
+            when(generatedKeys.next()).thenReturn(true);
+
+            sut.add(citizen());
+
+            InOrder order = inOrder(connection);
+            order.verify(connection).setAutoCommit(false);
+            order.verify(connection).commit();
+            order.verify(connection).setAutoCommit(true);
+        }
+
+        @Test
+        @DisplayName("devolve a conexão ao autocommit mesmo quando o insert falha")
+        void restoresAutoCommitOnFailure() throws Exception {
+            when(connection.prepareStatement(anyString(), eq(Statement.RETURN_GENERATED_KEYS)))
+                .thenThrow(new SQLException("falha"));
+
+            assertThatThrownBy(() -> sut.add(citizen())).isInstanceOf(RuntimeException.class);
+
+            verify(connection).rollback();
+            verify(connection).setAutoCommit(true);
         }
     }
 }
