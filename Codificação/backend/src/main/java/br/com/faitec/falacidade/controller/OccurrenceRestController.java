@@ -133,28 +133,26 @@ public class OccurrenceRestController {
 
     @GetMapping
     public ResponseEntity<List<GetOccurrenceDto>> getAll(Authentication auth) {
-        // RF a.8 / b.2: o escopo da listagem depende do papel do usuário.
-        // ADMINISTRATOR: todas as ocorrências (visão geral da administração pública).
         if (hasRole(auth, UserModel.UserRole.ADMINISTRATOR))
             return ResponseEntity.ok(occurrenceService.findAll());
 
-        // RF08/RF11: visitante (sem login) vê todas as ocorrências, com autor oculto.
-        if (auth == null) {
-            List<GetOccurrenceDto> all = occurrenceService.findAll();
-            all.forEach(this::maskAuthor);
-            return ResponseEntity.ok(all);
-        }
-
-        UserModel user = safeFindUser(auth);
-
-        // EMPLOYEE: apenas as ocorrências do município ao qual está vinculado.
         if (hasRole(auth, UserModel.UserRole.EMPLOYEE)) {
-            String city = user != null ? user.getCity() : null;
-            return ResponseEntity.ok(occurrenceService.findAllByCity(city));
+            UserModel user = safeFindUser(auth);
+            return ResponseEntity.ok(occurrenceService.findAllByCity(user != null ? user.getCity() : null));
         }
 
-        // CITIZEN: apenas as ocorrências abertas pelo próprio usuário.
-        return ResponseEntity.ok(occurrenceService.findAllByUserEmail(auth.getName()));
+        List<GetOccurrenceDto> all = occurrenceService.findAll();
+        all.forEach(o -> maskIfNotPrivileged(o, auth));
+        return ResponseEntity.ok(all);
+    }
+
+    /** RF16: ids das ocorrências que o usuário logado já apoia. */
+    @GetMapping("/support/mine")
+    public ResponseEntity<List<Integer>> mySupports(Authentication auth) {
+        UserModel user = safeFindUser(auth);
+        return ResponseEntity.ok(user == null
+            ? List.of()
+            : occurrenceService.getSupportedOccurrenceIds(user.getId()));
     }
 
     @GetMapping("/protocol/{number}")

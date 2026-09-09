@@ -33,6 +33,7 @@ export interface Occurrence {
     type?:           string;
     priority?:       string;
     anonymous?:      boolean;
+    supportCount?:   number;
     email?:          string | null;
     fullname?:       string | null;
     trackingCode?:   string;

@@ -21,6 +21,10 @@
       <option value="neighborhood">Agrupar por bairro</option>
       <option value="status">Agrupar por status</option>
     </select>
+    <label *ngIf="canFilterMine" class="filter-check">
+      <input type="checkbox" [(ngModel)]="filterMine" (ngModelChange)="applyFilters()" />
+      Minhas ocorrências
+    </label>
     <button (click)="clearFilters()" class="btn-secondary">Limpar</button>
   </div>
 
@@ -50,38 +54,54 @@
 
   <!-- Card de ocorrência (usado na grade simples e nos grupos) -->
   <ng-template #occurrenceCard let-o>
-    <a [routerLink]="['/occurrence/detail', o.id]" class="occurrence-card">
-      <div class="card-header">
-        <span class="protocol">{{ o.protocolNumber }}</span>
-        <span class="badge" [ngClass]="statusClass(o.status)">{{ statusLabel(o.status) }}</span>
-      </div>
+    <div class="occurrence-card">
+      <a [routerLink]="['/occurrence/detail', o.id]" class="card-body">
+        <div class="card-header">
+          <span class="protocol">{{ o.protocolNumber }}</span>
+          <span class="badge" [ngClass]="statusClass(o.status)">{{ statusLabel(o.status) }}</span>
+        </div>
 
-      <h3 class="card-title">{{ o.title || 'Ocorrência' }}</h3>
-      <p class="card-description">{{ o.description | slice:0:120 }}{{ o.description.length > 120 ? '...' : '' }}</p>
+        <h3 class="card-title">{{ o.title || 'Ocorrência' }}</h3>
+        <p class="card-description">{{ o.description | slice:0:120 }}{{ o.description.length > 120 ? '...' : '' }}</p>
 
-      <div class="card-tags">
-        <span class="badge-type"
-              [style.background]="typeColor(o.type) + '18'"
-              [style.color]="typeColor(o.type)"
-              [style.border-color]="typeColor(o.type) + '40'">
-          {{ typeLabel(o.type) }}
-        </span>
-        <span class="priority-pill" [ngClass]="priorityClass(o.priority || '')">
-          {{ o.priority }}
-        </span>
-      </div>
+        <div class="card-tags">
+          <span class="badge-type"
+                [style.background]="typeColor(o.type) + '18'"
+                [style.color]="typeColor(o.type)"
+                [style.border-color]="typeColor(o.type) + '40'">
+            {{ typeLabel(o.type) }}
+          </span>
+          <span class="priority-pill" [ngClass]="priorityClass(o.priority || '')">
+            {{ o.priority }}
+          </span>
+        </div>
+
+        <div class="card-place">
+          <span class="card-city">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
+            </svg>
+            {{ o.city }}
+          </span>
+        </div>
+      </a>
 
       <div class="card-footer">
-        <span class="card-city">
-          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
-          </svg>
-          {{ o.city }}
+        <button *ngIf="canSupport" type="button" class="btn-support-card"
+                [class.supported]="isSupported(o.id)"
+                [disabled]="isSupported(o.id) || supportingId === o.id"
+                [attr.aria-pressed]="isSupported(o.id)"
+                [attr.aria-label]="(isSupported(o.id) ? 'Você já apoia' : 'Apoiar') + ' a ocorrência ' + o.protocolNumber"
+                (click)="support(o)">
+          {{ isSupported(o.id) ? '✓ Você apoia' : (supportingId === o.id ? 'Apoiando...' : '🤝 Apoiar') }}
+        </button>
+        <span class="support-count" *ngIf="o.supportCount">
+          {{ o.supportCount }} {{ o.supportCount === 1 ? 'apoio' : 'apoios' }}
         </span>
-        <span class="card-link">Ver detalhes →</span>
+        <a [routerLink]="['/occurrence/detail', o.id]" class="card-link">Ver detalhes →</a>
       </div>
-    </a>
+    </div>
   </ng-template>
 
   <!-- Sem agrupamento: grade única -->

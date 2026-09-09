@@ -290,4 +290,21 @@ class OccurrenceServiceImplTest {
             verifyNoInteractions(occurrenceDao);
         }
     }
+
+    @Nested
+    @DisplayName("getSupportedOccurrenceIds()")
+    class SupportedIds {
+
+        @Test @DisplayName("delega ao DAO os ids apoiados pelo cidadão")
+        void delegatesToDao() {
+            when(supportDao.findOccurrenceIdsByCitizen(7)).thenReturn(List.of(3, 9));
+            assertThat(sut.getSupportedOccurrenceIds(7)).containsExactly(3, 9);
+        }
+
+        @Test @DisplayName("id de cidadão inválido retorna vazio sem consultar o DAO")
+        void guardsInvalidCitizen() {
+            assertThat(sut.getSupportedOccurrenceIds(0)).isEmpty();
+            verifyNoInteractions(supportDao);
+        }
+    }
 }
