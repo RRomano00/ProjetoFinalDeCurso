@@ -143,6 +143,23 @@ export class DetailOccurrenceComponent implements OnInit, OnDestroy {
     }
   }
 
+  /** Desfaz o apoio. Só aparece para quem já apoia, então não há o que confirmar. */
+  async unsupport() {
+    if (this.isVisitor) { this.showLoginPrompt = true; return; }
+    if (!this.occurrence?.id || !this.supportedByMe) return;
+    this.supporting = true;
+    try {
+      const info = await this.occurrenceSupportService.unsupport(this.occurrence.id);
+      this.supportCount  = info.count;
+      this.supportedByMe = false;
+      this.toastr.info('Apoio removido.');
+    } catch {
+      this.toastr.error('Não foi possível remover o apoio.');
+    } finally {
+      this.supporting = false;
+    }
+  }
+
   ngOnDestroy() { if (this.map) this.map.remove(); }
 
   private async renderMap() {

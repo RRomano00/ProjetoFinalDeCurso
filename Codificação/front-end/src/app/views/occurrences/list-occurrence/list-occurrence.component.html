@@ -96,10 +96,17 @@
                 (click)="support(o)">
           {{ isSupported(o.id) ? '✓ Você apoia' : (supportingId === o.id ? 'Apoiando...' : '🤝 Apoiar') }}
         </button>
+        <!-- Só nos cartões já apoiados: sem isso o botão acima vira um beco sem saída. -->
+        <button *ngIf="canSupport && isSupported(o.id)" type="button" class="btn-unsupport-card"
+                [disabled]="supportingId === o.id"
+                [attr.aria-label]="'Remover meu apoio da ocorrência ' + o.protocolNumber"
+                (click)="unsupport(o)">
+          {{ supportingId === o.id ? '...' : '👎' }}
+        </button>
         <span class="support-count" *ngIf="o.supportCount">
           {{ o.supportCount }} {{ o.supportCount === 1 ? 'apoio' : 'apoios' }}
         </span>
-        <a [routerLink]="['/occurrence/detail', o.id]" class="card-link">Ver detalhes →</a>
+        <a [routerLink]="['/occurrence/detail', o.id]" class="card-link">Ver detalhes</a>
       </div>
     </div>
   </ng-template>

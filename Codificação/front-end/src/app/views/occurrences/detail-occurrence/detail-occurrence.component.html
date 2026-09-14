@@ -3,7 +3,8 @@
 
   <div *ngIf="!loading && occurrence">
     <div class="page-header">
-      <h1>Ocorrência #{{ occurrence.protocolNumber }}</h1>
+      <h1>Ocorrência <span class="protocol">{{ occurrence.protocolNumber }}</span></h1>
+      <span *ngIf="occurrence.anonymous" class="badge-anonymous">🔒 Anônima</span>
       <button (click)="back()" class="btn-secondary">← Voltar</button>
     </div>
 
@@ -29,7 +30,12 @@
                   [disabled]="supporting || supportedByMe" (click)="support()">
             {{ supportedByMe ? '✓ Você apoia' : (supporting ? 'Apoiando...' : '🤝 Apoiar') }}
           </button>
-          <span *ngIf="occurrence.anonymous" class="badge-anonymous">🔒 Anônima</span>
+          <!-- Só aparece para quem já apoia: não há o que desfazer no caso contrário. -->
+          <button *ngIf="canSupport && supportedByMe" class="btn-unsupport"
+                  [disabled]="supporting" (click)="unsupport()"
+                  title="Remover meu apoio desta ocorrência">
+            {{ supporting ? '...' : '👎 Desapoiar' }}
+          </button>
         </div>
       </div>
 
