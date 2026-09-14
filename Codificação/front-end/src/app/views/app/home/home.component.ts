@@ -152,7 +152,7 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
     const icon = L.divIcon({
       className: '',
       html: `<div style="width:14px;height:14px;background:${color};border:2px solid #fff;
-             border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,0.4)"></div>`,
+             border-radius:50%;box-shadow:0 1px 3px rgb(18 32 51 / .45)"></div>`,
       iconSize: [14, 14], iconAnchor: [7, 7]
     });
 
@@ -173,13 +173,16 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   /** Monta o HTML do popup do marcador (com contador de apoios, se já carregado). */
   private popupHtml(o: Occurrence, color: string, supportCount: number | null): string {
     const supports = supportCount == null ? '' :
-      `<span style="background:#eff6ff;color:#1e40af;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;margin-left:4px">
+      `<span style="background:#e4edf7;color:#14487e;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;margin-left:4px">
         🤝 ${supportCount} ${supportCount === 1 ? 'apoio' : 'apoios'}
       </span>`;
-    return `<div style="font-family:sans-serif;font-size:13px;min-width:180px">
-      <b>${(o.title || o.description || '').slice(0, 60)}</b><br>
-      <span style="color:#6b7280">${o.street || ''}, ${o.neighborhood || ''}</span><br>
-      <span style="background:${color}22;color:${color};padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600">
+    return `<div style="font-family:inherit;font-size:13px;min-width:190px">
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;letter-spacing:.06em;color:#85909f">
+        ${o.protocolNumber || ''}
+      </span><br>
+      <b style="color:#1d2733">${(o.title || o.description || '').slice(0, 60)}</b><br>
+      <span style="color:#59657a">${o.street || ''}, ${o.neighborhood || ''}</span><br>
+      <span style="background:${color}1f;color:${color};padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600">
         ${statusLabel(o.status)}
       </span>${supports}</div>`;
   }

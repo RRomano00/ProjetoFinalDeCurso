@@ -1,4 +1,6 @@
 <div class="app-shell">
+  <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
+
   <!-- ===== Navbar ===== -->
   <header class="navbar">
     <div class="navbar-inner">
@@ -34,9 +36,9 @@
           </button>
 
           <div class="user-dropdown" [class.open]="userMenuOpen">
-            <div class="dropdown-item" style="flex-direction:column;align-items:flex-start;gap:2px;cursor:default">
-              <strong style="font-size:0.875rem;color:#111827">{{ fullname }}</strong>
-              <span style="font-size:0.75rem;color:#9ca3af">{{ roleLabel }}</span>
+            <div class="dropdown-item dropdown-user">
+              <strong class="dropdown-user-name">{{ fullname }}</strong>
+              <span class="dropdown-user-role">{{ roleLabel }}</span>
             </div>
             <div class="dropdown-divider"></div>
             <a class="dropdown-item" *ngIf="!isAnonymous" routerLink="/account/my-profile" (click)="closeUserMenu()">
@@ -147,7 +149,7 @@
       </div>
     </aside>
 
-    <main class="main-content">
+    <main class="main-content" id="conteudo" tabindex="-1">
       <router-outlet />
     </main>
   </div>

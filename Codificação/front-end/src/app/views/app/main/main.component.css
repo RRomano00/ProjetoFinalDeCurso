@@ -4,7 +4,7 @@
   flex-direction: column;
   height: 100vh;          /* altura fixa: só o conteúdo principal rola */
   overflow: hidden;
-  background: #f9fafb;
+  background: var(--bg);
 }
 
 /* ===== NAVBAR ===== */
@@ -12,9 +12,8 @@
   position: sticky;
   top: 0;
   z-index: 1100;   /* acima do mapa Leaflet (panes/controles vão até ~1000) */
-  background: #ffffff;
-  border-bottom: 1px solid #e5e7eb;
-  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.06);
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
 }
 
 .navbar-inner {
@@ -39,29 +38,31 @@
   height: 36px;
   border: none;
   background: transparent;
-  border-radius: 0.375rem;
-  color: #6b7280;
+  border-radius: var(--r-ctl);
+  color: var(--ink-mute);
   cursor: pointer;
   transition: background 0.2s, color 0.2s;
 }
-.menu-toggle:hover { background: #f3f4f6; color: #111827; }
+.menu-toggle:hover { background: var(--plate-wash); color: var(--plate); }
 
+/* A marca é uma placa de logradouro: campo azul, fio branco interno. */
 .brand-logo {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 34px;
   height: 34px;
-  background: #2563eb;
-  border-radius: 8px;
+  background: var(--plate);
+  border-radius: 3px;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / .45);
   color: #fff;
 }
 
 .brand-name {
   font-size: 1.0625rem;
-  font-weight: 700;
-  color: #111827;
-  letter-spacing: -0.01em;
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: -0.005em;
 }
 
 /* ===== USER MENU ===== */
@@ -74,36 +75,37 @@
   align-items: center;
   gap: 0.375rem;
   padding: 0.375rem 0.625rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.5rem;
-  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--r-ctl);
+  background: var(--surface);
   cursor: pointer;
   transition: background 0.2s, border-color 0.2s;
-  color: #374151;
+  color: var(--ink-mute);
 }
-.user-btn:hover { background: #f9fafb; border-color: #d1d5db; }
+.user-btn:hover { background: var(--surface-2); border-color: var(--plate-line); }
 
 .user-avatar {
   width: 30px;
   height: 30px;
-  background: #eff6ff;
+  background: var(--plate-wash);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #2563eb;
+  color: var(--plate);
 }
 
+/* Menu suspenso: flutua, então recebe elevação — ao contrário dos cartões. */
 .user-dropdown {
   display: none;
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  min-width: 180px;
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.5rem;
-  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  min-width: 190px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  box-shadow: var(--lift);
   overflow: hidden;
   z-index: 200;
 }
@@ -115,7 +117,7 @@
   gap: 0.625rem;
   padding: 0.625rem 0.875rem;
   font-size: 0.875rem;
-  color: #374151;
+  color: var(--ink);
   background: none;
   border: none;
   width: 100%;
@@ -124,11 +126,17 @@
   transition: background 0.15s;
   text-decoration: none;
 }
-.dropdown-item:hover { background: #f9fafb; }
-.dropdown-item.danger { color: #dc2626; }
-.dropdown-item.danger:hover { background: #fef2f2; }
+.dropdown-item:hover { background: var(--surface-2); }
+.dropdown-item.danger { color: var(--st-refused); }
+.dropdown-item.danger:hover { background: var(--st-refused-bg); }
 
-.dropdown-divider { height: 1px; background: #f3f4f6; margin: 2px 0; }
+.dropdown-divider { height: 1px; background: var(--line-soft); margin: 2px 0; }
+
+/* Cabeçalho do menu (nome + perfil) */
+.dropdown-user { flex-direction: column; align-items: flex-start; gap: 2px; cursor: default; }
+.dropdown-user:hover { background: none; }
+.dropdown-user-name { font-size: 0.875rem; font-weight: 600; color: var(--ink); }
+.dropdown-user-role { font-size: 0.75rem; color: var(--ink-faint); }
 
 /* ===== APP BODY ===== */
 .app-body {
@@ -142,8 +150,8 @@
 .sidebar {
   width: 240px;
   flex-shrink: 0;
-  background: #ffffff;
-  border-right: 1px solid #e5e7eb;
+  background: var(--surface);
+  border-right: 1px solid var(--line);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -158,7 +166,7 @@
 .sidebar.collapsed .nav-section-title { display: none; }
 .sidebar.collapsed .nav-item,
 .sidebar.collapsed .sidebar-logout { justify-content: center; padding-left: 0; padding-right: 0; }
-.sidebar.collapsed .nav-section { margin-top: 0.5rem; }
+.sidebar.collapsed .nav-section { margin-top: 0.5rem; padding-top: 0.5rem; }
 
 .sidebar-nav {
   flex: 1;
@@ -170,16 +178,20 @@
   gap: 0.125rem;
 }
 
-.nav-section { margin-top: 0.75rem; }
+/* Seção do menu: um fio separa os grupos — a hierarquia é estrutural,
+   não uma etiqueta em caixa alta. */
+.nav-section {
+  margin-top: 0.875rem;
+  padding-top: 0.875rem;
+  border-top: 1px solid var(--line-soft);
+}
 
 .nav-section-title {
-  font-size: 0.6875rem;
+  font-size: 0.8125rem;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  color: #9ca3af;
+  color: var(--ink-faint);
   padding: 0 0.625rem;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.375rem;
 }
 
 .nav-item {
@@ -187,19 +199,26 @@
   align-items: center;
   gap: 0.625rem;
   padding: 0.5625rem 0.75rem;
-  border-radius: 0.5rem;
+  border-radius: var(--r-ctl);
   font-size: 0.875rem;
   font-weight: 500;
-  color: #4b5563;
+  color: var(--ink-mute);
   text-decoration: none;
   transition: background 0.15s, color 0.15s;
 }
-.nav-item:hover { background: #f3f4f6; color: #111827; }
-.nav-item.active { background: #eff6ff; color: #2563eb; }
+.nav-item:hover { background: var(--surface-2); color: var(--ink); }
+
+/* Item ativo: campo azul-claro + fio à esquerda, como a aba de um processo. */
+.nav-item.active {
+  background: var(--plate-wash);
+  color: var(--plate);
+  font-weight: 600;
+  box-shadow: inset 2px 0 0 var(--plate);
+}
 
 .sidebar-footer {
   padding: 0.75rem;
-  border-top: 1px solid #f3f4f6;
+  border-top: 1px solid var(--line-soft);
 }
 
 .sidebar-logout {
@@ -209,22 +228,22 @@
   width: 100%;
   padding: 0.5625rem 0.75rem;
   border: none;
-  border-radius: 0.5rem;
+  border-radius: var(--r-ctl);
   background: transparent;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #6b7280;
+  color: var(--ink-mute);
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
 }
-.sidebar-logout:hover { background: #fef2f2; color: #dc2626; }
+.sidebar-logout:hover { background: var(--st-refused-bg); color: var(--st-refused); }
 
 /* ===== OVERLAY MOBILE ===== */
 .sidebar-overlay {
   display: none;
   position: fixed;
   inset: 0;
-  background: rgb(0 0 0 / 0.4);
+  background: rgb(18 32 51 / 0.45);
   z-index: 90;
 }
 
@@ -232,7 +251,7 @@
 .main-content {
   flex: 1;
   overflow-y: auto;
-  padding: 1.75rem;
+  padding: 1.75rem 1.75rem 5.5rem;   /* folga inferior: o controle de acessibilidade flutua ali */
   min-width: 0;
   position: relative;
   /* SEM z-index aqui de propósito: não criamos contexto de empilhamento, para que
@@ -240,21 +259,11 @@
      fica contido abaixo da navbar pelo z-index alto da navbar/sidebar, não por aqui. */
 }
 
-/* ===== FOOTER ===== */
-.app-footer {
-  background: #fff;
-  border-top: 1px solid #e5e7eb;
-  padding: 0.75rem 1.5rem;
-  text-align: center;
-  font-size: 0.8125rem;
-  color: #9ca3af;
-}
-
 /* ===== RESPONSIVE ===== */
 @media (max-width: 768px) {
   /* Use o botão ☰ para recolher/expandir a sidebar (ícones x ícones+texto) */
   .sidebar:not(.collapsed) { width: 200px; }
-  .main-content { padding: 1.25rem; }
+  .main-content { padding: 1.25rem 1.25rem 5rem; }
 }
 
 /* No celular a sidebar começa compacta (só ícones). Ao tocar no ☰ ela vira um
@@ -271,7 +280,7 @@
     bottom: 0;
     width: 230px;
     z-index: 1300;
-    box-shadow: 4px 0 16px rgb(0 0 0 / 0.18);
+    box-shadow: var(--lift-high);
   }
 
   /* Fundo escuro que cobre o conteúdo quando o drawer está aberto */
@@ -281,7 +290,7 @@
     z-index: 1200;
   }
 
-  .main-content { padding: 1rem; }
+  .main-content { padding: 1rem 1rem 4.5rem; }
   .navbar-inner { padding: 0 0.875rem; }
   .brand-name { font-size: 0.9375rem; }
 }

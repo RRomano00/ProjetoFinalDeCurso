@@ -19,20 +19,22 @@ export const OCCURRENCE_TYPES: { value: string; label: string }[] = [
   { value: 'OUTROS_PROBLEMAS',                      label: 'Outros Problemas' },
 ];
 
-/** Cor de destaque de cada categoria (badges/agrupamentos). */
+/** Cor de destaque de cada categoria (badges/agrupamentos).
+ *  Luminância equalizada: nenhuma categoria grita mais alto que as outras,
+ *  e todas mantêm contraste >= 4.5:1 sobre o fundo claro do badge. */
 const TYPE_COLORS: Record<string, string> = {
-  BURACO_NA_RUA_OU_CALCADA:              '#ea580c',
-  POSTE_COM_LUZ_QUEIMADA:                '#ca8a04',
-  LIXO_ACUMULADO_OU_TERRENO_SUJO:        '#15803d',
-  SINALIZACAO_OU_SEMAFORO_COM_DEFEITO:   '#b45309',
-  PROBLEMAS_EM_PRACAS_E_PARQUES:         '#16a34a',
-  FALHAS_NO_TRANSPORTE_PUBLICO:          '#1d4ed8',
-  PROBLEMAS_EM_POSTO_DE_SAUDE_OU_ESCOLA: '#dc2626',
-  SOM_ALTO_OU_PERTURBACAO_DO_SOSSEGO:    '#7c3aed',
-  OBRA_IRREGULAR_OU_IMOVEL_ABANDONADO:   '#6b7280',
-  MAUS_TRATOS_AOS_ANIMAIS:               '#db2777',
-  PESSOA_PRECISANDO_DE_AJUDA:            '#0d9488',
-  OUTROS_PROBLEMAS:                      '#94a3b8',
+  BURACO_NA_RUA_OU_CALCADA:              '#9c4a1c',
+  POSTE_COM_LUZ_QUEIMADA:                '#7d6a12',
+  LIXO_ACUMULADO_OU_TERRENO_SUJO:        '#3d6420',
+  SINALIZACAO_OU_SEMAFORO_COM_DEFEITO:   '#8a5800',
+  PROBLEMAS_EM_PRACAS_E_PARQUES:         '#176242',
+  FALHAS_NO_TRANSPORTE_PUBLICO:          '#14487e',
+  PROBLEMAS_EM_POSTO_DE_SAUDE_OU_ESCOLA: '#8b3a2d',
+  SOM_ALTO_OU_PERTURBACAO_DO_SOSSEGO:    '#5a4a9c',
+  OBRA_IRREGULAR_OU_IMOVEL_ABANDONADO:   '#4a5a73',
+  MAUS_TRATOS_AOS_ANIMAIS:               '#993d69',
+  PESSOA_PRECISANDO_DE_AJUDA:            '#146b6b',
+  OUTROS_PROBLEMAS:                      '#5d6a7c',
 };
 
 const TYPE_LABELS: Record<string, string> =
@@ -53,12 +55,14 @@ const STATUS_CLASSES: Record<string, string> = {
   INDEFERIDA:   'badge-rejected',
 };
 
-/** Cor do marcador no mapa por status. */
+/** Cor do marcador no mapa por status.
+ *  Mesma convenção dos badges e da legenda (ver tokens --st-* em styles.css):
+ *  pendente = âmbar, em andamento = azul, atendida = verde, indeferida = tijolo. */
 const STATUS_COLORS: Record<string, string> = {
-  ATENDIDA:     '#16a34a',
-  EM_ANDAMENTO: '#d97706',
-  INDEFERIDA:   '#6b7280',
-  PENDENTE:     '#dc2626',
+  ATENDIDA:     '#176242',
+  EM_ANDAMENTO: '#14487e',
+  INDEFERIDA:   '#8b3a2d',
+  PENDENTE:     '#8a5800',
 };
 
 const PRIORITY_LABELS: Record<string, string> = {
@@ -80,7 +84,7 @@ export function typeLabel(type?: string): string {
 
 /** Cor da categoria (badges/agrupamentos). */
 export function typeColor(type?: string): string {
-  return type ? (TYPE_COLORS[type] || '#94a3b8') : '#94a3b8';
+  return type ? (TYPE_COLORS[type] || '#5d6a7c') : '#5d6a7c';
 }
 
 /** Label do status ("Em Andamento"). */
@@ -95,7 +99,7 @@ export function statusClass(status?: string): string {
 
 /** Cor do marcador de mapa pelo status. */
 export function statusColor(status?: string): string {
-  return status ? (STATUS_COLORS[status] || '#dc2626') : '#dc2626';
+  return status ? (STATUS_COLORS[status] || '#8a5800') : '#8a5800';
 }
 
 /** Classe CSS da prioridade (ALTA/MEDIA/BAIXA). */

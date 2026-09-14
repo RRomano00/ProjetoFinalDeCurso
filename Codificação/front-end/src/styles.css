@@ -1,69 +1,110 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+/* ============================================================================
+   Fala, Cidade! — sistema de design
+   Referência visual: sinalização municipal brasileira (placa de logradouro
+   esmaltada azul, sinalização de obra em âmbar) sobre fundo de concreto.
+   Fonte única de cor, tipografia, raio e elevação — os componentes consomem
+   estes tokens via var(); nenhum hex solto nas telas.
+   ========================================================================= */
 
 :root {
-  --primary: #2563eb;
-  --primary-dark: #1d4ed8;
-  --primary-light: #eff6ff;
-  --primary-foreground: #ffffff;
+  /* ── Superfícies ── */
+  --bg:        #edf0f4;   /* concreto: fundo da aplicação */
+  --surface:   #ffffff;   /* cartão / painel */
+  --surface-2: #f5f7f9;   /* barra de ações, cabeçalho de tabela */
+  --line:      #d5dce4;   /* fio de estrutura (borda de cartão) */
+  --line-soft: #e7ebf0;   /* divisória interna */
 
-  --success: #16a34a;
-  --success-light: #f0fdf4;
-  --success-border: #bbf7d0;
+  /* ── Texto ── */
+  --ink:       #1d2733;   /* ardósia azulada, não preto tingido */
+  --ink-mute:  #59657a;
+  --ink-faint: #68737f;
 
-  --warning: #d97706;
-  --warning-light: #fffbeb;
-  --warning-border: #fde68a;
+  /* ── Azul de placa: marca, ações primárias, item ativo ── */
+  --plate:      #14487e;
+  --plate-deep: #0e3560;
+  --plate-wash: #e4edf7;
+  --plate-line: #b7cce4;
 
-  --danger: #dc2626;
-  --danger-light: #fef2f2;
-  --danger-border: #fecaca;
+  /* ── Status: uma cor, um significado, em TODAS as telas ──
+        pendente = aguarda triagem · em andamento = equipe atuando
+        atendida = concluída      · indeferida  = recusa administrativa   */
+  --st-pending:  #8a5800;  --st-pending-bg:  #fbf1dd;  --st-pending-line:  #ecd9ae;
+  --st-progress: #14487e;  --st-progress-bg: #e4edf7;  --st-progress-line: #b7cce4;
+  --st-done:     #176242;   --st-done-bg:    #e2f0e8;  --st-done-line:     #b2d7c4;
+  --st-refused:  #8b3a2d;  --st-refused-bg:  #f6e8e5;  --st-refused-line:  #e1c1ba;
 
-  --gray-50: #f9fafb;
-  --gray-100: #f3f4f6;
-  --gray-200: #e5e7eb;
-  --gray-300: #d1d5db;
-  --gray-400: #9ca3af;
-  --gray-500: #6b7280;
-  --gray-600: #4b5563;
-  --gray-700: #374151;
-  --gray-800: #1f2937;
-  --gray-900: #111827;
+  /* ── Prioridade ── */
+  --pr-high: #a2352a;  --pr-medium: #8a5800;  --pr-low: #176242;
 
-  --border-radius: 0.5rem;
-  --border-radius-lg: 0.75rem;
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  /* ── Raio: o valor comunica o que a superfície é ── */
+  --r-ctl:   4px;   /* controle: campo, botão, chip retangular */
+  --r-card: 10px;   /* cartão de registro */
+  --r-modal:14px;   /* algo que flutua sobre a tela */
+
+  /* ── Elevação: reservada ao que realmente flutua ── */
+  --lift:      0 6px 18px -10px rgb(18 32 51 / .30);
+  --lift-high: 0 24px 48px -18px rgb(18 32 51 / .40);
+
+  /* ── Tipografia ── */
+  --font: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+
+  --focus: 2px solid var(--plate);
 }
 
-*, *::before, *::after {
-  box-sizing: border-box;
-}
+*, *::before, *::after { box-sizing: border-box; }
 
 html, body {
   height: 100%;
   margin: 0;
-  font-family: 'Inter', Arial, sans-serif;
-  font-size: 16px;
-  color: var(--gray-900);
-  background-color: var(--gray-50);
+  font-family: var(--font);
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--ink);
+  background-color: var(--bg);
   -webkit-font-smoothing: antialiased;
 }
+html { font-size: 16px; }   /* âncora do controle de tamanho de fonte (RF18) */
 
-a {
-  text-decoration: none;
+a { text-decoration: none; }
+input, textarea, select, button { font-family: inherit; }
+
+/* Foco visível em tudo que recebe teclado — piso de acessibilidade.
+   Só aparece na navegação por teclado, não no clique. */
+:focus-visible {
+  outline: var(--focus);
+  outline-offset: 2px;
+  border-radius: 2px;
 }
 
-input, textarea, select, button {
-  font-family: inherit;
+/* Número de protocolo: o objeto que dá identidade ao sistema.
+   Mesmo tratamento em toda tela onde ele aparece. */
+.protocol, .incident-id, .duplicate-protocol, .group-protocol, .tracking-code {
+  font-family: var(--mono);
+  font-feature-settings: 'zero' 1;
 }
 
-/* Scrollbar */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: var(--gray-100); }
-::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--gray-400); }
+/* Atalho para o conteúdo (leitor de tela / teclado) */
+.skip-link {
+  position: absolute;
+  left: 0.5rem;
+  top: -3rem;
+  z-index: 3000;
+  padding: 0.5rem 0.875rem;
+  background: var(--plate);
+  color: #fff;
+  border-radius: var(--r-ctl);
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: top 0.15s;
+}
+.skip-link:focus { top: 0.5rem; }
+
+/* Barra de rolagem */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: #c3ccd6; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--ink-faint); }
 
 /* ===== RF18: Modo escuro =====
    Inversão global de luminância (invert + hue-rotate mantém os tons das cores
@@ -78,7 +119,24 @@ html.dark-theme video,
 html.dark-theme picture,
 html.dark-theme .leaflet-container,
 html.dark-theme .qr-img,
+html.dark-theme .qr-code,
 html.dark-theme .occurrence-photo,
 html.dark-theme .a11y-controls {
   filter: invert(1) hue-rotate(180deg);
+}
+
+/* Movimento responde a uma ação; nunca decora.
+   Em prefers-reduced-motion sobra apenas o giro dos indicadores de carga,
+   que é a única informação transmitida por movimento. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+  .spinner, .spinner-sm {
+    animation-duration: 1.2s !important;
+    animation-iteration-count: infinite !important;
+  }
 }
