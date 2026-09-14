@@ -11,7 +11,7 @@ type ResetStep = 'request' | 'confirm';
   selector: 'app-recover-password',
   imports: [RouterModule, CommonModule, FormsModule, ReactiveFormsModule],
   templateUrl: './recover-password.component.html',
-  styleUrl: './recover-password.component.css'
+  styleUrls: ['../auth-shell.css', './recover-password.component.css']
 })
 export class RecoverPasswordComponent {
   step: ResetStep = 'request';

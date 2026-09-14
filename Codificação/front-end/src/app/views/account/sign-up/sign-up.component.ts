@@ -9,7 +9,7 @@ import { ToastrService } from 'ngx-toastr';
   selector: 'app-sign-up',
   imports: [RouterModule, CommonModule, FormsModule, ReactiveFormsModule],
   templateUrl: './sign-up.component.html',
-  styleUrl: './sign-up.component.css'
+  styleUrls: ['../auth-shell.css', './sign-up.component.css']
 })
 export class SignUpComponent {
   form!: FormGroup;
