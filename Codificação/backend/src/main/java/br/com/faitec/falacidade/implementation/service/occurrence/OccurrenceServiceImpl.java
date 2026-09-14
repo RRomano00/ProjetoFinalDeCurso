@@ -138,6 +138,14 @@ public class OccurrenceServiceImpl implements OccurrenceService {
     }
 
     @Override
+    public boolean unsupportOccurrence(int occurrenceId, int citizenId) {
+        if (occurrenceId < 0 || citizenId <= 0) return false;
+        if (occurrenceDao.readById(occurrenceId) == null)
+            throw new IllegalArgumentException("Ocorrência não encontrada");
+        return supportDao.removeSupport(occurrenceId, citizenId);
+    }
+
+    @Override
     public int getSupportCount(int occurrenceId) {
         return occurrenceId >= 0 ? supportDao.countByOccurrence(occurrenceId) : 0;
     }

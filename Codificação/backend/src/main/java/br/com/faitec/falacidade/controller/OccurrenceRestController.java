@@ -188,6 +188,22 @@ public class OccurrenceRestController {
         ));
     }
 
+    /** RF16: o cidadão desfaz o próprio apoio (só o dele — o id vem do token). */
+    @DeleteMapping("/{id}/support")
+    public ResponseEntity<Map<String, Object>> unsupport(@PathVariable int id, Authentication auth) {
+        UserModel user = safeFindUser(auth);
+        if (user == null) return ResponseEntity.status(401).build();
+        try {
+            occurrenceService.unsupportOccurrence(id, user.getId());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(Map.of(
+            "count", occurrenceService.getSupportCount(id),
+            "supportedByMe", false
+        ));
+    }
+
     /** RF16: total de apoios + se o usuário logado já apoiou. */
     @GetMapping("/{id}/support")
     public ResponseEntity<Map<String, Object>> supportInfo(@PathVariable int id, Authentication auth) {

@@ -27,6 +27,16 @@ public class OccurrenceSupportPostgresDao implements OccurrenceSupportDao {
     }
 
     @Override
+    public boolean removeSupport(int occurrenceId, int citizenId) {
+        String sql = "DELETE FROM occurrence_support WHERE occurrence_id = ? AND citizen_id = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, occurrenceId);
+            ps.setInt(2, citizenId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) { throw new RuntimeException("Erro ao remover apoio", e); }
+    }
+
+    @Override
     public int countByOccurrence(int occurrenceId) {
         String sql = "SELECT COUNT(*) FROM occurrence_support WHERE occurrence_id = ?";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
