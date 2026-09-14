@@ -1,8 +1,17 @@
 package br.com.faitec.falacidade.port.service.email;
 
+import br.com.faitec.falacidade.domain.UserModel;
+
 public interface EmailService {
     void sendPasswordResetEmail(String toEmail, String resetLink);
     void sendWelcomeEmail(String toEmail, String fullname);
+
+    /**
+     * Avisa a pessoa de que um administrador criou uma conta de Funcionário ou
+     * Administrador para ela. O município vai no corpo porque é ele que define
+     * quais ocorrências a conta enxerga.
+     */
+    void sendStaffWelcomeEmail(String toEmail, String fullname, UserModel.UserRole role, String city);
     /** Envia o código de verificação em duas etapas (MFA por e-mail). */
     void sendMfaCodeEmail(String toEmail, String code);
     void sendMfaDeactivationEmail(String toEmail, String code);

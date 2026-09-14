@@ -1,5 +1,6 @@
 package br.com.faitec.falacidade.service;
 
+import br.com.faitec.falacidade.domain.UserModel;
 import br.com.faitec.falacidade.implementation.service.email.EmailServiceImpl;
 import jakarta.mail.Session;
 import jakarta.mail.internet.MimeMessage;
@@ -80,6 +81,49 @@ class EmailServiceImplTest {
             verify(mailSender).send(mime);
             assertThat(mime.getAllRecipients()[0].toString()).isEqualTo("novo@test.com");
             assertThat(mime.getSubject()).contains("Bem-vindo");
+        }
+    }
+
+    @Nested
+    @DisplayName("sendStaffWelcomeEmail()")
+    class SendStaffWelcome {
+
+        @Test
+        @DisplayName("trata EMPLOYEE como Funcionário no assunto")
+        void sendsEmployeeWelcome() throws Exception {
+            MimeMessage mime = newMime();
+            when(mailSender.createMimeMessage()).thenReturn(mime);
+
+            sut.sendStaffWelcomeEmail("func@prefeitura.com", "Rodrigo",
+                                      UserModel.UserRole.EMPLOYEE, "Santa Rita do Sapucaí");
+
+            verify(mailSender).send(mime);
+            assertThat(mime.getAllRecipients()[0].toString()).isEqualTo("func@prefeitura.com");
+            assertThat(mime.getSubject()).contains("Funcionário");
+            assertThat(mime.getSubject()).doesNotContain("Administrador");
+        }
+
+        @Test
+        @DisplayName("trata ADMINISTRATOR como Administrador no assunto")
+        void sendsAdminWelcome() throws Exception {
+            MimeMessage mime = newMime();
+            when(mailSender.createMimeMessage()).thenReturn(mime);
+
+            sut.sendStaffWelcomeEmail("admin@prefeitura.com", "Miguel",
+                                      UserModel.UserRole.ADMINISTRATOR, "Santa Rita do Sapucaí");
+
+            verify(mailSender).send(mime);
+            assertThat(mime.getSubject()).contains("Administrador");
+        }
+
+        @Test
+        @DisplayName("não quebra quando nome e município vêm vazios")
+        void toleratesMissingNameAndCity() {
+            when(mailSender.createMimeMessage()).thenReturn(newMime());
+
+            sut.sendStaffWelcomeEmail("x@y.com", null, UserModel.UserRole.EMPLOYEE, null);
+
+            verify(mailSender, times(1)).send(any(MimeMessage.class));
         }
     }
 }

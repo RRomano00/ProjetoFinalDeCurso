@@ -56,6 +56,11 @@ public class UserRestController {
         catch (IllegalArgumentException e) { return ResponseEntity.badRequest().build(); }
         int id = userService.create(entity);
         if (id < 0) return ResponseEntity.badRequest().build();
+        // Mesmo tratamento do /register: a falha no e-mail não desfaz o cadastro.
+        try {
+            emailService.sendStaffWelcomeEmail(entity.getEmail(), entity.getFullname(),
+                                               entity.getRole(), entity.getCity());
+        } catch (Exception ignored) {}
         URI uri = ServletUriComponentsBuilder
             .fromCurrentRequest().replacePath("/api/user/{id}").buildAndExpand(id).toUri();
         return ResponseEntity.created(uri).build();

@@ -1,5 +1,6 @@
 package br.com.faitec.falacidade.implementation.service.email;
 
+import br.com.faitec.falacidade.domain.UserModel;
 import br.com.faitec.falacidade.port.service.email.EmailService;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -156,6 +157,78 @@ public class EmailServiceImpl implements EmailService {
 
         send(toEmail, null, "Bem-vindo(a) ao Fala, Cidade!", withFooter(text), layout(content),
              "Falha ao enviar e-mail de boas-vindas");
+    }
+
+    /** Conta de Funcionário/Administrador criada por um administrador. */
+    @Override
+    @Async("emailExecutor")
+    public void sendStaffWelcomeEmail(String toEmail, String fullname, UserModel.UserRole role, String city) {
+        String name = (fullname == null || fullname.isBlank()) ? "colega" : fullname;
+        boolean isAdmin = role == UserModel.UserRole.ADMINISTRATOR;
+        String roleLabel = isAdmin ? "Administrador" : "Funcionário";
+        String cityLabel = (city == null || city.isBlank()) ? "não informado" : city;
+
+        String permissions = isAdmin
+            ? "Painel de gestão com os indicadores de demanda\n" +
+              "Todas as ocorrências do sistema\n" +
+              "Cadastro de funcionários e administradores\n" +
+              "Relatórios de desempenho por categoria"
+            : "Ocorrências registradas no seu município\n" +
+              "Atualização do status das ocorrências\n" +
+              "Histórico e dados dos autores das ocorrências";
+
+        String permissionsHtml = isAdmin
+            ? "  <li>📊 Painel de gestão com os indicadores de demanda</li>" +
+              "  <li>🗂️ Todas as ocorrências do sistema</li>" +
+              "  <li>👥 Cadastro de funcionários e administradores</li>" +
+              "  <li>📈 Relatórios de desempenho por categoria</li>"
+            : "  <li>🗂️ Ocorrências registradas no seu município</li>" +
+              "  <li>🔄 Atualização do status das ocorrências</li>" +
+              "  <li>🔍 Histórico e dados dos autores das ocorrências</li>";
+
+        String text =
+            "Olá, " + name + "!\n\n" +
+            "Um administrador criou uma conta de " + roleLabel + " para você no Fala, Cidade!.\n\n" +
+            "Município vinculado: " + cityLabel + "\n" +
+            "E-mail de acesso: " + toEmail + "\n\n" +
+            "Com esta conta você tem acesso a:\n" + permissions + "\n\n" +
+            "Importante: a senha inicial foi definida pelo administrador. " +
+            "Troque-a no primeiro acesso.\n" +
+            "No primeiro login o sistema pede a configuração obrigatória da " +
+            "verificação em duas etapas (2FA).";
+
+        String content =
+            "<h2 style='margin:0 0 16px; font-size:20px; color:#111;'>Sua conta de " + roleLabel + " foi criada</h2>" +
+            "<p style='font-size:15px; color:#333;'>Olá, <strong>" + name + "</strong>!</p>" +
+            "<p style='font-size:15px; color:#333;'>Um administrador criou uma conta de " +
+            "<strong>" + roleLabel + "</strong> para você no Fala, Cidade!.</p>" +
+
+            "<div style='background:#eef4fb; border-radius:8px; padding:14px 16px; margin:20px 0;'>" +
+            "  <p style='font-size:13px; color:#777; margin:0 0 6px;'>Município vinculado</p>" +
+            "  <p style='font-size:17px; font-weight:bold; color:" + BRAND_COLOR + "; margin:0 0 12px;'>" +
+                 cityLabel + "</p>" +
+            "  <p style='font-size:13px; color:#777; margin:0 0 6px;'>E-mail de acesso</p>" +
+            "  <p style='font-size:15px; color:#333; margin:0;'>" + toEmail + "</p>" +
+            "</div>" +
+
+            (isAdmin ? "" :
+            "<p style='font-size:13px; color:#777; margin:-8px 0 18px;'>" +
+            "Você enxerga as ocorrências deste município. Se ele estiver incorreto, " +
+            "peça a um administrador para corrigir o cadastro.</p>") +
+
+            "<p style='font-size:15px; color:#333;'>Com esta conta você tem acesso a:</p>" +
+            "<ul style='font-size:14px; color:#444; line-height:1.8;'>" + permissionsHtml + "</ul>" +
+
+            "<div style='border-top:1px solid #eee; margin-top:22px; padding-top:16px;'>" +
+            "  <p style='font-size:14px; color:#333; margin:0 0 8px;'><strong>Antes do primeiro acesso</strong></p>" +
+            "  <p style='font-size:14px; color:#555; margin:0 0 6px;'>" +
+            "    A senha inicial foi definida pelo administrador — troque-a no primeiro acesso.</p>" +
+            "  <p style='font-size:14px; color:#555; margin:0;'>" +
+            "    O sistema pedirá a configuração obrigatória da verificação em duas etapas (2FA).</p>" +
+            "</div>";
+
+        send(toEmail, null, "Fala, Cidade! – Sua conta de " + roleLabel + " foi criada",
+             withFooter(text), layout(content), "Falha ao enviar e-mail de boas-vindas da equipe");
     }
 
     /** Confirma o registro da ocorrência e agradece o comprometimento com a cidade. */
