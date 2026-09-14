@@ -35,4 +35,9 @@ export class OccurrenceSupportService {
   support(id: number | string): Promise<SupportInfo> {
     return firstValueFrom(this.http.post<SupportInfo>(`${this.base}/${id}/support`, {}));
   }
+
+  /** Desfaz o apoio do usuário logado. O backend só remove o apoio dele. */
+  unsupport(id: number | string): Promise<SupportInfo> {
+    return firstValueFrom(this.http.delete<SupportInfo>(`${this.base}/${id}/support`));
+  }
 }

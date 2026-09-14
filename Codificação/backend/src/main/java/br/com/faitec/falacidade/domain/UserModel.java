@@ -71,7 +71,13 @@ public class UserModel {
     public void setCep(String cep) { this.cep = cep; }
 
     public String getCity() { return city; }
-    public void setCity(String city) { this.city = city; }
+    /**
+     * O município é comparado por igualdade exata com o da ocorrência
+     * (WHERE o.city = ?), então um espaço nas pontas faz o funcionário não
+     * enxergar ocorrência nenhuma -- e os dois valores ficam idênticos na tela.
+     * Normaliza aqui, no ponto por onde todos os DTOs passam.
+     */
+    public void setCity(String city) { this.city = city == null ? null : city.trim(); }
 
     public UserRole getRole() { return role; }
     public void setRole(UserRole role) { this.role = role; }

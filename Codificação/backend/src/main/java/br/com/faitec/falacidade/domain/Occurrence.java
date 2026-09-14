@@ -101,7 +101,8 @@ public class Occurrence {
     public String getStreet() { return street; }
     public void setStreet(String street) { this.street = street; }
     public String getCity() { return city; }
-    public void setCity(String city) { this.city = city; }
+    /** Ver UserModel.setCity: os dois lados da comparação precisam do trim. */
+    public void setCity(String city) { this.city = city == null ? null : city.trim(); }
     public String getUrlMedia() { return urlMedia; }
     public void setUrlMedia(String urlMedia) { this.urlMedia = urlMedia; }
     public String getCloudinaryPublicId() { return cloudinaryPublicId; }

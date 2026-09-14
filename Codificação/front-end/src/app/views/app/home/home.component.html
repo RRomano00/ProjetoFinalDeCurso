@@ -19,7 +19,62 @@
   <!-- Body: lista + mapa -->
   <div class="home-body">
 
-    <!-- Coluna esquerda: ocorrências recentes -->
+    <!-- Coluna principal: mapa da cidade + números -->
+    <div class="map-col">
+      <h2 class="col-title">Mapa de Ocorrências</h2>
+
+      <!-- RF21: filtros do mapa por bairro, categoria e status -->
+      <div class="map-filters">
+        <select [(ngModel)]="mapFilterNeighborhood" (ngModelChange)="refreshMarkers()">
+          <option value="">Todos os bairros</option>
+          <option *ngFor="let b of mapNeighborhoodOptions" [value]="b">{{ b }}</option>
+        </select>
+        <select [(ngModel)]="mapFilterType" (ngModelChange)="refreshMarkers()">
+          <option value="">Todas as categorias</option>
+          <option *ngFor="let t of mapTypeOptions" [value]="t.value">{{ t.label }}</option>
+        </select>
+        <select [(ngModel)]="mapFilterStatus" (ngModelChange)="refreshMarkers()">
+          <option value="">Todos os status</option>
+          <option *ngFor="let st of mapStatusOptions" [value]="st">{{ statusLabel(st) }}</option>
+        </select>
+        <button type="button" class="btn-clear-map" (click)="clearMapFilters()" [disabled]="!hasMapFilters">
+          Limpar
+        </button>
+      </div>
+
+      <div class="map-wrapper">
+        <div id="incident-map"></div>
+        <div class="map-loading" *ngIf="loadingMap">
+          <div class="spinner"></div>
+          <span>Carregando marcadores...</span>
+        </div>
+        <div class="map-legend">
+          <span class="legend-item"><span class="dot pending"></span> Pendente</span>
+          <span class="legend-item"><span class="dot progress"></span> Em Andamento</span>
+          <span class="legend-item"><span class="dot done"></span> Atendida</span>
+          <span class="legend-item"><span class="dot refused"></span> Indeferida</span>
+        </div>
+      </div>
+
+      <!-- Estatísticas rápidas -->
+      <div class="quick-stats">
+        <h3>Estatísticas Rápidas</h3>
+        <div class="stat-row">
+          <span>Total de Ocorrências</span>
+          <span class="stat-num">{{ totalOccurrences }}</span>
+        </div>
+        <div class="stat-row">
+          <span>Atendidas</span>
+          <span class="stat-num done">{{ resolvedCount }}</span>
+        </div>
+        <div class="stat-row">
+          <span>Pendentes</span>
+          <span class="stat-num pending">{{ pendingCount }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Coluna secundária: ocorrências recentes -->
     <div class="incidents-col">
       <h2 class="col-title">Ocorrências Recentes</h2>
       <div class="incident-list">
@@ -57,61 +112,6 @@
 
         <div class="empty-incidents" *ngIf="occurrences.length === 0 && !loadingMap">
           Nenhuma ocorrência encontrada.
-        </div>
-      </div>
-    </div>
-
-    <!-- Coluna direita: mapa + stats -->
-    <div class="map-col">
-      <h2 class="col-title">Mapa de Ocorrências</h2>
-
-      <!-- RF21: filtros do mapa por bairro, categoria e status -->
-      <div class="map-filters">
-        <select [(ngModel)]="mapFilterNeighborhood" (ngModelChange)="refreshMarkers()">
-          <option value="">Todos os bairros</option>
-          <option *ngFor="let b of mapNeighborhoodOptions" [value]="b">{{ b }}</option>
-        </select>
-        <select [(ngModel)]="mapFilterType" (ngModelChange)="refreshMarkers()">
-          <option value="">Todas as categorias</option>
-          <option *ngFor="let t of mapTypeOptions" [value]="t.value">{{ t.label }}</option>
-        </select>
-        <select [(ngModel)]="mapFilterStatus" (ngModelChange)="refreshMarkers()">
-          <option value="">Todos os status</option>
-          <option *ngFor="let st of mapStatusOptions" [value]="st">{{ statusLabel(st) }}</option>
-        </select>
-        <button type="button" class="btn-clear-map" (click)="clearMapFilters()" [disabled]="!hasMapFilters">
-          Limpar
-        </button>
-      </div>
-
-      <div class="map-wrapper">
-        <div id="incident-map"></div>
-        <div class="map-loading" *ngIf="loadingMap">
-          <div class="spinner"></div>
-          <span>Carregando marcadores...</span>
-        </div>
-        <div class="map-legend">
-          <span class="legend-item"><span class="dot red"></span> Pendente</span>
-          <span class="legend-item"><span class="dot yellow"></span> Em Andamento</span>
-          <span class="legend-item"><span class="dot green"></span> Atendida</span>
-          <span class="legend-item"><span class="dot gray"></span> Indeferida</span>
-        </div>
-      </div>
-
-      <!-- Estatísticas rápidas -->
-      <div class="quick-stats">
-        <h3>Estatísticas Rápidas</h3>
-        <div class="stat-row">
-          <span>Total de Ocorrências</span>
-          <span class="stat-num">{{ totalOccurrences }}</span>
-        </div>
-        <div class="stat-row">
-          <span>Atendidas</span>
-          <span class="stat-num green">{{ resolvedCount }}</span>
-        </div>
-        <div class="stat-row">
-          <span>Pendentes</span>
-          <span class="stat-num red">{{ pendingCount }}</span>
         </div>
       </div>
     </div>

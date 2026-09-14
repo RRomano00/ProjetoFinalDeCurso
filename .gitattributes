@@ -1,0 +1,35 @@
+# Fim de linha normalizado no repositorio: LF sempre.
+# Sem isso, cada checkout em Windows reescreve o arquivo inteiro e o diff
+# some debaixo de milhares de linhas trocadas so por causa do CRLF.
+* text=auto eol=lf
+
+# Binarios: nunca converter. Extensao em maiuscula tambem -- o repositorio
+# tem .PNG, e o casamento de padrao do git e sensivel a caixa.
+*.png binary
+*.PNG binary
+*.jpg binary
+*.JPG binary
+*.jpeg binary
+*.JPEG binary
+*.gif binary
+*.GIF binary
+*.ico binary
+*.ICO binary
+*.pdf binary
+*.PDF binary
+*.jar binary
+*.JAR binary
+*.woff binary
+*.WOFF binary
+*.woff2 binary
+*.WOFF2 binary
+*.ttf binary
+*.TTF binary
+*.eot binary
+*.EOT binary
+*.docx binary
+*.DOCX binary
+*.xlsx binary
+*.XLSX binary
+*.zip binary
+*.ZIP binary

@@ -1,4 +1,6 @@
-/* ===== Controles de acessibilidade fixos (RF18) ===== */
+/* ===== Controles de acessibilidade fixos (RF18) =====
+   Ficam fora do fluxo, então toda tela reserva folga inferior para eles
+   (ver .main-content e .auth-wrapper) — nenhuma ação some embaixo do controle. */
 .a11y-controls {
   position: fixed;
   right: 1rem;
@@ -8,10 +10,10 @@
   align-items: center;
   gap: 0.25rem;
   padding: 0.3125rem;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
+  background: var(--surface);
+  border: 1px solid var(--line);
   border-radius: 999px;
-  box-shadow: 0 6px 20px -6px rgb(0 0 0 / 0.25);
+  box-shadow: var(--lift);
 }
 
 .a11y-btn {
@@ -23,14 +25,14 @@
   border: none;
   border-radius: 50%;
   background: transparent;
-  color: #374151;
+  color: var(--ink-mute);
   cursor: pointer;
   font-size: 0.9375rem;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1;
   transition: background 0.2s, color 0.2s;
 }
-.a11y-btn:hover:not(:disabled) { background: #f3f4f6; color: #2563eb; }
+.a11y-btn:hover:not(:disabled) { background: var(--plate-wash); color: var(--plate); }
 .a11y-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .font-btn .sign {
@@ -40,18 +42,18 @@
 }
 
 /* Botão do meio: restaura o tamanho padrão */
-.font-reset { font-size: 0.8125rem; color: #6b7280; }
-.font-reset:hover:not(:disabled) { color: #2563eb; }
+.font-reset { font-size: 0.8125rem; color: var(--ink-faint); }
+.font-reset:hover:not(:disabled) { color: var(--plate); }
 
 .a11y-divider {
   width: 1px;
   height: 20px;
-  background: #e5e7eb;
+  background: var(--line);
   margin: 0 0.125rem;
 }
 
 /* ── Botão de tema com animação sol/lua ── */
-.theme-toggle { color: #2563eb; }
+.theme-toggle { color: var(--plate); }
 .icon-wrap {
   position: relative;
   width: 18px;
@@ -65,7 +67,7 @@
 
 /* Modo claro: mostra a lua (clique para escurecer) */
 .icon-wrap .moon { opacity: 1; transform: rotate(0deg) scale(1); }
-.icon-wrap .sun  { opacity: 0; transform: rotate(-90deg) scale(0.3); color: #f59e0b; }
+.icon-wrap .sun  { opacity: 0; transform: rotate(-90deg) scale(0.3); color: #8a5800; }
 
 /* Modo escuro: mostra o sol (clique para clarear) */
 .a11y-controls.is-dark .icon-wrap .moon { opacity: 0; transform: rotate(90deg) scale(0.3); }

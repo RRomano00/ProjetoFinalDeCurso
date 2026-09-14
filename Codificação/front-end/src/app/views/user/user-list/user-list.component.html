@@ -34,7 +34,7 @@
             <!-- Admin não inativa a própria conta por aqui -->
             <button *ngIf="u.id !== myId" class="btn-toggle" [class.danger]="u.active"
                     [disabled]="togglingId === u.id" (click)="toggleActive(u)">
-              {{ togglingId === u.id ? '...' : (u.active ? 'Inativar' : 'Ativar') }}
+              {{ togglingId === u.id ? '...' : (u.active ? 'Desativar' : 'Ativar') }}
             </button>
             <span *ngIf="u.id === myId" class="self-label">você</span>
           </td>

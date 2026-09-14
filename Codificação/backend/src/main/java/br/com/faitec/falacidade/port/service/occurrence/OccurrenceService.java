@@ -23,6 +23,9 @@ public interface OccurrenceService extends ReadService<GetOccurrenceDto> {
 
     boolean supportOccurrence(int occurrenceId, int citizenId);
 
+    /** Desfaz o apoio do cidadão. Retorna false se ele não apoiava. */
+    boolean unsupportOccurrence(int occurrenceId, int citizenId);
+
     int getSupportCount(int occurrenceId);
     boolean hasSupported(int occurrenceId, int citizenId);
 

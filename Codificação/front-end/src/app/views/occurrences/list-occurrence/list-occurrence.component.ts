@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { OccurrenceReadService } from '../../../services/occurrence-read.service';
 import { OccurrenceSupportService } from '../../../services/occurrence-support.service';
 import { Occurrence } from '../../../domain/model/occurrence';
-import { typeLabel, typeColor, statusLabel, statusClass, priorityClass } from '../../../domain/occurrence-labels';
+import { typeLabel, typeColor, statusLabel, statusClass, priorityClass, priorityLabel } from '../../../domain/occurrence-labels';
 import { ToastrService } from 'ngx-toastr';
 
 @Component({
@@ -94,6 +94,23 @@ export class ListOccurrenceComponent implements OnInit {
     }
   }
 
+  /** Desfaz o apoio. O botão só existe nos cartões que o usuário já apoia. */
+  async unsupport(o: Occurrence) {
+    if (this.isVisitor) return;
+    if (o.id == null || !this.isSupported(o.id) || this.supportingId != null) return;
+    this.supportingId = o.id;
+    try {
+      const info = await this.occurrenceSupportService.unsupport(o.id);
+      o.supportCount = info.count;
+      this.supportedIds.delete(o.id);
+      this.toastr.info('Apoio removido.');
+    } catch {
+      this.toastr.error('Não foi possível remover o apoio.');
+    } finally {
+      this.supportingId = null;
+    }
+  }
+
   applyFilters() {
     this.filtered = this.occurrences.filter(o => {
       const matchProtocol = !this.searchProtocol ||
@@ -161,6 +178,7 @@ export class ListOccurrenceComponent implements OnInit {
   statusLabel   = statusLabel;
   statusClass   = statusClass;
   priorityClass = priorityClass;
+  priorityLabel = priorityLabel;
   typeLabel     = typeLabel;
   typeColor     = typeColor;
 }

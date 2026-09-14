@@ -307,4 +307,41 @@ class OccurrenceServiceImplTest {
             verifyNoInteractions(supportDao);
         }
     }
+
+    @Nested
+    @DisplayName("unsupportOccurrence()")
+    class Unsupport {
+
+        @Test @DisplayName("remove o apoio quando a ocorrência existe")
+        void removesSupport() {
+            when(occurrenceDao.readById(5)).thenReturn(new GetOccurrenceDto());
+            when(supportDao.removeSupport(5, 7)).thenReturn(true);
+
+            assertThat(sut.unsupportOccurrence(5, 7)).isTrue();
+            verify(supportDao).removeSupport(5, 7);
+        }
+
+        @Test @DisplayName("retorna false quando o cidadão não apoiava")
+        void returnsFalseWhenNotSupported() {
+            when(occurrenceDao.readById(5)).thenReturn(new GetOccurrenceDto());
+            when(supportDao.removeSupport(5, 7)).thenReturn(false);
+
+            assertThat(sut.unsupportOccurrence(5, 7)).isFalse();
+        }
+
+        @Test @DisplayName("ocorrência inexistente lança IllegalArgumentException")
+        void throwsWhenOccurrenceMissing() {
+            when(occurrenceDao.readById(99)).thenReturn(null);
+
+            assertThatThrownBy(() -> sut.unsupportOccurrence(99, 7))
+                .isInstanceOf(IllegalArgumentException.class);
+            verify(supportDao, never()).removeSupport(anyInt(), anyInt());
+        }
+
+        @Test @DisplayName("id de cidadão inválido não chega ao DAO")
+        void guardsInvalidCitizen() {
+            assertThat(sut.unsupportOccurrence(5, 0)).isFalse();
+            verifyNoInteractions(supportDao);
+        }
+    }
 }

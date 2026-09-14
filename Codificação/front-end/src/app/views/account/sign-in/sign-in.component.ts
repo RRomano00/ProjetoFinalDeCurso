@@ -12,7 +12,7 @@ type MfaMethod = 'APP' | 'EMAIL';
   selector: 'app-sign-in',
   imports: [RouterModule, CommonModule, FormsModule, ReactiveFormsModule],
   templateUrl: './sign-in.component.html',
-  styleUrl: './sign-in.component.css'
+  styleUrls: ['../auth-shell.css', './sign-in.component.css']
 })
 export class SignInComponent implements OnInit, OnDestroy {
   step: LoginStep = 'credentials';

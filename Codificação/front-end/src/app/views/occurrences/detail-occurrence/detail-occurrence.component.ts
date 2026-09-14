@@ -8,7 +8,7 @@ import { OccurrenceEditService } from '../../../services/occurrence-edit.service
 import { OccurrenceSupportService } from '../../../services/occurrence-support.service';
 import { GeocodingService } from '../../../services/local/geocoding.service';
 import { Occurrence, OccurrenceHistory } from '../../../domain/model/occurrence';
-import { typeLabel, typeColor, statusLabel, statusColor } from '../../../domain/occurrence-labels';
+import { typeLabel, typeColor, statusLabel, statusColor, priorityLabel } from '../../../domain/occurrence-labels';
 import { ToastrService } from 'ngx-toastr';
 import { SANTA_RITA_DO_SAPUCAI, DEFAULT_MAP_ZOOM } from '../../../domain/map.constants';
 
@@ -36,17 +36,13 @@ export class DetailOccurrenceComponent implements OnInit, OnDestroy {
 
   userRole = localStorage.getItem('role') || '';
 
-  // RF16: apoios
   supportCount = 0;
   supportedByMe = false;
   supporting = false;
-  /** RF08/RF11: visitante tentou apoiar → pede login. */
   showLoginPrompt = false;
 
-  // RN03/RF11: histórico de mudanças de status
   history: OccurrenceHistory[] = [];
 
-  // Mensagem opcional do funcionário ao mudar o status (vai no e-mail e no histórico)
   staffMessage = '';
   readonly presetMessages = [
     'Encaminhada para o setor responsável.',
@@ -55,7 +51,6 @@ export class DetailOccurrenceComponent implements OnInit, OnDestroy {
     'Serviço executado e finalizado.'
   ];
 
-  // RF12: grupo de duplicatas + atualização coletiva
   group: Occurrence[] = [];
   applyToGroup = false;
   get groupSize(): number { return this.group.length; }
@@ -64,12 +59,10 @@ export class DetailOccurrenceComponent implements OnInit, OnDestroy {
     return this.userRole === 'EMPLOYEE' || this.userRole === 'ADMINISTRATOR';
   }
 
-  /** Visitante sem conta (RF08/RF11). */
   get isVisitor(): boolean {
     return !localStorage.getItem('token');
   }
 
-  /** RF16: cidadão apoia; visitante vê o botão mas é convidado a entrar. */
   get canSupport(): boolean {
     return this.userRole === 'CITIZEN' || this.isVisitor;
   }
@@ -100,7 +93,6 @@ export class DetailOccurrenceComponent implements OnInit, OnDestroy {
     } finally { this.loading = false; }
   }
 
-  // ── RF16: apoios ──
   private async loadSupportInfo(id: string) {
     try {
       const info = await this.occurrenceSupportService.getSupportInfo(id);
@@ -109,25 +101,21 @@ export class DetailOccurrenceComponent implements OnInit, OnDestroy {
     } catch { /* silencioso: apenas não mostra o contador */ }
   }
 
-  /** RN03/RF11: carrega a linha do tempo de status (inclui justificativa do indeferimento). */
   private async loadHistory(id: string) {
     try { this.history = await this.occurrenceReadService.getHistory(id); }
     catch { this.history = []; }
   }
 
-  /** RF12: carrega as ocorrências encadeadas (só exibido para a equipe). */
   private async loadGroup(id: string) {
     try { this.group = await this.occurrenceReadService.getGroup(id); }
     catch { this.group = []; }
   }
 
-  /** Preenche a caixa de mensagem com um texto pré-definido. */
   applyPreset(text: string) { this.staffMessage = text; }
 
   goToLogin() { this.router.navigate(['/account/sign-in']); }
 
   async support() {
-    // Visitante: não pode apoiar — convida a entrar (RF11)
     if (this.isVisitor) { this.showLoginPrompt = true; return; }
     if (!this.occurrence?.id || this.supportedByMe) return;
     this.supporting = true;
@@ -143,6 +131,23 @@ export class DetailOccurrenceComponent implements OnInit, OnDestroy {
     }
   }
 
+  /** Desfaz o apoio. Só aparece para quem já apoia, então não há o que confirmar. */
+  async unsupport() {
+    if (this.isVisitor) { this.showLoginPrompt = true; return; }
+    if (!this.occurrence?.id || !this.supportedByMe) return;
+    this.supporting = true;
+    try {
+      const info = await this.occurrenceSupportService.unsupport(this.occurrence.id);
+      this.supportCount  = info.count;
+      this.supportedByMe = false;
+      this.toastr.info('Apoio removido.');
+    } catch {
+      this.toastr.error('Não foi possível remover o apoio.');
+    } finally {
+      this.supporting = false;
+    }
+  }
+
   ngOnDestroy() { if (this.map) this.map.remove(); }
 
   private async renderMap() {
@@ -152,7 +157,6 @@ export class DetailOccurrenceComponent implements OnInit, OnDestroy {
     let lat = o.latitude ?? null;
     let lng = o.longitude ?? null;
 
-    // Sem coordenadas salvas: tenta geocodificar o endereço; senão, centro de Santa Rita
     if (lat == null || lng == null) {
       const coords = await this.geocodingService.geocode(o.street || '', o.neighborhood || '', o.city || '');
       if (coords) { lat = coords.lat; lng = coords.lng; }
@@ -215,7 +219,6 @@ export class DetailOccurrenceComponent implements OnInit, OnDestroy {
     finally { this.updating = false; }
   }
 
-  /** Limpa a mensagem e recarrega histórico/grupo após mudar o status. */
   private afterStatusChange() {
     this.staffMessage = '';
     const id = String(this.occurrence!.id);
@@ -244,10 +247,10 @@ export class DetailOccurrenceComponent implements OnInit, OnDestroy {
     finally { this.updating = false; }
   }
 
-  // Labels e cores compartilhados (domain/occurrence-labels)
   statusLabel = statusLabel;
   typeLabel   = typeLabel;
   typeColor   = typeColor;
+  priorityLabel = priorityLabel;
 
   back() { this.router.navigate(['/occurrence/list']); }
 }

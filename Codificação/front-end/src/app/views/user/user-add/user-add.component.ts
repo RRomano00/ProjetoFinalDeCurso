@@ -1,7 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { UserCreateService } from '../../../services/user/user-create.service';
+import { UserReadService } from '../../../services/user/user-read.service';
 import { ToastrService } from 'ngx-toastr';
 import { Router, RouterModule } from '@angular/router';
 
@@ -11,9 +12,18 @@ import { Router, RouterModule } from '@angular/router';
   templateUrl: './user-add.component.html',
   styleUrl: './user-add.component.css'
 })
-export class UserAddComponent {
+export class UserAddComponent implements OnInit {
   form!: FormGroup;
   loading = false;
+
+  /**
+   * Municípios já em uso, sugeridos no <datalist> do campo Município.
+   * O backend filtra as ocorrências por igualdade exata (WHERE o.city = ?),
+   * então digitar "Santa Rita" no lugar de "Santa Rita do Sapucaí" faz o
+   * funcionário não enxergar ocorrência nenhuma. Sugerir o que já existe evita
+   * o erro sem impedir o cadastro de um município novo.
+   */
+  cities: string[] = [];
 
   // Roles disponíveis para criação via painel admin
   roles = [
@@ -24,6 +34,7 @@ export class UserAddComponent {
   constructor(
     private fb: FormBuilder,
     private userCreateService: UserCreateService,
+    private userReadService: UserReadService,
     private toastr: ToastrService,
     private router: Router
   ) {
@@ -36,6 +47,29 @@ export class UserAddComponent {
       repeatPassword: ['', Validators.required],
       role:           ['EMPLOYEE', Validators.required]
     });
+  }
+
+  async ngOnInit(): Promise<void> {
+    try {
+      const users = await this.userReadService.findAll();
+      // Só usuários ativos: contas inativas costumam ser testes antigos e
+      // arrastariam municípios errados para dentro das sugestões.
+      // O trim() é essencial: já existe cadastro com "Santa Rita " (espaço no
+      // fim), que viraria uma sugestão duplicada e visualmente idêntica.
+      const counts = new Map<string, number>();
+      for (const u of users ?? []) {
+        if (!u?.active || typeof u?.city !== 'string') continue;
+        const city = u.city.trim();
+        if (city) counts.set(city, (counts.get(city) ?? 0) + 1);
+      }
+      // Mais usados primeiro: o município correto fica no topo da lista, e as
+      // variantes digitadas errado (menos frequentes) ficam para baixo.
+      this.cities = [...counts.entries()]
+        .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'pt-BR'))
+        .map(([city]) => city);
+    } catch {
+      this.cities = []; // sem sugestões o campo segue funcionando como texto livre
+    }
   }
 
   passwordsMatch(): boolean {

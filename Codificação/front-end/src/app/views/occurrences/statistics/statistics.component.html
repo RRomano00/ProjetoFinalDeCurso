@@ -41,7 +41,7 @@
   <div class="kpi-grid">
     <div class="kpi-card">
       <div class="kpi-top">
-        <div class="kpi-icon blue">
+        <div class="kpi-icon plate">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
@@ -56,25 +56,25 @@
 
     <div class="kpi-card">
       <div class="kpi-top">
-        <div class="kpi-icon red">
+        <div class="kpi-icon pending">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
           </svg>
         </div>
         <div class="kpi-body">
-          <span class="kpi-num red">{{ pending }}</span>
+          <span class="kpi-num pending">{{ pending }}</span>
           <span class="kpi-lbl">Pendentes</span>
         </div>
       </div>
       <div class="kpi-bar-mini" *ngIf="total > 0">
-        <div class="kpi-bar-fill red" [style.width.%]="(pending/total)*100"></div>
+        <div class="kpi-bar-fill pending" [style.width.%]="(pending/total)*100"></div>
       </div>
     </div>
 
     <div class="kpi-card">
       <div class="kpi-top">
-        <div class="kpi-icon yellow">
+        <div class="kpi-icon progress">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="23 4 23 10 17 10"/>
@@ -82,43 +82,43 @@
           </svg>
         </div>
         <div class="kpi-body">
-          <span class="kpi-num yellow">{{ inProgress }}</span>
+          <span class="kpi-num progress">{{ inProgress }}</span>
           <span class="kpi-lbl">Em Andamento</span>
         </div>
       </div>
       <div class="kpi-bar-mini" *ngIf="total > 0">
-        <div class="kpi-bar-fill yellow" [style.width.%]="(inProgress/total)*100"></div>
+        <div class="kpi-bar-fill progress" [style.width.%]="(inProgress/total)*100"></div>
       </div>
     </div>
 
     <div class="kpi-card">
       <div class="kpi-top">
-        <div class="kpi-icon green">
+        <div class="kpi-icon done">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
           </svg>
         </div>
         <div class="kpi-body">
-          <span class="kpi-num green">{{ resolved }}</span>
+          <span class="kpi-num done">{{ resolved }}</span>
           <span class="kpi-lbl">Atendidas</span>
         </div>
       </div>
       <div class="kpi-bar-mini" *ngIf="total > 0">
-        <div class="kpi-bar-fill green" [style.width.%]="(resolved/total)*100"></div>
+        <div class="kpi-bar-fill done" [style.width.%]="(resolved/total)*100"></div>
       </div>
     </div>
 
     <div class="kpi-card kpi-highlight">
       <div class="kpi-top">
-        <div class="kpi-icon purple">
+        <div class="kpi-icon rate">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
           </svg>
         </div>
         <div class="kpi-body">
-          <span class="kpi-num purple">{{ resolutionRate }}%</span>
+          <span class="kpi-num rate">{{ resolutionRate }}%</span>
           <span class="kpi-lbl">Taxa de Resolução</span>
         </div>
       </div>
@@ -127,14 +127,14 @@
     <!-- RF13: tempo médio de resolução -->
     <div class="kpi-card">
       <div class="kpi-top">
-        <div class="kpi-icon blue">
+        <div class="kpi-icon plate">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
           </svg>
         </div>
         <div class="kpi-body">
-          <span class="kpi-num blue">{{ avgResolutionDays }}</span>
+          <span class="kpi-num plate">{{ avgResolutionDays }}</span>
           <span class="kpi-lbl">Tempo Médio de Resolução</span>
         </div>
       </div>
