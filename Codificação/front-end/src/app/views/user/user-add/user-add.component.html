@@ -37,11 +37,19 @@
         <div class="field-group">
           <label>Município <span class="required">*</span></label>
           <input type="text" formControlName="city" placeholder="Município de atuação" class="form-input"
+            list="city-options" autocomplete="off"
             [class.input-error]="form.controls['city'].touched && form.controls['city'].invalid">
+          <datalist id="city-options">
+            <option *ngFor="let c of cities" [value]="c"></option>
+          </datalist>
           <span class="field-error"
             *ngIf="form.controls['city'].touched && form.controls['city'].invalid">
             Município é obrigatório.
           </span>
+          <p class="field-hint" *ngIf="cities.length">
+            Escolha um município da lista para garantir que o funcionário veja as
+            ocorrências certas. Digite um novo apenas se for outro município.
+          </p>
         </div>
 
         <div class="field-group">
