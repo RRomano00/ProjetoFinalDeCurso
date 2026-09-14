@@ -61,6 +61,12 @@ const STATUS_COLORS: Record<string, string> = {
   PENDENTE:     '#dc2626',
 };
 
+const PRIORITY_LABELS: Record<string, string> = {
+  ALTA:  'Alta',
+  MEDIA: 'Média',
+  BAIXA: 'Baixa',
+};
+
 const PRIORITY_CLASSES: Record<string, string> = {
   ALTA:  'priority-high',
   MEDIA: 'priority-medium',
@@ -95,4 +101,9 @@ export function statusColor(status?: string): string {
 /** Classe CSS da prioridade (ALTA/MEDIA/BAIXA). */
 export function priorityClass(priority?: string): string {
   return priority ? (PRIORITY_CLASSES[priority] || '') : '';
+}
+
+/** Label da prioridade ("Média") — o enum cru não vai para a tela. */
+export function priorityLabel(priority?: string): string {
+  return priority ? (PRIORITY_LABELS[priority] || priority) : '';
 }

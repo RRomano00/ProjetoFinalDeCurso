@@ -8,7 +8,7 @@ import { OccurrenceEditService } from '../../../services/occurrence-edit.service
 import { OccurrenceSupportService } from '../../../services/occurrence-support.service';
 import { GeocodingService } from '../../../services/local/geocoding.service';
 import { Occurrence, OccurrenceHistory } from '../../../domain/model/occurrence';
-import { typeLabel, typeColor, statusLabel, statusColor } from '../../../domain/occurrence-labels';
+import { typeLabel, typeColor, statusLabel, statusColor, priorityLabel } from '../../../domain/occurrence-labels';
 import { ToastrService } from 'ngx-toastr';
 import { SANTA_RITA_DO_SAPUCAI, DEFAULT_MAP_ZOOM } from '../../../domain/map.constants';
 
@@ -261,10 +261,10 @@ export class DetailOccurrenceComponent implements OnInit, OnDestroy {
     finally { this.updating = false; }
   }
 
-  // Labels e cores compartilhados (domain/occurrence-labels)
   statusLabel = statusLabel;
   typeLabel   = typeLabel;
   typeColor   = typeColor;
+  priorityLabel = priorityLabel;
 
   back() { this.router.navigate(['/occurrence/list']); }
 }
