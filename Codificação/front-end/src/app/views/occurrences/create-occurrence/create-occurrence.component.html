@@ -123,16 +123,27 @@
         </p>
         <div class="duplicate-item" *ngFor="let d of nearbyDuplicates">
           <div class="duplicate-info">
-            <span class="duplicate-protocol">{{ d.protocolNumber }}</span>
+            <!-- O protocolo é o caminho para o registro; abre em outra aba para
+                 não perder o que já foi preenchido neste formulário. -->
+            <a class="duplicate-protocol" [routerLink]="['/occurrence/detail', d.id]"
+               target="_blank" rel="noopener"
+               [attr.aria-label]="'Abrir a ocorrência ' + d.protocolNumber + ' em uma nova aba'">
+              {{ d.protocolNumber }}
+            </a>
             <span class="duplicate-desc">{{ d.title || (d.description | slice:0:60) }}</span>
           </div>
           <div class="duplicate-actions">
-            <a [routerLink]="['/occurrence/detail', d.id]" class="btn-mini-link">Ver</a>
-            <button type="button" class="btn-mini-support"
-                    [class.supported]="d.id != null && supportedIds.has(d.id)"
-                    [disabled]="supportingId === d.id || (d.id != null && supportedIds.has(d.id))"
-                    (click)="supportDuplicate(d)">
-              {{ d.id != null && supportedIds.has(d.id) ? '✓ Apoiado' : (supportingId === d.id ? '...' : '🤝 Apoiar') }}
+            <!-- Um botão só: apoia e desfaz. Ver .btn-support em styles.css. -->
+            <button type="button" class="btn-support btn-support--sm"
+                    [class.supported]="isSupported(d.id)"
+                    [disabled]="supportingId === d.id"
+                    [attr.aria-label]="(isSupported(d.id)
+                      ? 'Você apoia a ocorrência ' + d.protocolNumber + '; clique para remover o apoio'
+                      : 'Apoiar a ocorrência ' + d.protocolNumber)"
+                    (click)="toggleSupportDuplicate(d)">
+              <span class="btn-support__state">{{ supportingId === d.id ? 'Salvando...'
+                : (isSupported(d.id) ? '✓ Você apoia' : '🤝 Apoiar') }}</span>
+              <span class="btn-support__undo">Não apoiar</span>
             </button>
           </div>
         </div>
@@ -172,11 +183,11 @@
 
     <div class="form-section">
       <!-- RF08: visitante registra sempre como anônimo -->
-      <label class="checkbox-label" *ngIf="!isVisitor">
+      <label class="checkbox-label" *ngIf="!auth.isVisitor()">
         <input type="checkbox" formControlName="anonymous" />
         Registrar como anônimo (você receberá um código de rastreamento)
       </label>
-      <p class="visitor-note" *ngIf="isVisitor">
+      <p class="visitor-note" *ngIf="auth.isVisitor()">
         🔒 Você está como visitante: a ocorrência será registrada de forma <strong>anônima</strong>
         e você receberá um código de rastreamento.
       </p>

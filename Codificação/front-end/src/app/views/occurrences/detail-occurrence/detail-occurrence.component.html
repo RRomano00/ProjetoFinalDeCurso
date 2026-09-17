@@ -2,47 +2,73 @@
   <div *ngIf="loading" class="loading-state">Carregando...</div>
 
   <div *ngIf="!loading && occurrence">
-    <div class="page-header">
-      <h1>Ocorrência <span class="protocol">{{ occurrence.protocolNumber }}</span></h1>
-      <span *ngIf="occurrence.anonymous" class="badge-anonymous">🔒 Anônima</span>
-      <button (click)="back()" class="btn-secondary">← Voltar</button>
-    </div>
+    <button (click)="back()" class="btn-back">← Ocorrências</button>
 
     <div class="detail-card">
-      <div class="detail-header">
-        <div class="detail-badges">
-          <span class="badge badge-{{ occurrence.status.toLowerCase() }}">
-            {{ statusLabel(occurrence.status) }}
+      <!-- Identidade do registro: a placa esmaltada leva o protocolo; o título é a manchete. -->
+      <header class="record-head">
+        <div class="record-id">
+          <span class="protocol-plate">{{ occurrence.protocolNumber }}</span>
+          <span class="record-id-end">
+            <span *ngIf="occurrence.anonymous" class="badge-anonymous">🔒 Anônima</span>
+            <span class="badge badge-{{ occurrence.status.toLowerCase() }}">
+              {{ statusLabel(occurrence.status) }}
+            </span>
           </span>
-          <span class="badge-type"
-                [style.background]="typeColor(occurrence.type) + '18'"
-                [style.color]="typeColor(occurrence.type)"
-                [style.border-color]="typeColor(occurrence.type) + '40'">
-            {{ typeLabel(occurrence.type) }}
-          </span>
-          <span class="priority">Prioridade: {{ priorityLabel(occurrence.priority) }}</span>
         </div>
-        <div class="detail-badges">
-          <span class="support-chip" title="Cidadãos que apoiam esta ocorrência">
-            🤝 {{ supportCount }} {{ supportCount === 1 ? 'apoio' : 'apoios' }}
-          </span>
-          <button *ngIf="canSupport" class="btn-support" [class.supported]="supportedByMe"
-                  [disabled]="supporting || supportedByMe" (click)="support()">
-            {{ supportedByMe ? '✓ Você apoia' : (supporting ? 'Apoiando...' : '🤝 Apoiar') }}
-          </button>
-          <!-- Só aparece para quem já apoia: não há o que desfazer no caso contrário. -->
-          <button *ngIf="canSupport && supportedByMe" class="btn-unsupport"
-                  [disabled]="supporting" (click)="unsupport()"
-                  title="Remover meu apoio desta ocorrência">
-            {{ supporting ? '...' : '👎 Desapoiar' }}
-          </button>
-        </div>
-      </div>
 
-      <div class="detail-section" *ngIf="occurrence.title">
-        <h3>Título</h3>
-        <p>{{ occurrence.title }}</p>
-      </div>
+        <h1 class="record-title">{{ occurrence.title || 'Ocorrência sem título' }}</h1>
+
+        <dl class="record-facts">
+          <dt>Categoria</dt>
+          <dd>
+            <span class="badge-type"
+                  [style.background]="typeColor(occurrence.type) + '18'"
+                  [style.color]="typeColor(occurrence.type)"
+                  [style.border-color]="typeColor(occurrence.type) + '40'">
+              {{ typeLabel(occurrence.type) }}
+            </span>
+          </dd>
+
+          <dt>Prioridade</dt>
+          <dd class="pr-{{ (occurrence.priority || '').toLowerCase() }}">
+            {{ priorityLabel(occurrence.priority) }}
+          </dd>
+
+          <ng-container *ngIf="occurrence.createdAt">
+            <dt>Registrada em</dt>
+            <dd>{{ occurrence.createdAt | date:'dd/MM/yyyy, HH:mm' }}</dd>
+          </ng-container>
+
+          <ng-container *ngIf="!occurrence.anonymous && (occurrence.fullname || occurrence.email)">
+            <dt>Registrada por</dt>
+            <dd class="record-author">
+              {{ occurrence.fullname || occurrence.email }}
+              <!-- Sem nome não há o que parentetizar; autor apagado só tem o rótulo. -->
+              <span class="record-author-mail" *ngIf="occurrence.fullname && occurrence.email">
+                ({{ occurrence.email }})
+              </span>
+            </dd>
+          </ng-container>
+        </dl>
+
+        <div class="record-support" *ngIf="auth.canSupport() || supportCount">
+          <span class="support-count" *ngIf="supportCount">
+            {{ supportCount }} {{ supportCount === 1 ? 'pessoa apoia' : 'pessoas apoiam' }}
+          </span>
+          <!-- Um botão só: apoia e desfaz. Ver .btn-support em styles.css. -->
+          <button *ngIf="auth.canSupport()" type="button" class="btn-support"
+                  [class.supported]="supportedByMe" [disabled]="supporting"
+                  [attr.aria-label]="supportedByMe
+                    ? 'Você apoia esta ocorrência; clique para remover o apoio'
+                    : 'Apoiar esta ocorrência'"
+                  (click)="toggleSupport()">
+            <span class="btn-support__state">{{ supporting ? 'Salvando...'
+              : (supportedByMe ? '✓ Você apoia' : '🤝 Apoiar') }}</span>
+            <span class="btn-support__undo">Não apoiar</span>
+          </button>
+        </div>
+      </header>
 
       <div class="detail-section">
         <h3>Descrição</h3>
@@ -54,6 +80,12 @@
         <p>{{ occurrence.street }}{{ occurrence.number ? ', ' + occurrence.number : '' }}, {{ occurrence.neighborhood }} — {{ occurrence.city }}</p>
         <p *ngIf="occurrence.addressReference" class="address-reference">📍 Referência: {{ occurrence.addressReference }}</p>
         <div id="detail-map" class="detail-map"></div>
+        <div *ngIf="groupSize > 1" class="map-legend">
+          <span><i class="legend-dot legend-dot--current"></i>esta ocorrência</span>
+          <span><i class="legend-dot"></i>{{ groupSize === 2
+            ? 'outro registro do mesmo problema'
+            : 'outros ' + (groupSize - 1) + ' registros do mesmo problema' }}</span>
+        </div>
       </div>
 
       <div *ngIf="occurrence.media?.length || occurrence.urlMedia" class="detail-section">
@@ -86,34 +118,38 @@
         </div>
       </div>
 
-      <div *ngIf="!occurrence.anonymous" class="detail-section">
-        <h3>Registrado por</h3>
-        <p>{{ occurrence.fullname || occurrence.email }}</p>
-      </div>
-
       <!-- RF12: encadeamento de duplicatas (visível para a equipe) -->
-      <div *ngIf="canUpdateStatus && groupSize > 1" class="detail-section">
+      <div *ngIf="auth.isStaff() && groupSize > 1" class="detail-section">
         <h3>Ocorrências agrupadas ({{ groupSize }})</h3>
         <p class="group-hint">Registros do mesmo problema num raio de 50 m, encadeados automaticamente.</p>
         <div class="group-item" *ngFor="let g of group">
-          <a [routerLink]="['/occurrence/detail', g.id]" class="group-protocol"
-             [class.current]="g.id === occurrence.id">
-            {{ g.protocolNumber }}{{ g.id === occurrence.id ? ' (esta)' : '' }}
+          <a *ngIf="g.id !== occurrence.id" [routerLink]="['/occurrence/detail', g.id]"
+             target="_blank" rel="noopener" class="group-protocol"
+             [attr.aria-label]="'Abrir a ocorrência ' + g.protocolNumber + ' em uma nova aba'">
+            {{ g.protocolNumber }}
           </a>
+          <span *ngIf="g.id === occurrence.id" class="group-protocol current">
+            {{ g.protocolNumber }} (atual)
+          </span>
           <span class="group-title-txt">{{ g.title || (g.description | slice:0:40) }}</span>
           <span class="badge badge-{{ g.status.toLowerCase() }}">{{ statusLabel(g.status) }}</span>
         </div>
       </div>
 
-      <div *ngIf="canUpdateStatus" class="detail-actions">
+      <div *ngIf="auth.isStaff()" class="detail-actions">
         <h3>Ações</h3>
 
-        <!-- Mensagem opcional ao cidadão (vai no e-mail de mudança de status e no histórico) -->
-        <div class="staff-message"
-             *ngIf="occurrence.status === 'PENDENTE' || occurrence.status === 'EM_ANDAMENTO'">
-          <label for="staffMsg">Mensagem ao cidadão (opcional)</label>
-          <textarea id="staffMsg" [(ngModel)]="staffMessage" rows="2" maxlength="300"
-                    placeholder="Escreva uma mensagem que será enviada por e-mail junto com a mudança de status..."></textarea>
+        <!-- Mensagem ao cidadão: vai ao histórico e ao e-mail, com ou sem mudança de status -->
+        <div class="staff-message">
+          <label for="staffMsg">Mensagem ao cidadão</label>
+          <!-- Enviar fica encostado no campo: é a ação daquilo que se acabou de escrever -->
+          <div class="message-row">
+            <textarea id="staffMsg" [(ngModel)]="staffMessage" rows="2" maxlength="300"
+                      placeholder="Escreva uma mensagem que será enviada por e-mail ao autor da ocorrência..."></textarea>
+            <button (click)="sendReply()" [disabled]="updating || !staffMessage.trim()" class="btn-action">
+              {{ updating ? 'Enviando...' : '✉ Enviar resposta' }}
+            </button>
+          </div>
           <div class="preset-chips">
             <button type="button" class="preset-chip" *ngFor="let m of presetMessages"
                     (click)="applyPreset(m)">{{ m }}</button>
@@ -124,21 +160,32 @@
             Aplicar a todas as {{ groupSize }} ocorrências agrupadas (os autores serão notificados)
           </label>
         </div>
-        <button *ngIf="occurrence.status === 'PENDENTE'"
-                (click)="updateToInProgress()" [disabled]="updating" class="btn-action">
-          {{ updating ? 'Atualizando...' : '▶ Iniciar Atendimento' }}
-        </button>
-        <button *ngIf="occurrence.status === 'EM_ANDAMENTO'"
-                (click)="updateToConclude()" [disabled]="updating" class="btn-action btn-success">
-          {{ updating ? 'Atualizando...' : '✓ Marcar como Atendida' }}
-        </button>
-        <span *ngIf="occurrence.status === 'ATENDIDA'" class="concluded-label">✓ Ocorrência concluída</span>
 
-        <ng-container *ngIf="occurrence.status === 'PENDENTE' || occurrence.status === 'EM_ANDAMENTO'">
-          <button *ngIf="!showRejectForm"
-                  (click)="showRejectForm = true" [disabled]="updating" class="btn-action btn-danger">
+        <!-- Mudanças de status numa linha: avançar à esquerda, recusar à direita -->
+        <div class="status-actions">
+          <button *ngIf="occurrence.status === 'PENDENTE'"
+                  (click)="updateToInProgress()" [disabled]="updating" class="btn-action">
+            {{ updating ? 'Atualizando...' : '▶ Iniciar Atendimento' }}
+          </button>
+          <button *ngIf="occurrence.status === 'EM_ANDAMENTO'"
+                  (click)="updateToConclude()" [disabled]="updating" class="btn-action btn-success">
+            {{ updating ? 'Atualizando...' : '✓ Marcar como Atendida' }}
+          </button>
+          <span *ngIf="occurrence.status === 'ATENDIDA'" class="concluded-label">✓ Ocorrência concluída</span>
+          <span *ngIf="occurrence.status === 'INDEFERIDA'" class="rejected-label">✕ Ocorrência Indeferida</span>
+
+          <!-- Concluída ou indeferida por engano: volta para Em Andamento -->
+          <button *ngIf="canReopen" (click)="reopen()" [disabled]="updating" class="btn-action">
+            {{ updating ? 'Reabrindo...' : '↻ Reabrir Ocorrência' }}
+          </button>
+
+          <button *ngIf="(occurrence.status === 'PENDENTE' || occurrence.status === 'EM_ANDAMENTO') && !showRejectForm"
+                  (click)="showRejectForm = true" [disabled]="updating" class="btn-action btn-danger btn-end">
             ✕ Indeferir Ocorrência
           </button>
+        </div>
+
+        <ng-container *ngIf="occurrence.status === 'PENDENTE' || occurrence.status === 'EM_ANDAMENTO'">
           <div *ngIf="showRejectForm" class="reject-form">
             <label for="rejectObs">Justificativa (obrigatória)</label>
             <textarea id="rejectObs" [(ngModel)]="rejectObservation" rows="3"
@@ -153,8 +200,6 @@
             </div>
           </div>
         </ng-container>
-
-        <span *ngIf="occurrence.status === 'INDEFERIDA'" class="rejected-label">✕ Ocorrência Indeferida</span>
       </div>
     </div>
   </div>

@@ -5,8 +5,9 @@ import { FormsModule } from '@angular/forms';
 import { OccurrenceReadService } from '../../../services/occurrence-read.service';
 import { OccurrenceSupportService } from '../../../services/occurrence-support.service';
 import { Occurrence } from '../../../domain/model/occurrence';
-import { typeLabel, typeColor, statusLabel, statusClass, priorityClass, priorityLabel } from '../../../domain/occurrence-labels';
+import { typeLabel, typeColor, statusLabel, statusClass, priorityLabel } from '../../../domain/occurrence-labels';
 import { ToastrService } from 'ngx-toastr';
+import { AuthenticationService } from '../../../services/security/authentication.service';
 
 @Component({
   selector: 'app-list-occurrence',
@@ -19,7 +20,7 @@ export class ListOccurrenceComponent implements OnInit {
   filtered:    Occurrence[] = [];
   loading = true;
 
-  searchProtocol = '';
+  search = '';
   filterStatus   = '';
   filterType     = '';
   filterMine     = false;
@@ -27,16 +28,14 @@ export class ListOccurrenceComponent implements OnInit {
   supportedIds = new Set<number>();
   supportingId: number | null = null;
 
-  private readonly userRole = localStorage.getItem('role') || '';
-  private readonly myEmail  = localStorage.getItem('email') || '';
-
-  get isVisitor(): boolean { return !localStorage.getItem('token'); }
-  get canSupport(): boolean { return this.userRole === 'CITIZEN' || this.isVisitor; }
-  get canFilterMine(): boolean { return this.userRole === 'CITIZEN'; }
+  private readonly myEmail = localStorage.getItem('email') || '';
 
   groupBy: '' | 'type' | 'neighborhood' | 'status' = '';
 
   statusOptions = ['PENDENTE', 'EM_ANDAMENTO', 'ATENDIDA', 'INDEFERIDA'];
+
+  /** RF08/RF11: visitante tentou apoiar → pede login (mesmo convite do detalhe). */
+  showLoginPrompt = false;
 
   showProtocolModal = false;
   trackingCodeInput = '';
@@ -46,6 +45,7 @@ export class ListOccurrenceComponent implements OnInit {
     private occurrenceReadService: OccurrenceReadService,
     private occurrenceSupportService: OccurrenceSupportService,
     private router: Router,
+    public  auth: AuthenticationService,
     private toastr: ToastrService
   ) {}
 
@@ -62,7 +62,7 @@ export class ListOccurrenceComponent implements OnInit {
   }
 
   private async loadMySupports() {
-    if (this.isVisitor) return;
+    if (this.auth.isVisitor()) return;
     try {
       this.supportedIds = new Set(await this.occurrenceSupportService.mySupports());
     } catch {
@@ -74,56 +74,54 @@ export class ListOccurrenceComponent implements OnInit {
     return id != null && this.supportedIds.has(id);
   }
 
-  async support(o: Occurrence) {
-    if (this.isVisitor) {
-      this.toastr.info('Entre na sua conta para apoiar uma ocorrência.');
-      this.router.navigate(['/account/sign-in']);
-      return;
-    }
-    if (o.id == null || this.isSupported(o.id) || this.supportingId != null) return;
+  goToLogin() { this.router.navigate(['/account/sign-in']); }
+
+  /**
+   * Apoia ou desfaz o apoio no mesmo botão. Quem manda no estado é a resposta
+   * do servidor (`supportedByMe`) — antes a tela dava `add()` no conjunto local
+   * e passava a exibir "Você apoia" mesmo quando o back-end não gravou nada.
+   */
+  async toggleSupport(o: Occurrence) {
+    if (this.auth.isVisitor()) { this.showLoginPrompt = true; return; }
+    if (o.id == null || this.supportingId != null) return;
+    const apoiando = this.isSupported(o.id);
     this.supportingId = o.id;
     try {
-      const info = await this.occurrenceSupportService.support(o.id);
+      const info = await this.occurrenceSupportService.toggle(o.id, apoiando);
       o.supportCount = info.count;
-      this.supportedIds.add(o.id);
-      this.toastr.success('Apoio registrado. Obrigado!');
+      if (info.supportedByMe) this.supportedIds.add(o.id);
+      else                    this.supportedIds.delete(o.id);
+      this.toastr[apoiando ? 'info' : 'success'](
+        apoiando ? 'Apoio removido.' : 'Apoio registrado. Obrigado!');
     } catch {
-      this.toastr.error('Não foi possível registrar o apoio.');
+      this.toastr.error(apoiando
+        ? 'Não foi possível remover o apoio.'
+        : 'Não foi possível registrar o apoio.');
     } finally {
       this.supportingId = null;
     }
   }
 
-  /** Desfaz o apoio. O botão só existe nos cartões que o usuário já apoia. */
-  async unsupport(o: Occurrence) {
-    if (this.isVisitor) return;
-    if (o.id == null || !this.isSupported(o.id) || this.supportingId != null) return;
-    this.supportingId = o.id;
-    try {
-      const info = await this.occurrenceSupportService.unsupport(o.id);
-      o.supportCount = info.count;
-      this.supportedIds.delete(o.id);
-      this.toastr.info('Apoio removido.');
-    } catch {
-      this.toastr.error('Não foi possível remover o apoio.');
-    } finally {
-      this.supportingId = null;
-    }
+  /** Minúsculas e sem acento: quem digita "onibus" tem que achar "ônibus". */
+  private fold(text?: string): string {
+    return (text || '').normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
   }
 
   applyFilters() {
+    const term = this.fold(this.search.trim());
     this.filtered = this.occurrences.filter(o => {
-      const matchProtocol = !this.searchProtocol ||
-        o.protocolNumber?.toLowerCase().includes(this.searchProtocol.toLowerCase());
+      const matchSearch = !term
+        || this.fold(o.protocolNumber).includes(term)
+        || this.fold(o.title).includes(term);
       const matchStatus = !this.filterStatus || o.status === this.filterStatus;
       const matchType   = !this.filterType   || o.type   === this.filterType;
       const matchMine   = !this.filterMine   || (!!o.email && o.email === this.myEmail);
-      return matchProtocol && matchStatus && matchType && matchMine;
+      return matchSearch && matchStatus && matchType && matchMine;
     });
   }
 
   clearFilters() {
-    this.searchProtocol = '';
+    this.search         = '';
     this.filterStatus   = '';
     this.filterType     = '';
     this.filterMine     = false;
@@ -177,7 +175,6 @@ export class ListOccurrenceComponent implements OnInit {
 
   statusLabel   = statusLabel;
   statusClass   = statusClass;
-  priorityClass = priorityClass;
   priorityLabel = priorityLabel;
   typeLabel     = typeLabel;
   typeColor     = typeColor;

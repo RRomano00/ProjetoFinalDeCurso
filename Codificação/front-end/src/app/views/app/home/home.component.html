@@ -3,7 +3,6 @@
   <div class="page-header">
     <div class="welcome-block">
       <h1>Bem-vindo(a), {{ username }}!</h1>
-      <p>Acompanhe as ocorrências da sua cidade</p>
     </div>
     <a routerLink="/occurrence/create" class="btn-primary">
       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
@@ -50,27 +49,27 @@
         </div>
         <div class="map-legend">
           <span class="legend-item"><span class="dot pending"></span> Pendente</span>
-          <span class="legend-item"><span class="dot progress"></span> Em Andamento</span>
+          <span class="legend-item"><span class="dot em-andamento"></span> Em Andamento</span>
           <span class="legend-item"><span class="dot done"></span> Atendida</span>
           <span class="legend-item"><span class="dot refused"></span> Indeferida</span>
         </div>
       </div>
 
-      <!-- Estatísticas rápidas -->
-      <div class="quick-stats">
-        <h3>Estatísticas Rápidas</h3>
-        <div class="stat-row">
-          <span>Total de Ocorrências</span>
-          <span class="stat-num">{{ totalOccurrences }}</span>
+      <!-- Situação da cidade: a proporção fecha sozinha, o que três números não faziam -->
+      <div class="city-state" *ngIf="totalOccurrences">
+        <div class="city-state-top">
+          <h3>Situação das ocorrências</h3>
+          <span class="city-state-total">{{ totalOccurrences }} registros</span>
         </div>
-        <div class="stat-row">
-          <span>Atendidas</span>
-          <span class="stat-num done">{{ resolvedCount }}</span>
+        <div class="state-bar" aria-hidden="true">
+          <span *ngFor="let s of statusBreakdown"
+                [style.flex-grow]="s.count" [style.background]="s.color"></span>
         </div>
-        <div class="stat-row">
-          <span>Pendentes</span>
-          <span class="stat-num pending">{{ pendingCount }}</span>
-        </div>
+        <ul class="state-legend">
+          <li *ngFor="let s of statusBreakdown">
+            <i [style.background]="s.color"></i>{{ s.count }} {{ s.count === 1 ? s.one : s.many }}
+          </li>
+        </ul>
       </div>
     </div>
 
@@ -82,7 +81,7 @@
            [routerLink]="['/occurrence/detail', o.id]"
            class="incident-card">
           <div class="incident-top">
-            <span class="incident-id">{{ o.protocolNumber }}</span>
+            <span class="incident-title">{{ o.title || (o.description | slice:0:60) }}</span>
             <span class="status-badge" [ngClass]="{
                 'badge-open':     o.status === 'PENDENTE',
                 'badge-progress': o.status === 'EM_ANDAMENTO',
@@ -93,7 +92,6 @@
               {{ statusLabel(o.status) }}
             </span>
           </div>
-          <div class="incident-title">{{ o.title || (o.description | slice:0:60) }}</div>
           <div class="incident-desc" *ngIf="o.title">{{ o.description | slice:0:70 }}{{ o.description.length > 70 ? '...' : '' }}</div>
           <div class="incident-meta">
             <span>
@@ -105,8 +103,18 @@
               {{ o.street || '' }} {{ o.neighborhood ? ', ' + o.neighborhood : '' }}
             </span>
           </div>
-          <div class="incident-tag" *ngIf="o.type">
-            {{ o.type.replaceAll('_', ' ') }}
+          <!-- Mesma pílula colorida da listagem e do detalhe, não o enum cru -->
+          <span class="incident-tag" *ngIf="o.type"
+                [style.background]="typeColor(o.type) + '18'"
+                [style.color]="typeColor(o.type)"
+                [style.border-color]="typeColor(o.type) + '40'">
+            {{ typeLabel(o.type) }}
+          </span>
+
+          <div class="incident-foot">
+            <span class="incident-id">{{ o.protocolNumber }}</span>
+            <!-- "Recentes" é uma afirmação sobre data: mostra a data. -->
+            <time *ngIf="o.createdAt">{{ o.createdAt | date:'dd/MM/yyyy' }}</time>
           </div>
         </a>
 
@@ -116,5 +124,17 @@
       </div>
     </div>
 
+  </div>
+
+  <!-- RF11: visitante tentou apoiar pelo mapa → precisa entrar -->
+  <div class="login-prompt-overlay" *ngIf="showLoginPrompt" (click)="showLoginPrompt = false">
+    <div class="login-prompt-card" (click)="$event.stopPropagation()">
+      <h2>🤝 Quer apoiar esta ocorrência?</h2>
+      <p>Para apoiar é preciso ter uma conta. Entre ou cadastre-se — leva menos de um minuto.</p>
+      <div class="login-prompt-actions">
+        <button class="btn-clear-map" (click)="showLoginPrompt = false">Agora não</button>
+        <button class="btn-primary" (click)="goToLogin()">Fazer login</button>
+      </div>
+    </div>
   </div>
 </div>

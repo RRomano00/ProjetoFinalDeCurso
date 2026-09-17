@@ -11,6 +11,8 @@ import { Occurrence, OccurrenceHistory } from '../../../domain/model/occurrence'
 import { typeLabel, typeColor, statusLabel, statusColor, priorityLabel } from '../../../domain/occurrence-labels';
 import { ToastrService } from 'ngx-toastr';
 import { SANTA_RITA_DO_SAPUCAI, DEFAULT_MAP_ZOOM } from '../../../domain/map.constants';
+import { occurrencePopup } from '../../../domain/occurrence-popup';
+import { AuthenticationService } from '../../../services/security/authentication.service';
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -34,7 +36,6 @@ export class DetailOccurrenceComponent implements OnInit, OnDestroy {
 
   private map?: L.Map;
 
-  userRole = localStorage.getItem('role') || '';
 
   supportCount = 0;
   supportedByMe = false;
@@ -55,18 +56,6 @@ export class DetailOccurrenceComponent implements OnInit, OnDestroy {
   applyToGroup = false;
   get groupSize(): number { return this.group.length; }
 
-  get canUpdateStatus(): boolean {
-    return this.userRole === 'EMPLOYEE' || this.userRole === 'ADMINISTRATOR';
-  }
-
-  get isVisitor(): boolean {
-    return !localStorage.getItem('token');
-  }
-
-  get canSupport(): boolean {
-    return this.userRole === 'CITIZEN' || this.isVisitor;
-  }
-
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -74,6 +63,7 @@ export class DetailOccurrenceComponent implements OnInit, OnDestroy {
     private occurrenceEditService: OccurrenceEditService,
     private occurrenceSupportService: OccurrenceSupportService,
     private geocodingService: GeocodingService,
+    public  auth: AuthenticationService,
     private toastr: ToastrService,
     private ngZone: NgZone
   ) {}
@@ -83,10 +73,10 @@ export class DetailOccurrenceComponent implements OnInit, OnDestroy {
     if (!id) { this.router.navigate(['/occurrence/list']); return; }
     try {
       this.occurrence = await this.occurrenceReadService.findById(id);
-      setTimeout(() => this.renderMap(), 0);
       this.loadSupportInfo(id);
       this.loadHistory(id);
-      if (this.canUpdateStatus) this.loadGroup(id);
+      await this.loadGroup(id);          // RF12: o mapa plota o grupo inteiro
+      setTimeout(() => this.renderMap(), 0);
     } catch {
       this.toastr.error('Ocorrência não encontrada.');
       this.router.navigate(['/occurrence/list']);
@@ -115,34 +105,26 @@ export class DetailOccurrenceComponent implements OnInit, OnDestroy {
 
   goToLogin() { this.router.navigate(['/account/sign-in']); }
 
-  async support() {
-    if (this.isVisitor) { this.showLoginPrompt = true; return; }
-    if (!this.occurrence?.id || this.supportedByMe) return;
+  /**
+   * Apoia ou desfaz o apoio no mesmo botão. O estado vem do que o servidor
+   * devolve (`supportedByMe`), nunca de um palpite local: assim a tela não
+   * pode discordar do banco.
+   */
+  async toggleSupport() {
+    if (this.auth.isVisitor()) { this.showLoginPrompt = true; return; }
+    if (!this.occurrence?.id || this.supporting) return;
+    const apoiando = this.supportedByMe;
     this.supporting = true;
     try {
-      const info = await this.occurrenceSupportService.support(this.occurrence.id);
+      const info = await this.occurrenceSupportService.toggle(this.occurrence.id, apoiando);
       this.supportCount  = info.count;
-      this.supportedByMe = true;
-      this.toastr.success('Apoio registrado. Obrigado!');
+      this.supportedByMe = info.supportedByMe;
+      this.toastr[apoiando ? 'info' : 'success'](
+        apoiando ? 'Apoio removido.' : 'Apoio registrado. Obrigado!');
     } catch {
-      this.toastr.error('Não foi possível registrar o apoio.');
-    } finally {
-      this.supporting = false;
-    }
-  }
-
-  /** Desfaz o apoio. Só aparece para quem já apoia, então não há o que confirmar. */
-  async unsupport() {
-    if (this.isVisitor) { this.showLoginPrompt = true; return; }
-    if (!this.occurrence?.id || !this.supportedByMe) return;
-    this.supporting = true;
-    try {
-      const info = await this.occurrenceSupportService.unsupport(this.occurrence.id);
-      this.supportCount  = info.count;
-      this.supportedByMe = false;
-      this.toastr.info('Apoio removido.');
-    } catch {
-      this.toastr.error('Não foi possível remover o apoio.');
+      this.toastr.error(apoiando
+        ? 'Não foi possível remover o apoio.'
+        : 'Não foi possível registrar o apoio.');
     } finally {
       this.supporting = false;
     }
@@ -175,17 +157,37 @@ export class DetailOccurrenceComponent implements OnInit, OnDestroy {
       }).addTo(this.map);
       setTimeout(() => this.map!.invalidateSize(), 100);
 
-      if (hasPoint) {
-        const color = statusColor(o.status);
-        const icon = L.divIcon({
-          className: '',
-          html: `<div style="width:16px;height:16px;background:${color};border:2px solid #fff;
-                 border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,0.4)"></div>`,
-          iconSize: [16, 16], iconAnchor: [8, 8]
-        });
-        L.marker(center, { icon }).addTo(this.map!)
-          .bindPopup(`<b>${o.protocolNumber || ''}</b><br>${this.statusLabel(o.status)}`);
+      const points: [number, number][] = [];
+      for (const g of this.group) {
+        if (g.id === o.id || g.latitude == null || g.longitude == null) continue;
+        const p: [number, number] = [g.latitude, g.longitude];
+        points.push(p);
+        L.marker(p, { icon: this.pointIcon(statusColor(g.status), false) }).addTo(this.map!)
+          .bindPopup(occurrencePopup(g));
       }
+
+      if (hasPoint) {
+        points.push(center);
+        // O popup não abre sozinho: o marcador maior com halo já diz qual é o desta
+        // tela, e o balão aberto tapava justamente o mapa que se quer ver.
+        L.marker(center, { icon: this.pointIcon(statusColor(o.status), true), zIndexOffset: 1000 })
+          .addTo(this.map!)
+          .bindPopup(occurrencePopup(o, { current: true }));
+      }
+
+      if (points.length > 1) this.map!.fitBounds(L.latLngBounds(points).pad(0.4));
+    });
+  }
+
+  /** O ponto da ocorrência aberta vem maior e com halo, para não sumir no grupo. */
+  private pointIcon(color: string, current: boolean): L.DivIcon {
+    const size = current ? 22 : 13;
+    return L.divIcon({
+      className: '',
+      html: `<div style="width:${size}px;height:${size}px;background:${color};
+             border:${current ? 3 : 2}px solid #fff;border-radius:50%;
+             box-shadow:0 0 0 ${current ? 5 : 0}px ${color}4d, 0 1px 4px rgba(0,0,0,.4)"></div>`,
+      iconSize: [size, size], iconAnchor: [size / 2, size / 2]
     });
   }
 
@@ -223,7 +225,44 @@ export class DetailOccurrenceComponent implements OnInit, OnDestroy {
     this.staffMessage = '';
     const id = String(this.occurrence!.id);
     this.loadHistory(id);
-    if (this.canUpdateStatus) this.loadGroup(id);
+    this.loadGroup(id);
+  }
+
+  async sendReply() {
+    if (!this.occurrence?.id) return;
+    if (!this.staffMessage.trim()) {
+      this.toastr.warning('Escreva a mensagem antes de enviar.');
+      return;
+    }
+    this.updating = true;
+    try {
+      // Reenvia o status atual: entra no histórico como mensagem e notifica o autor.
+      await this.occurrenceEditService.updateStatus(
+        String(this.occurrence.id), this.occurrence.status, this.staffMessage.trim(), this.applyToGroup);
+      this.toastr.success('Resposta enviada ao cidadão.');
+      this.afterStatusChange();
+    } catch { this.toastr.error('Erro ao enviar a resposta.'); }
+    finally { this.updating = false; }
+  }
+
+  get canReopen(): boolean {
+    return this.auth.isStaff()
+        && (this.occurrence?.status === 'ATENDIDA' || this.occurrence?.status === 'INDEFERIDA');
+  }
+
+  async reopen() {
+    if (!this.occurrence?.id) return;
+    this.updating = true;
+    try {
+      await this.occurrenceEditService.updateStatus(
+        String(this.occurrence.id), 'EM_ANDAMENTO', this.staffMessage.trim() || undefined, this.applyToGroup);
+      this.occurrence!.status = 'EM_ANDAMENTO';
+      this.toastr.success(this.applyToGroup
+        ? `Grupo de ${this.groupSize} ocorrências reaberto.`
+        : 'Ocorrência reaberta.');
+      this.afterStatusChange();
+    } catch { this.toastr.error('Erro ao reabrir a ocorrência.'); }
+    finally { this.updating = false; }
   }
 
   async updateToRejected() {

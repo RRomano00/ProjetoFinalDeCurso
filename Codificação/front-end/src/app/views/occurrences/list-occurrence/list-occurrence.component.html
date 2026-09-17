@@ -8,8 +8,9 @@
   </div>
 
   <div class="filters">
-    <input type="text" [(ngModel)]="searchProtocol" (ngModelChange)="applyFilters()"
-           placeholder="Filtrar por protocolo..." class="filter-input" />
+    <input type="search" [(ngModel)]="search" (ngModelChange)="applyFilters()"
+           aria-label="Pesquisar ocorrência por protocolo ou título"
+           placeholder="Pesquisar ocorrência (protocolo ou título)" class="filter-input" />
     <select [(ngModel)]="filterStatus" (ngModelChange)="applyFilters()" class="filter-select">
       <option value="">Todos os status</option>
       <option *ngFor="let s of statusOptions" [value]="s">{{ statusLabel(s) }}</option>
@@ -21,7 +22,7 @@
       <option value="neighborhood">Agrupar por bairro</option>
       <option value="status">Agrupar por status</option>
     </select>
-    <label *ngIf="canFilterMine" class="filter-check">
+    <label *ngIf="auth.isCitizen()" class="filter-check">
       <input type="checkbox" [(ngModel)]="filterMine" (ngModelChange)="applyFilters()" />
       Minhas ocorrências
     </label>
@@ -57,11 +58,10 @@
     <div class="occurrence-card">
       <a [routerLink]="['/occurrence/detail', o.id]" class="card-body">
         <div class="card-header">
-          <span class="protocol">{{ o.protocolNumber }}</span>
+          <h3 class="card-title">{{ o.title || 'Ocorrência' }}</h3>
           <span class="badge" [ngClass]="statusClass(o.status)">{{ statusLabel(o.status) }}</span>
         </div>
 
-        <h3 class="card-title">{{ o.title || 'Ocorrência' }}</h3>
         <p class="card-description">{{ o.description | slice:0:120 }}{{ o.description.length > 120 ? '...' : '' }}</p>
 
         <div class="card-tags">
@@ -71,12 +71,15 @@
                 [style.border-color]="typeColor(o.type) + '40'">
             {{ typeLabel(o.type) }}
           </span>
-          <span class="priority-pill" [ngClass]="priorityClass(o.priority || '')">
-            {{ priorityLabel(o.priority) }}
+          <!-- Prioridade em texto, como no detalhe: duas pílulas iguais lado a lado
+               pareciam duas categorias. -->
+          <span class="card-priority pr-{{ (o.priority || '').toLowerCase() }}">
+            Prioridade {{ priorityLabel(o.priority).toLowerCase() }}
           </span>
         </div>
 
-        <div class="card-place">
+        <!-- Referência do registro: onde, qual protocolo e desde quando -->
+        <div class="card-ref">
           <span class="card-city">
             <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none"
               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -84,29 +87,28 @@
             </svg>
             {{ o.city }}
           </span>
+          <span class="protocol">{{ o.protocolNumber }}</span>
+          <time *ngIf="o.createdAt">{{ o.createdAt | date:'dd/MM/yyyy' }}</time>
         </div>
       </a>
 
-      <div class="card-footer">
-        <button *ngIf="canSupport" type="button" class="btn-support-card"
+      <!-- Sem apoio possível nem apoios registrados não há rodapé a mostrar -->
+      <div class="card-footer" *ngIf="auth.canSupport() || o.supportCount">
+        <!-- Um botão só: apoia e desfaz. Ver .btn-support em styles.css. -->
+        <button *ngIf="auth.canSupport()" type="button" class="btn-support btn-support--sm"
                 [class.supported]="isSupported(o.id)"
-                [disabled]="isSupported(o.id) || supportingId === o.id"
-                [attr.aria-pressed]="isSupported(o.id)"
-                [attr.aria-label]="(isSupported(o.id) ? 'Você já apoia' : 'Apoiar') + ' a ocorrência ' + o.protocolNumber"
-                (click)="support(o)">
-          {{ isSupported(o.id) ? '✓ Você apoia' : (supportingId === o.id ? 'Apoiando...' : '🤝 Apoiar') }}
-        </button>
-        <!-- Só nos cartões já apoiados: sem isso o botão acima vira um beco sem saída. -->
-        <button *ngIf="canSupport && isSupported(o.id)" type="button" class="btn-unsupport-card"
                 [disabled]="supportingId === o.id"
-                [attr.aria-label]="'Remover meu apoio da ocorrência ' + o.protocolNumber"
-                (click)="unsupport(o)">
-          {{ supportingId === o.id ? '...' : '👎' }}
+                [attr.aria-label]="(isSupported(o.id)
+                  ? 'Você apoia a ocorrência ' + o.protocolNumber + '; clique para remover o apoio'
+                  : 'Apoiar a ocorrência ' + o.protocolNumber)"
+                (click)="toggleSupport(o)">
+          <span class="btn-support__state">{{ supportingId === o.id ? 'Salvando...'
+            : (isSupported(o.id) ? '✓ Você apoia' : '🤝 Apoiar') }}</span>
+          <span class="btn-support__undo">Não apoiar</span>
         </button>
         <span class="support-count" *ngIf="o.supportCount">
           {{ o.supportCount }} {{ o.supportCount === 1 ? 'apoio' : 'apoios' }}
         </span>
-        <a [routerLink]="['/occurrence/detail', o.id]" class="card-link">Ver detalhes</a>
       </div>
     </div>
   </ng-template>
@@ -116,6 +118,18 @@
     <ng-container *ngFor="let o of filtered">
       <ng-container *ngTemplateOutlet="occurrenceCard; context: { $implicit: o }" />
     </ng-container>
+  </div>
+
+  <!-- RF11: visitante tentou apoiar → precisa entrar -->
+  <div class="login-prompt-overlay" *ngIf="showLoginPrompt" (click)="showLoginPrompt = false">
+    <div class="login-prompt-card" (click)="$event.stopPropagation()">
+      <h2>🤝 Quer apoiar esta ocorrência?</h2>
+      <p>Para apoiar é preciso ter uma conta. Entre ou cadastre-se — leva menos de um minuto.</p>
+      <div class="login-prompt-actions">
+        <button class="btn-secondary" (click)="showLoginPrompt = false">Agora não</button>
+        <button class="btn-primary" (click)="goToLogin()">Fazer login</button>
+      </div>
+    </div>
   </div>
 
   <!-- RF12: agrupado por categoria/bairro/status -->

@@ -144,20 +144,22 @@
   text-decoration: none;
 }
 /* Hover muda a borda, não a posição — nenhum cartão salta ao passar o mouse. */
-.occurrence-card:hover { border-color: var(--plate-line); }
+.occurrence-card:hover { border-color: var(--plate); }
+.occurrence-card:hover .card-title { color: var(--plate); }
 
+/* O título encabeça o cartão; protocolo e data são referência, não manchete. */
 .card-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 0.5rem;
+  gap: 0.625rem;
 }
+.card-header .badge { flex-shrink: 0; }
 
-/* Número de protocolo: identificador estampado, sempre igual em toda tela. */
 .protocol {
   font-size: 0.75rem;
   font-weight: 600;
-  color: var(--ink-mute);
+  color: var(--ink-faint);
   letter-spacing: 0.09em;
 }
 
@@ -217,17 +219,24 @@
   border: 1px solid;
 }
 
-.priority-pill {
+/* Prioridade: ponto colorido e texto, o mesmo vocabulário da ficha do registro. */
+.card-priority {
   display: inline-flex;
   align-items: center;
-  padding: 0.1875rem 0.5625rem;
-  border-radius: 999px;
+  gap: 0.375rem;
   font-size: 0.75rem;
   font-weight: 600;
 }
-.priority-high   { background: var(--st-refused-bg); color: var(--pr-high); }
-.priority-medium { background: var(--st-pending-bg); color: var(--pr-medium); }
-.priority-low    { background: var(--st-done-bg);    color: var(--pr-low); }
+.card-priority::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.card-priority.pr-alta  { color: var(--pr-high); }
+.card-priority.pr-media { color: var(--pr-medium); }
+.card-priority.pr-baixa { color: var(--pr-low); }
 
 .card-body {
   display: flex;
@@ -235,9 +244,25 @@
   gap: 0.625rem;
   text-decoration: none;
   color: inherit;
+  /* A folga da grade sobra na descrição: assim a linha de referência fica na
+     mesma altura em todos os cartões da fileira. */
+  flex: 1;
 }
+.card-body .card-description { flex-grow: 1; }
 
-.card-place { margin-top: 0.125rem; }
+.card-ref {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem 0.875rem;
+  flex-wrap: wrap;
+  margin-top: 0.125rem;
+}
+.card-ref time {
+  font-size: 0.75rem;
+  color: var(--ink-faint);
+  margin-left: auto;
+  white-space: nowrap;
+}
 .card-city {
   display: inline-flex;
   align-items: center;
@@ -255,60 +280,9 @@
   padding-top: 0.75rem;
   border-top: 1px solid var(--line-soft);
 }
-.card-footer .card-link { margin-left: auto; }
 
-.card-link {
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: var(--plate);
-  white-space: nowrap;
-}
-.occurrence-card:hover .card-link { text-decoration: underline; }
 
-.btn-support-card {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  padding: 0.375rem 0.75rem;
-  font: inherit;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: var(--plate);
-  background: var(--plate-wash);
-  border: 1px solid var(--plate-line);
-  border-radius: 99px;
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
-}
-.btn-support-card:hover:not(:disabled) { background: var(--plate); border-color: var(--plate); color: #fff; }
-.btn-support-card:focus-visible { outline: var(--focus); outline-offset: 2px; }
-.btn-support-card:disabled { cursor: default; }
-.btn-support-card.supported {
-  color: var(--st-done);
-  background: var(--st-done-bg);
-  border-color: var(--st-done-line);
-}
-
-/* Desapoiar no cartão: só o ícone, para não competir com o botão principal.
-   Tom neutro do "indeferida" — desfazer o próprio apoio não é destrutivo. */
-.btn-unsupport-card {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.375rem 0.625rem;
-  font: inherit;
-  font-size: 0.8125rem;
-  line-height: 1;
-  color: var(--st-refused);
-  background: var(--surface);
-  border: 1px solid var(--st-refused-line);
-  border-radius: 99px;
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
-}
-.btn-unsupport-card:hover:not(:disabled) { background: var(--st-refused-bg); }
-.btn-unsupport-card:focus-visible { outline: var(--focus); outline-offset: 2px; }
-.btn-unsupport-card:disabled { cursor: default; opacity: 0.6; }
+/* .btn-support agora é do sistema (styles.css): um controle, quatro telas. */
 
 .support-count { font-size: 0.8125rem; color: var(--ink-mute); }
 

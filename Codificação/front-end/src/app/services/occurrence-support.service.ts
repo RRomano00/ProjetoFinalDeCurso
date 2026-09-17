@@ -40,4 +40,12 @@ export class OccurrenceSupportService {
   unsupport(id: number | string): Promise<SupportInfo> {
     return firstValueFrom(this.http.delete<SupportInfo>(`${this.base}/${id}/support`));
   }
+
+  /**
+   * Liga ou desliga o apoio conforme o estado atual e devolve o que o servidor
+   * confirmou — é essa resposta que as telas usam, nunca um palpite local.
+   */
+  toggle(id: number | string, apoiado: boolean): Promise<SupportInfo> {
+    return apoiado ? this.unsupport(id) : this.support(id);
+  }
 }

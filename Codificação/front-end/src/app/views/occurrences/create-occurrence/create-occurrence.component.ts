@@ -9,6 +9,7 @@ import { GeocodingService } from '../../../services/local/geocoding.service';
 import { Occurrence } from '../../../domain/model/occurrence';
 import { OCCURRENCE_TYPES } from '../../../domain/occurrence-labels';
 import { ToastrService } from 'ngx-toastr';
+import { AuthenticationService } from '../../../services/security/authentication.service';
 import { SANTA_RITA_DO_SAPUCAI, DEFAULT_MAP_ZOOM } from '../../../domain/map.constants';
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -48,11 +49,6 @@ export class CreateOccurrenceComponent implements OnInit, AfterViewInit, OnDestr
   /** RF08/RF11: visitante tentou apoiar → pede login. */
   showLoginPrompt = false;
 
-  /** Visitante sem conta (RF08): ocorrência é obrigatoriamente anônima. */
-  get isVisitor(): boolean {
-    return !localStorage.getItem('token');
-  }
-
   // Categorias compartilhadas (domain/occurrence-labels)
   occurrenceTypes = OCCURRENCE_TYPES;
 
@@ -62,6 +58,7 @@ export class CreateOccurrenceComponent implements OnInit, AfterViewInit, OnDestr
     private geocodingService: GeocodingService,
     private fb: FormBuilder,
     private router: Router,
+    public  auth: AuthenticationService,
     private toastr: ToastrService,
     private ngZone: NgZone
   ) {}
@@ -82,10 +79,12 @@ export class CreateOccurrenceComponent implements OnInit, AfterViewInit, OnDestr
     });
 
     // RF08: visitante só registra como anônimo
-    if (this.isVisitor) this.form.patchValue({ anonymous: true });
+    if (this.auth.isVisitor()) this.form.patchValue({ anonymous: true });
 
     // RF16: mudou a categoria com local já marcado → verifica duplicatas de novo
     this.form.get('type')!.valueChanges.subscribe(() => this.checkDuplicates());
+
+    this.loadMySupports();
   }
 
   ngAfterViewInit() {
@@ -174,20 +173,41 @@ export class CreateOccurrenceComponent implements OnInit, AfterViewInit, OnDestr
 
   goToLogin() { this.router.navigate(['/account/sign-in']); }
 
-  /** Apoia uma ocorrência existente em vez de criar outra igual. */
-  async supportDuplicate(o: Occurrence) {
-    if (this.isVisitor) { this.showLoginPrompt = true; return; }
-    if (!o.id || this.supportedIds.has(o.id)) return;
+  isSupported(id?: number): boolean {
+    return id != null && this.supportedIds.has(id);
+  }
+
+  /**
+   * Apoia ou desfaz o apoio a uma duplicata, em vez de criar outra igual.
+   * O estado sai da resposta do servidor: antes o conjunto local começava vazio,
+   * então uma ocorrência que o usuário JÁ apoiava aparecia como "Apoiar" e o
+   * clique respondia "Apoio registrado" sem o banco mudar nada.
+   */
+  async toggleSupportDuplicate(o: Occurrence) {
+    if (this.auth.isVisitor()) { this.showLoginPrompt = true; return; }
+    if (o.id == null || this.supportingId != null) return;
+    const apoiando = this.isSupported(o.id);
     this.supportingId = o.id;
     try {
-      await this.occurrenceSupportService.support(o.id);
-      this.supportedIds.add(o.id);
-      this.toastr.success('Apoio registrado. Obrigado por colaborar!');
+      const info = await this.occurrenceSupportService.toggle(o.id, apoiando);
+      if (info.supportedByMe) this.supportedIds.add(o.id);
+      else                    this.supportedIds.delete(o.id);
+      this.toastr[apoiando ? 'info' : 'success'](
+        apoiando ? 'Apoio removido.' : 'Apoio registrado. Obrigado por colaborar!');
     } catch {
-      this.toastr.error('Não foi possível registrar o apoio.');
+      this.toastr.error(apoiando
+        ? 'Não foi possível remover o apoio.'
+        : 'Não foi possível registrar o apoio.');
     } finally {
       this.supportingId = null;
     }
+  }
+
+  /** Carrega os apoios que o usuário já tem, para o botão nascer com o estado certo. */
+  private async loadMySupports() {
+    if (this.auth.isVisitor()) return;
+    try { this.supportedIds = new Set(await this.occurrenceSupportService.mySupports()); }
+    catch { this.supportedIds = new Set(); }
   }
 
   // ── Upload de foto (RF07/RF08/RF20) ──────────────────────────────────────
