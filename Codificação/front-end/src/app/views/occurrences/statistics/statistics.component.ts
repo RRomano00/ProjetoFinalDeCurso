@@ -88,7 +88,9 @@ export class StatisticsComponent implements OnInit {
       sum + (new Date(o.updatedAt!).getTime() - new Date(o.createdAt!).getTime()), 0);
     const days = totalMs / done.length / 86_400_000;
     if (days < 1) return `${Math.max(1, Math.round(days * 24))} h`;
-    return `${days.toFixed(1).replace('.', ',')} dias`;
+    // Dia é unidade inteira: "26,0 dias" sugere uma precisão que a medida não tem.
+    const inteiro = Math.round(days);
+    return `${inteiro} ${inteiro === 1 ? 'dia' : 'dias'}`;
   }
 
   get barChartData(): ChartBar[] {

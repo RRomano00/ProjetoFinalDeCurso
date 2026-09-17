@@ -74,7 +74,7 @@
 
     <div class="kpi-card">
       <div class="kpi-top">
-        <div class="kpi-icon progress">
+        <div class="kpi-icon em-andamento">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="23 4 23 10 17 10"/>
@@ -82,12 +82,12 @@
           </svg>
         </div>
         <div class="kpi-body">
-          <span class="kpi-num progress">{{ inProgress }}</span>
+          <span class="kpi-num em-andamento">{{ inProgress }}</span>
           <span class="kpi-lbl">Em Andamento</span>
         </div>
       </div>
       <div class="kpi-bar-mini" *ngIf="total > 0">
-        <div class="kpi-bar-fill progress" [style.width.%]="(inProgress/total)*100"></div>
+        <div class="kpi-bar-fill em-andamento" [style.width.%]="(inProgress/total)*100"></div>
       </div>
     </div>
 

@@ -30,8 +30,6 @@
   font-weight: 600;
   color: var(--ink);
   margin-bottom: 1.25rem;
-  padding-left: 0.625rem;
-  border-left: 2px solid var(--plate);
 }
 
 .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem; }

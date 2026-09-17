@@ -92,10 +92,6 @@
   flex-direction: column;
   gap: 0.75rem;
 }
-.kpi-card.kpi-highlight {
-  background: var(--plate-wash);
-  border-color: var(--plate-line);
-}
 
 .kpi-top { display: flex; align-items: center; gap: 0.75rem; }
 
@@ -110,7 +106,7 @@
 }
 .kpi-icon.plate   { background: var(--st-progress-bg); color: var(--st-progress); }
 .kpi-icon.pending    { background: var(--st-pending-bg);  color: var(--st-pending); }
-.kpi-icon.progress { background: var(--st-progress-bg); color: var(--st-progress); }
+.kpi-icon.em-andamento { background: var(--st-progress-bg); color: var(--st-progress); }
 .kpi-icon.done  { background: var(--st-done-bg);     color: var(--st-done); }
 .kpi-icon.rate { background: var(--surface-2);      color: var(--ink-mute); }
 
@@ -122,9 +118,12 @@
   font-weight: 600;
   color: var(--ink);
   line-height: 1.15;
+  /* Os cartões esticam para a altura da fileira; sem isto o número é o item
+     que cede espaço e chega a ser cortado ao meio (era o caso de "Em Andamento"). */
+  flex-shrink: 0;
 }
 .kpi-num.pending    { color: var(--st-pending); }
-.kpi-num.progress { color: var(--st-progress); }
+.kpi-num.em-andamento { color: var(--st-progress); }
 .kpi-num.done  { color: var(--st-done); }
 .kpi-num.plate   { color: var(--plate); }
 .kpi-num.rate { color: var(--plate-deep); }
@@ -139,7 +138,7 @@
 }
 .kpi-bar-fill { height: 100%; border-radius: 999px; transition: width .5s ease; }
 .kpi-bar-fill.pending    { background: var(--st-pending); }
-.kpi-bar-fill.progress { background: var(--st-progress); }
+.kpi-bar-fill.em-andamento { background: var(--st-progress); }
 .kpi-bar-fill.done  { background: var(--st-done); }
 
 /* ── Gráficos ── */

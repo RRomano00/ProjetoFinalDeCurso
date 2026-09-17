@@ -34,8 +34,6 @@
   font-weight: 600;
   color: var(--ink);
   margin: 0 0 1.25rem 0;
-  padding-left: 0.625rem;
-  border-left: 2px solid var(--plate);
 }
 .section-title svg { color: var(--plate); }
 
