@@ -4,6 +4,41 @@ Guia rápido para subir back-end + front-end, tanto no PC quanto no celular.
 
 ---
 
+## Atalho: um comando só (Linux/macOS/WSL)
+
+```bash
+cd Codificação
+./subir.sh              # PC     -> http://localhost:4173 (com PWA/service worker)
+./subir.sh --celular    # celular -> abre os 2 túneis e imprime a URL
+```
+
+O script sobe o backend (`mvnw spring-boot:run`), abre o túnel do backend, escreve a
+URL no `environment.ts`, roda o `npm run build`, serve o `dist` e abre o túnel do front.
+`Ctrl+C` derruba tudo e **restaura o `environment.ts` original**. Logs em `/tmp/falacidade/`.
+Se o backend já estiver rodando (IntelliJ), ele detecta e não sobe outro.
+
+**Endereço fixo no celular** (a URL do Cloudflare muda a cada execução):
+
+```bash
+DOMINIO=falacidade.ngrok-free.app ./subir.sh --celular
+```
+
+Setup uma vez só (nesta máquina os passos 1 e 2 já estão feitos):
+1. instalar o `ngrok` (`ngrok version` para conferir);
+2. `ngrok config add-authtoken <token>` — token em *dashboard.ngrok.com → Your Authtoken*;
+3. reservar o domínio em *dashboard.ngrok.com → Domains → New Domain*. O plano free dá
+   **1 domínio permanente** e é ele quem escolhe o nome (ex.: `fond-poodle-42.ngrok-free.app`).
+
+Na primeira visita o ngrok free mostra uma tela de aviso com o botão *Visit Site*; como o
+domínio é fixo, o cookie fica salvo e ela não volta a aparecer nesse navegador.
+Só o front usa domínio fixo — o túnel do backend continua aleatório, mas o script já o
+injeta sozinho no `environment.ts`. O CORS do backend já aceita `*.ngrok-free.app`.
+Outra porta local: `PORTA=8081 ./subir.sh`.
+
+Os passos manuais abaixo continuam válidos (Windows/IntelliJ, ou para depurar).
+
+---
+
 ## A) Rodar só no PC (desenvolvimento)
 
 1. **Backend** — abra o projeto no IntelliJ e clique em **Run** (porta `8080`).
