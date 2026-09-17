@@ -75,9 +75,19 @@ class OccurrenceRestControllerPublicTest {
     class Authorship {
 
         @Test
-        @DisplayName("sem token: e-mail do corpo é ignorado e a ocorrência vira anônima")
-        void ignoresBodyEmailWhenNotAuthenticated() {
-            Occurrence o = created(dto("vitima@email.com"), null);
+        @DisplayName("sem token mas pedindo identificação: 401, nada é registrado em nome de terceiros")
+        void rejectsIdentifiedRequestWithoutToken() {
+            ResponseEntity<?> res = sut.create(dto("vitima@email.com"), new MockHttpServletRequest(), null);
+
+            assertThat(res.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+            verifyNoInteractions(occurrenceService);
+            verifyNoInteractions(emailService);
+        }
+
+        @Test
+        @DisplayName("sem token e sem e-mail: visitante registra normalmente como anônima")
+        void visitorRegistersAnonymously() {
+            Occurrence o = created(dto(null), null);
             assertThat(o.getEmail()).isNull();
             assertThat(o.isAnonymous()).isTrue();
             verifyNoInteractions(emailService);
@@ -226,6 +236,39 @@ class OccurrenceRestControllerPublicTest {
             GetOccurrenceDto o = listAs(authAs("admin@email.com", UserModel.UserRole.ADMINISTRATOR)).get(0);
             assertThat(o.getEmail()).isEqualTo("joao@email.com");
             assertThat(o.getFullname()).isNotNull();
+        }
+
+        @Test
+        @DisplayName("cidadão não vê ocorrências anônimas na listagem")
+        void citizenDoesNotSeeAnonymous() {
+            GetOccurrenceDto anonima = occurrence(3, null);
+            anonima.setAnonymous(true);
+            when(occurrenceService.findAll())
+                .thenReturn(List.of(occurrence(1, "joao@email.com"), anonima));
+
+            assertThat(listAs(authAs("joao@email.com", UserModel.UserRole.CITIZEN)))
+                .extracting(GetOccurrenceDto::getId).containsExactly(1);
+        }
+
+        @Test
+        @DisplayName("visitante também não vê ocorrências anônimas na listagem")
+        void visitorDoesNotSeeAnonymous() {
+            GetOccurrenceDto anonima = occurrence(3, null);
+            anonima.setAnonymous(true);
+            when(occurrenceService.findAll())
+                .thenReturn(List.of(occurrence(1, "joao@email.com"), anonima));
+
+            assertThat(listAs(null)).extracting(GetOccurrenceDto::getId).containsExactly(1);
+        }
+
+        @Test
+        @DisplayName("administrador continua vendo as anônimas")
+        void administratorStillSeesAnonymous() {
+            GetOccurrenceDto anonima = occurrence(3, null);
+            anonima.setAnonymous(true);
+            when(occurrenceService.findAll()).thenReturn(List.of(anonima));
+
+            assertThat(listAs(authAs("admin@email.com", UserModel.UserRole.ADMINISTRATOR))).hasSize(1);
         }
 
         @Test

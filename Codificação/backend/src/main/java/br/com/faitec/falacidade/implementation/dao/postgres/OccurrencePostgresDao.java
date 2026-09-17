@@ -267,7 +267,10 @@ public class OccurrencePostgresDao implements OccurrenceDao {
         int gid = rs.getInt("group_id"); if (!rs.wasNull()) o.setGroupId(gid);
         o.setSupportCount(rs.getInt("support_count"));
         o.setEmail(rs.getString("user_email"));
-        o.setFullname(rs.getString("fullname"));
+        // users_id é ON DELETE SET NULL: se o autor apagou a conta, a ocorrência fica
+        // sem nome/e-mail. Identifica o autor perdido em vez de exibir um campo vazio.
+        String fullname = rs.getString("fullname");
+        o.setFullname(!o.isAnonymous() && fullname == null ? "Usuário Desconhecido" : fullname);
         Timestamp cat = rs.getTimestamp("created_at"); if (cat != null) o.setCreatedAt(cat.toLocalDateTime());
         Timestamp uat = rs.getTimestamp("updated_at"); if (uat != null) o.setUpdatedAt(uat.toLocalDateTime());
         return o;

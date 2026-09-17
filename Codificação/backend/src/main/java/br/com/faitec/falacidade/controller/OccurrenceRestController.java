@@ -96,10 +96,14 @@ public class OccurrenceRestController {
             @Valid @RequestBody CreateOccurrenceDto dto, HttpServletRequest request,
             Authentication auth) {
         // O autor vem sempre do token: o e-mail do corpo só sinaliza "quero me identificar"
-        // (em branco = anônima). Sem token a ocorrência é obrigatoriamente anônima — impede
-        // registrar ocorrência (e disparar e-mail) em nome de terceiros.
+        // (em branco = anônima) — impede registrar ocorrência (e disparar e-mail) em nome
+        // de terceiros. Pedir identificação sem token é sessão vencida: recusa em vez de
+        // rebaixar para anônima em silêncio e perder o autor.
         boolean identified = dto.getEmail() != null && !dto.getEmail().isBlank();
-        dto.setEmail(auth != null && identified ? auth.getName() : null);
+        if (identified && auth == null)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
+                "error", "Sua sessão expirou. Entre novamente para registrar a ocorrência em seu nome."));
+        dto.setEmail(identified ? auth.getName() : null);
         try {
             String clientIp = extractClientIp(request);
             CreateOccurrenceResponseDto response = occurrenceService.createOccurrence(dto.toOccurrence(), clientIp);
@@ -141,7 +145,11 @@ public class OccurrenceRestController {
             return ResponseEntity.ok(occurrenceService.findAllByCity(user != null ? user.getCity() : null));
         }
 
-        List<GetOccurrenceDto> all = occurrenceService.findAll();
+        // Cidadão e visitante não veem ocorrências anônimas na listagem: elas só são
+        // acessíveis pelo código de acompanhamento (GET /anonymous-status) ou pelo link direto.
+        List<GetOccurrenceDto> all = occurrenceService.findAll().stream()
+            .filter(o -> !o.isAnonymous())
+            .toList();
         all.forEach(o -> maskIfNotPrivileged(o, auth));
         return ResponseEntity.ok(all);
     }
