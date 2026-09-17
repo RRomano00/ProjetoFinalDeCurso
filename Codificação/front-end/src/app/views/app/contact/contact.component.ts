@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ContactService } from '../../../services/contact.service';
 import { ToastrService } from 'ngx-toastr';
+import { AuthenticationService } from '../../../services/security/authentication.service';
 
 @Component({
   selector: 'app-contact',
@@ -18,13 +19,14 @@ export class ContactComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private contactService: ContactService,
+    private auth: AuthenticationService,
     private toastr: ToastrService
   ) {}
 
   ngOnInit() {
     // Logado: nome/e-mail vêm da conta e não podem ser alterados.
     // Visitante (RF08): campos livres para ele se identificar.
-    const logged = !!localStorage.getItem('token');
+    const logged = this.auth.isAuthenticated();
     this.form = this.fb.group({
       name:    [{ value: localStorage.getItem('fullname') || '', disabled: logged }, [Validators.required, Validators.minLength(2)]],
       email:   [{ value: localStorage.getItem('email') || '', disabled: logged }, [Validators.required, Validators.email]],

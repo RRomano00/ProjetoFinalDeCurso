@@ -14,8 +14,7 @@ export const authenticationGuard: CanActivateFn = () => {
 /** RF a.8/b.1: a dashboard de estatísticas é da equipe (Funcionário/Administrador). */
 export const staffGuard: CanActivateFn = () => {
   const router = inject(Router);
-  const role   = localStorage.getItem('role');
-  if (role === 'EMPLOYEE' || role === 'ADMINISTRATOR') return true;
+  if (inject(AuthenticationService).isStaff()) return true;
   router.navigate(['/']);
   return false;
 };

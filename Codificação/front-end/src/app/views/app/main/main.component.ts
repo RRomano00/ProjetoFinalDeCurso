@@ -16,10 +16,10 @@ export class MainComponent implements OnInit {
   userMenuOpen = false;
 
   get isAdmin()   { return this.role === 'ADMINISTRATOR'; }
-  get isStaff()   { return this.role === 'EMPLOYEE' || this.role === 'ADMINISTRATOR'; }
-  get isCitizen() { return this.role === 'CITIZEN'; }
+  get isStaff()   { return this.auth.isStaff(); }
+  get isCitizen() { return this.auth.isCitizen(); }
   /** RF08/RF11: visitante sem conta (só leitura + ocorrência anônima). */
-  get isAnonymous() { return localStorage.getItem('anonymous') === 'true' && !localStorage.getItem('token'); }
+  get isAnonymous() { return this.auth.isAnonymous(); }
 
   get roleLabel(): string {
     const map: Record<string, string> = {
@@ -31,11 +31,11 @@ export class MainComponent implements OnInit {
     return map[this.role] || this.role;
   }
 
-  constructor(private auth: AuthenticationService, private router: Router) {}
+  constructor(public auth: AuthenticationService, private router: Router) {}
 
   ngOnInit() {
     this.fullname = localStorage.getItem('fullname') || (this.isAnonymous ? 'Visitante' : 'Usuário');
-    this.role     = localStorage.getItem('role')     || (this.isAnonymous ? 'ANONYMOUS' : '');
+    this.role     = this.auth.role() || (this.isAnonymous ? 'ANONYMOUS' : '');
     // No celular a sidebar começa recolhida (só ícones); no desktop, expandida.
     this.sidebarCollapsed = window.innerWidth <= 480;
   }
