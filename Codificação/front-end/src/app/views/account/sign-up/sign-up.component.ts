@@ -76,7 +76,9 @@ export class SignUpComponent {
       },
       error: (err) => {
         this.loading = false;
-        if (err.status === 400) {
+        if (err.status === 409) {
+          this.toastr.error(err.error?.error || 'Este e-mail já está cadastrado.');
+        } else if (err.status === 400) {
           this.toastr.error('Verifique os dados informados. A senha deve ter 8+ caracteres, letra, número e caractere especial.');
         } else {
           this.toastr.error('Erro ao criar conta. Tente novamente.');

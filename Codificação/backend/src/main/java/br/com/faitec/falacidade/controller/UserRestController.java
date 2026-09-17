@@ -9,6 +9,7 @@ import br.com.faitec.falacidade.port.service.mfa.MfaService;
 import br.com.faitec.falacidade.port.service.password.PasswordResetService;
 import br.com.faitec.falacidade.port.service.user.UserService;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -38,9 +39,11 @@ public class UserRestController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<Void> register(@Valid @RequestBody RegisterUserDto dto) {
+    public ResponseEntity<?> register(@Valid @RequestBody RegisterUserDto dto) {
         UserModel entity = dto.toUserModel();
-        int id = userService.create(entity);
+        int id;
+        try { id = userService.create(entity); }
+        catch (IllegalStateException e) { return conflict(e); }
         if (id < 0) return ResponseEntity.badRequest().build();
         try { emailService.sendWelcomeEmail(entity.getEmail(), entity.getFullname()); }
         catch (Exception ignored) {}
@@ -50,11 +53,13 @@ public class UserRestController {
     }
 
     @PostMapping("/employee")
-    public ResponseEntity<Void> createStaff(@Valid @RequestBody CreateEmployeeDto dto) {
+    public ResponseEntity<?> createStaff(@Valid @RequestBody CreateEmployeeDto dto) {
         UserModel entity;
         try { entity = dto.toUserModel(); }
         catch (IllegalArgumentException e) { return ResponseEntity.badRequest().build(); }
-        int id = userService.create(entity);
+        int id;
+        try { id = userService.create(entity); }
+        catch (IllegalStateException e) { return conflict(e); }
         if (id < 0) return ResponseEntity.badRequest().build();
         // Mesmo tratamento do /register: a falha no e-mail não desfaz o cadastro.
         try {
@@ -64,6 +69,12 @@ public class UserRestController {
         URI uri = ServletUriComponentsBuilder
             .fromCurrentRequest().replacePath("/api/user/{id}").buildAndExpand(id).toUri();
         return ResponseEntity.created(uri).build();
+    }
+
+    /** E-mail duplicado: 409 com o motivo, para a tela dizer o que houve. */
+    private ResponseEntity<java.util.Map<String, String>> conflict(IllegalStateException e) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+            .body(java.util.Map.of("error", e.getMessage()));
     }
 
     /** RF15: lista todos os usuários (inclusive inativos) — restrito ao Administrador. */

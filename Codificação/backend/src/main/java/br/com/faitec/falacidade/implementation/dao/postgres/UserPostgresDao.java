@@ -54,6 +54,9 @@ public class UserPostgresDao implements UserDao {
             }
         } catch (SQLException e) {
             rollback();
+            // 23505 = unique_violation; o único índice único de users é o do e-mail.
+            if ("23505".equals(e.getSQLState()))
+                throw new IllegalStateException("Este e-mail já está cadastrado.", e);
             throw new RuntimeException("Erro ao inserir usuário: " + e.getMessage(), e);
         } finally {
             restoreAutoCommit();

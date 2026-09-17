@@ -91,7 +91,7 @@ export class UserAddComponent implements OnInit {
     }).subscribe({
       next: () => {
         this.loading = false;
-        this.toastr.success('Usuário criado! No primeiro login, ele deverá configurar o 2FA.');
+        this.toastr.success('Usuário criado! No primeiro login, ele recebe um código de 2FA por e-mail.');
         this.form.reset({ role: 'EMPLOYEE' });
         this.router.navigate(['/']);
       },
@@ -101,6 +101,8 @@ export class UserAddComponent implements OnInit {
           this.toastr.error('Sem permissão. Apenas administradores podem criar funcionários.');
         } else if (err.status === 400) {
           this.toastr.error('Dados inválidos. Senha deve ter 8+ caracteres, letra, número e especial.');
+        } else if (err.status === 409) {
+          this.toastr.error(err.error?.error || 'Este e-mail já está cadastrado.');
         } else {
           this.toastr.error('Erro ao criar usuário. Tente novamente.');
         }
