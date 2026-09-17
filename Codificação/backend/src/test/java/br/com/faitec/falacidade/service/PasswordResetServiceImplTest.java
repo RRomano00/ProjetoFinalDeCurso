@@ -3,6 +3,7 @@ package br.com.faitec.falacidade.service;
 import br.com.faitec.falacidade.domain.PasswordResetToken;
 import br.com.faitec.falacidade.domain.UserModel;
 import br.com.faitec.falacidade.implementation.service.password.PasswordResetServiceImpl;
+import br.com.faitec.falacidade.implementation.service.tracking.AnonymousTrackingCodeService;
 import br.com.faitec.falacidade.port.dao.password.PasswordResetTokenDao;
 import br.com.faitec.falacidade.port.service.email.EmailService;
 import br.com.faitec.falacidade.port.service.user.UserService;
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -33,13 +35,13 @@ class PasswordResetServiceImplTest {
     @Mock PasswordResetTokenDao tokenDao;
     @Mock EmailService emailService;
     @Mock PasswordEncoder passwordEncoder;
+    @Spy  AnonymousTrackingCodeService codeService = new AnonymousTrackingCodeService();
 
     @InjectMocks
     PasswordResetServiceImpl sut;
 
     @BeforeEach
     void injectProperties() {
-        ReflectionTestUtils.setField(sut, "baseUrl", "http://localhost:8080");
         ReflectionTestUtils.setField(sut, "expirationMinutes", 30);
     }
 
@@ -59,7 +61,7 @@ class PasswordResetServiceImplTest {
         PasswordResetToken t = new PasswordResetToken();
         t.setId(1);
         t.setUserId(userId);
-        t.setToken("uuid-token-123");
+        t.setToken("A3KP7NB2");
         t.setExpiresAt(LocalDateTime.now().plusMinutes(30));
         t.setUsed(false);
         return t;
@@ -105,13 +107,13 @@ class PasswordResetServiceImplTest {
             assertThat(saved.getToken()).isNotBlank();
             assertThat(saved.getExpiresAt()).isAfter(LocalDateTime.now());
 
-            // Deve enviar e-mail com link contendo o token
-            ArgumentCaptor<String> linkCaptor = ArgumentCaptor.forClass(String.class);
+            // Deve enviar por e-mail o mesmo código que a tela pede de volta
+            ArgumentCaptor<String> codeCaptor = ArgumentCaptor.forClass(String.class);
             verify(emailService).sendPasswordResetEmail(
-                eq("joao@email.com"), linkCaptor.capture());
-            assertThat(linkCaptor.getValue())
-                .startsWith("http://localhost:8080/redefinir-senha?token=")
-                .contains(saved.getToken());
+                eq("joao@email.com"), codeCaptor.capture());
+            assertThat(codeCaptor.getValue())
+                .isEqualTo(saved.getToken())
+                .matches("[A-Z2-9]{8}");
         }
 
         @Test
@@ -126,7 +128,7 @@ class PasswordResetServiceImplTest {
         }
 
         @Test
-        @DisplayName("token gerado deve ser único (UUID)")
+        @DisplayName("código gerado deve ser diferente a cada pedido")
         void tokenIsUnique() {
             when(userService.findByEmail("a@b.com")).thenReturn(user(1, "a@b.com"));
 
@@ -154,63 +156,73 @@ class PasswordResetServiceImplTest {
         @Test
         @DisplayName("altera senha e marca token como usado quando tudo está válido")
         void success() {
-            when(tokenDao.findByToken("uuid-token-123")).thenReturn(validToken(1));
+            when(tokenDao.findByToken("A3KP7NB2")).thenReturn(validToken(1));
             when(passwordEncoder.encode("Nova@Senha9")).thenReturn("$2a$ENCODED");
             when(userService.updatePasswordEncoded(1, "$2a$ENCODED")).thenReturn(true);
 
-            boolean result = sut.confirmReset("uuid-token-123", "Nova@Senha9");
+            boolean result = sut.confirmReset("A3KP7NB2", "Nova@Senha9");
 
             assertThat(result).isTrue();
             verify(tokenDao).markUsed(1);
         }
 
         @Test
+        @DisplayName("código digitado com espaço e em minúsculas continua valendo")
+        void normalizesTypedCode() {
+            when(tokenDao.findByToken("A3KP7NB2")).thenReturn(validToken(1));
+            when(passwordEncoder.encode("Nova@Senha9")).thenReturn("$2a$ENCODED");
+            when(userService.updatePasswordEncoded(1, "$2a$ENCODED")).thenReturn(true);
+
+            assertThat(sut.confirmReset("  a3kp7nb2 ", "Nova@Senha9")).isTrue();
+        }
+
+        @Test
         @DisplayName("token inexistente → retorna false")
         void tokenNotFound() {
-            when(tokenDao.findByToken("invalido")).thenReturn(null);
-            assertThat(sut.confirmReset("invalido", "Nova@Senha9")).isFalse();
+            when(tokenDao.findByToken("INVALIDO")).thenReturn(null);
+            assertThat(sut.confirmReset("INVALIDO", "Nova@Senha9")).isFalse();
             verify(tokenDao, never()).markUsed(anyInt());
         }
 
         @Test
         @DisplayName("token expirado → retorna false")
         void expiredTokenReturnsFalse() {
-            when(tokenDao.findByToken("uuid-token-123")).thenReturn(expiredToken(1));
-            assertThat(sut.confirmReset("uuid-token-123", "Nova@Senha9")).isFalse();
+            when(tokenDao.findByToken("A3KP7NB2")).thenReturn(expiredToken(1));
+            assertThat(sut.confirmReset("A3KP7NB2", "Nova@Senha9")).isFalse();
             verify(tokenDao, never()).markUsed(anyInt());
         }
 
         @Test
         @DisplayName("token já usado → retorna false")
         void usedTokenReturnsFalse() {
-            when(tokenDao.findByToken("uuid-token-123")).thenReturn(usedToken(1));
-            assertThat(sut.confirmReset("uuid-token-123", "Nova@Senha9")).isFalse();
+            when(tokenDao.findByToken("A3KP7NB2")).thenReturn(usedToken(1));
+            assertThat(sut.confirmReset("A3KP7NB2", "Nova@Senha9")).isFalse();
             verify(tokenDao, never()).markUsed(anyInt());
         }
 
         @Test
         @DisplayName("nova senha sem caractere especial → retorna false")
         void invalidPassword() {
-            when(tokenDao.findByToken("uuid-token-123")).thenReturn(validToken(1));
-            assertThat(sut.confirmReset("uuid-token-123", "SenhaSemEspecial1")).isFalse();
+            when(tokenDao.findByToken("A3KP7NB2")).thenReturn(validToken(1));
+            assertThat(sut.confirmReset("A3KP7NB2", "SenhaSemEspecial1")).isFalse();
             verifyNoInteractions(passwordEncoder, userService);
         }
 
         @Test
         @DisplayName("nova senha menor que 8 chars → retorna false")
         void shortPassword() {
-            when(tokenDao.findByToken("uuid-token-123")).thenReturn(validToken(1));
-            assertThat(sut.confirmReset("uuid-token-123", "Ab@1")).isFalse();
+            when(tokenDao.findByToken("A3KP7NB2")).thenReturn(validToken(1));
+            assertThat(sut.confirmReset("A3KP7NB2", "Ab@1")).isFalse();
         }
 
         @Test
         @DisplayName("quando updatePasswordEncoded falha → não marca token como usado")
         void doesNotMarkUsedIfUpdateFails() {
-            when(tokenDao.findByToken("uuid-token-123")).thenReturn(validToken(1));
+            when(tokenDao.findByToken("A3KP7NB2")).thenReturn(validToken(1));
             when(passwordEncoder.encode(anyString())).thenReturn("$2a$ENCODED");
             when(userService.updatePasswordEncoded(1, "$2a$ENCODED")).thenReturn(false);
 
-            boolean result = sut.confirmReset("uuid-token-123", "Nova@Senha9");
+            boolean result = sut.confirmReset("A3KP7NB2", "Nova@Senha9");
 
             assertThat(result).isFalse();
             verify(tokenDao, never()).markUsed(anyInt());

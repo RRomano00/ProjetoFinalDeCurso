@@ -2,6 +2,7 @@ package br.com.faitec.falacidade.implementation.service.password;
 
 import br.com.faitec.falacidade.domain.PasswordResetToken;
 import br.com.faitec.falacidade.domain.UserModel;
+import br.com.faitec.falacidade.implementation.service.tracking.AnonymousTrackingCodeService;
 import br.com.faitec.falacidade.port.dao.password.PasswordResetTokenDao;
 import br.com.faitec.falacidade.port.service.email.EmailService;
 import br.com.faitec.falacidade.port.service.password.PasswordResetService;
@@ -11,7 +12,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Service
 public class PasswordResetServiceImpl implements PasswordResetService {
@@ -20,9 +20,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     private final PasswordResetTokenDao tokenDao;
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
-
-    @Value("${app.base-url}")
-    private String baseUrl;
+    private final AnonymousTrackingCodeService codeService;
 
     @Value("${app.password-reset.expiration-minutes:30}")
     private int expirationMinutes;
@@ -30,11 +28,13 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     public PasswordResetServiceImpl(UserService userService,
                                     PasswordResetTokenDao tokenDao,
                                     EmailService emailService,
-                                    PasswordEncoder passwordEncoder) {
+                                    PasswordEncoder passwordEncoder,
+                                    AnonymousTrackingCodeService codeService) {
         this.userService = userService;
         this.tokenDao = tokenDao;
         this.emailService = emailService;
         this.passwordEncoder = passwordEncoder;
+        this.codeService = codeService;
     }
 
     @Override
@@ -46,8 +46,10 @@ public class PasswordResetServiceImpl implements PasswordResetService {
         // Limpa tokens antigos deste usuário
         tokenDao.deleteExpiredByUserId(user.getId());
 
-        // Gera token seguro (UUID)
-        String rawToken = UUID.randomUUID().toString();
+        // Código curto de 8 chars (o mesmo gerador do rastreamento anônimo): é isso
+        // que a pessoa digita de volta na tela. Um link para localhost não abre em
+        // lugar nenhum e ainda cheira a phishing para o filtro de spam.
+        String rawToken = codeService.generateCode();
 
         PasswordResetToken token = new PasswordResetToken();
         token.setUserId(user.getId());
@@ -56,13 +58,14 @@ public class PasswordResetServiceImpl implements PasswordResetService {
 
         tokenDao.save(token);
 
-        String resetLink = baseUrl + "/redefinir-senha?token=" + rawToken;
-        emailService.sendPasswordResetEmail(email, resetLink);
+        emailService.sendPasswordResetEmail(email, rawToken);
     }
 
     @Override
     public boolean confirmReset(String rawToken, String newPassword) {
-        PasswordResetToken token = tokenDao.findByToken(rawToken);
+        if (rawToken == null) return false;
+        // Código digitado à mão: espaço nas pontas e minúsculas não podem reprovar.
+        PasswordResetToken token = tokenDao.findByToken(rawToken.trim().toUpperCase());
 
         if (token == null || token.isExpired() || token.isUsed()) {
             return false;

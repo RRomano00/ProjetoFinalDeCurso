@@ -33,38 +33,38 @@ public class EmailServiceImpl implements EmailService {
         this.mailSender = mailSender;
     }
 
-    /** E-mail de recuperação de senha com link/botão (válido por 30 min). */
+    /** Código de recuperação de senha (válido por 30 min). */
     @Override
     @Async("emailExecutor")
-    public void sendPasswordResetEmail(String toEmail, String resetLink) {
+    public void sendPasswordResetEmail(String toEmail, String code) {
         String text =
             "Olá!\n\n" +
             "Recebemos uma solicitação para redefinir sua senha.\n\n" +
-            "Acesse o link abaixo para criar uma nova senha (válido por 30 minutos):\n" +
-            resetLink + "\n\n" +
+            "Seu código de recuperação é: " + code + "\n\n" +
+            "Informe esse código na tela \"Esqueci minha senha\" do aplicativo. " +
+            "Ele é válido por 30 minutos.\n\n" +
             "Se você não solicitou a redefinição, ignore este e-mail.";
 
         String content =
             "<h2 style='margin:0 0 16px; font-size:20px; color:#111;'>Recuperação de senha</h2>" +
             "<p style='font-size:15px; color:#333;'>Olá!</p>" +
-            "<p style='font-size:15px; color:#333;'>Recebemos uma solicitação para redefinir sua senha. " +
-            "Clique no botão abaixo para criar uma nova senha. O link é válido por <strong>30 minutos</strong>.</p>" +
-            "<div style='text-align:center; margin:28px 0;'>" +
-            "  <a href='" + resetLink + "' style='background:" + BRAND_COLOR + "; color:#fff; padding:14px 28px;" +
-            "     border-radius:6px; text-decoration:none; font-size:16px; font-weight:bold; display:inline-block;'>" +
-            "    Redefinir Senha</a>" +
+            "<p style='font-size:15px; color:#333;'>Use o código abaixo na tela " +
+            "<strong>Esqueci minha senha</strong> para criar uma nova senha:</p>" +
+            "<div style='font-size:30px; font-weight:bold; letter-spacing:6px; color:" + BRAND_COLOR + ";" +
+            "            background:#eef4fb; border-radius:8px; padding:16px; margin:20px 0; text-align:center;'>" +
+                 code +
             "</div>" +
-            "<p style='font-size:13px; color:#777;'>Se o botão não funcionar, copie e cole este link no navegador:<br>" +
-            "  <a href='" + resetLink + "' style='color:" + BRAND_COLOR + "; word-break:break-all;'>" + resetLink + "</a></p>" +
+            "<p style='font-size:13px; color:#777;'>Válido por 30 minutos.</p>" +
             "<p style='font-size:12px; color:#aaa;'>Se você não solicitou a redefinição, ignore este e-mail. " +
             "Sua senha permanece a mesma.</p>";
 
-        send(toEmail, null, "Fala, Cidade! – Recuperação de Senha", withFooter(text), layout(content),
+        send(toEmail, null, "Fala, Cidade! – Código de Recuperação de Senha", withFooter(text), layout(content),
              "Falha ao enviar e-mail de recuperação de senha");
     }
 
     /** Código de verificação do login em duas etapas (válido por 10 min). */
     @Override
+    @Async("emailExecutor")
     public void sendMfaCodeEmail(String toEmail, String code) {
         String text =
             "Seu código de verificação é: " + code + "\n\n" +
@@ -86,6 +86,7 @@ public class EmailServiceImpl implements EmailService {
 
     /** Código para confirmar a desativação do MFA (com alerta de segurança). */
     @Override
+    @Async("emailExecutor")
     public void sendMfaDeactivationEmail(String toEmail, String code) {
         String text =
             "Seu código para desativar a verificação em duas etapas é: " + code + "\n\n" +

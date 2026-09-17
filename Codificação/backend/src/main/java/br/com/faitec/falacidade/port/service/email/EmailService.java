@@ -3,7 +3,8 @@ package br.com.faitec.falacidade.port.service.email;
 import br.com.faitec.falacidade.domain.UserModel;
 
 public interface EmailService {
-    void sendPasswordResetEmail(String toEmail, String resetLink);
+    /** Envia o código de recuperação de senha (o mesmo que a tela pede de volta). */
+    void sendPasswordResetEmail(String toEmail, String code);
     void sendWelcomeEmail(String toEmail, String fullname);
 
     /**
