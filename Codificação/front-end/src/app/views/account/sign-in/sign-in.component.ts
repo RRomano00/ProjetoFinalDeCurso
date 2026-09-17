@@ -5,7 +5,7 @@ import { CommonModule } from '@angular/common';
 import { AuthenticationService } from '../../../services/security/authentication.service';
 import { ToastrService } from 'ngx-toastr';
 
-type LoginStep = 'credentials' | 'mfa-select' | 'mfa-verify' | 'mfa-setup' | 'mfa-confirm';
+type LoginStep = 'credentials' | 'mfa-select' | 'mfa-verify';
 type MfaMethod = 'APP' | 'EMAIL';
 
 @Component({
@@ -36,11 +36,6 @@ export class SignInComponent implements OnInit, OnDestroy {
   // Reenvio de código por e-mail (habilita após 15s)
   resendCountdown = 0;
   private resendTimer?: any;
-
-  // Setup QR Code
-  qrCodeUri    = '';
-  secret       = '';
-  qrCodeImgUrl = '';
 
   constructor(
     private router: Router,
@@ -74,8 +69,6 @@ export class SignInComponent implements OnInit, OnDestroy {
 
         this.mfaToken = res.mfaToken;
 
-        if (res.requiresMfaSetup) { this.loadMfaSetup(); return; }
-
         if (res.requiresMfa) {
           this.mfaAppAvailable   = !!res.mfaAppAvailable;
           this.mfaEmailAvailable = !!res.mfaEmailAvailable;
@@ -107,18 +100,24 @@ export class SignInComponent implements OnInit, OnDestroy {
   // ── Seleção de método (quando há app E e-mail) ───────────────────────────
 
   chooseMethod(method: MfaMethod) {
+    if (this.loading) return;   // o envio já está em curso: um 2º clique invalidaria o código
     this.mfaMethod = method;
     this.mfaError = false;
     this.totpCode.reset();
 
     if (method === 'EMAIL') {
+      this.loading = true;
       this.auth.sendEmailCode(this.mfaToken).subscribe({
         next: () => {
+          this.loading = false;
           this.toastr.info('Enviamos um código para o seu e-mail.');
           this.step = 'mfa-verify';
           this.startResendCountdown();
         },
-        error: () => this.toastr.error('Não foi possível enviar o código por e-mail.')
+        error: () => {
+          this.loading = false;
+          this.toastr.error('Não foi possível enviar o código por e-mail.');
+        }
       });
     } else {
       this.step = 'mfa-verify';
@@ -178,48 +177,14 @@ export class SignInComponent implements OnInit, OnDestroy {
     this.resendCountdown = 0;
   }
 
-  // ── STEP setup: Carregar QR Code ─────────────────────────────────────────
-
-  private loadMfaSetup() {
-    this.auth.setupMfa(this.mfaToken).subscribe({
-      next: (res: any) => {
-        this.qrCodeUri   = res.qrCodeUri;
-        this.secret      = res.secret;
-        this.mfaToken    = res.mfaToken;
-        this.qrCodeImgUrl =
-          'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' +
-          encodeURIComponent(res.qrCodeUri);
-        this.step = 'mfa-setup';
-      },
-      error: () => this.toastr.error('Erro ao carregar configuração 2FA. Tente novamente.')
-    });
-  }
-
-  continueToConfirm() {
-    this.step = 'mfa-confirm';
-    this.totpCode.reset();
-  }
-
-  confirmSetup() {
-    if (this.totpCode.invalid) return;
-    this.mfaError = false;
-    this.loading  = true;
-    this.auth.confirmMfaSetup(this.mfaToken, this.totpCode.value!).subscribe({
-      next: (res: any) => { this.loading = false; this.finishLogin(res.token); },
-      error: () => {
-        this.loading  = false;
-        this.mfaError = true;
-        this.toastr.error('Código inválido. Verifique o app autenticador.');
-      }
-    });
-  }
-
   // ── Finalizar login ──────────────────────────────────────────────────────
 
   private finishLogin(token: string) {
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
-      this.auth.saveSession(token, payload.email, payload.fullname, payload.role);
+      // O id vem do token: sem ele a tela Meu Perfil não carrega nem salva nada.
+      this.auth.saveSession(token, payload.email, payload.fullname, payload.role,
+                            payload.id != null ? String(payload.id) : undefined);
       this.toastr.success('Login efetuado com sucesso!');
       this.router.navigate(['']);
     } catch {

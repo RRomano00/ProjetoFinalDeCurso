@@ -60,8 +60,11 @@ public class JwtService {
     }
 
     public String generateToken(UserDetails userDetails, String fullname,
-                                 UserModel.UserRole role, String email) {
+                                 UserModel.UserRole role, String email, int id) {
         Map<String, Object> claims = new HashMap<>();
+        // O id vai no token porque a tela Meu Perfil precisa dele para carregar e
+        // salvar os próprios dados (GET/PUT /api/user/{id}).
+        claims.put("id",       id);
         claims.put("email",    email);
         claims.put("fullname", fullname);
         claims.put("role",     role.name());

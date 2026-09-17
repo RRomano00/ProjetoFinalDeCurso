@@ -35,7 +35,8 @@ class JwtServiceTest {
             userDetails,
             "João Silva",
             UserModel.UserRole.CITIZEN,
-            "joao@email.com"
+            "joao@email.com",
+            42
         );
     }
 
@@ -65,7 +66,7 @@ class JwtServiceTest {
             // O 'iat' do JWT tem precisão de segundos — espera > 1s garante timestamps distintos
             Thread.sleep(1100);
             String token2 = sut.generateToken(
-                userDetails, "João Silva", UserModel.UserRole.CITIZEN, "joao@email.com");
+                userDetails, "João Silva", UserModel.UserRole.CITIZEN, "joao@email.com", 42);
             assertThat(token).isNotEqualTo(token2);
         }
     }
@@ -159,6 +160,13 @@ class JwtServiceTest {
     @Nested
     @DisplayName("Claims customizados")
     class CustomClaims {
+
+        @Test
+        @DisplayName("claim 'id' está no token — a tela Meu Perfil depende dele")
+        void idClaim() {
+            Integer id = sut.getClaimFromToken(token, claims -> claims.get("id", Integer.class));
+            assertThat(id).isEqualTo(42);
+        }
 
         @Test
         @DisplayName("claim 'fullname' está no token")

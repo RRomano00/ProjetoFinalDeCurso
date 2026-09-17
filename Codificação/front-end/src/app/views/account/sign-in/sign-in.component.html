@@ -70,7 +70,7 @@
         <h2>Verificação em Duas Etapas</h2>
         <p>Como você quer receber/validar o código de verificação?</p>
 
-        <button (click)="chooseMethod('APP')" class="btn-method">
+        <button (click)="chooseMethod('APP')" [disabled]="loading" class="btn-method">
           <span class="btn-method-icon">📱</span>
           <span class="btn-method-text">
             <strong>Aplicativo autenticador</strong>
@@ -78,11 +78,11 @@
           </span>
         </button>
 
-        <button (click)="chooseMethod('EMAIL')" class="btn-method">
+        <button (click)="chooseMethod('EMAIL')" [disabled]="loading" class="btn-method">
           <span class="btn-method-icon">✉️</span>
           <span class="btn-method-text">
             <strong>E-mail</strong>
-            <small>Enviaremos um código para o seu e-mail</small>
+            <small>{{ loading ? 'Enviando o código...' : 'Enviaremos um código para o seu e-mail' }}</small>
           </span>
         </button>
 
@@ -120,60 +120,6 @@
         </button>
 
         <button (click)="backToLogin()" class="btn-link-back">← Voltar para o login</button>
-      </div>
-    }
-
-    <!-- ── STEP 2b: Setup obrigatório — QR Code ── -->
-    @if (step === 'mfa-setup') {
-      <div class="mfa-section">
-        <div class="mfa-icon">📱</div>
-        <h2>Configure o Autenticador</h2>
-        <p>
-          Sua conta requer autenticação em dois fatores. Abra o
-          <strong>Google Authenticator</strong> ou <strong>Authy</strong>
-          e escaneie o QR Code abaixo.
-        </p>
-
-        <div class="qr-container">
-          <img [src]="qrCodeImgUrl" alt="QR Code para Google Authenticator" class="qr-code" />
-        </div>
-
-        <details class="manual-entry">
-          <summary>Não consigo escanear o QR Code</summary>
-          <p>Digite esta chave manualmente no aplicativo:</p>
-          <code class="secret-key">{{ secret }}</code>
-        </details>
-
-        <button (click)="continueToConfirm()" class="btn-primary btn-full">
-          Já escaneei — Continuar
-        </button>
-      </div>
-    }
-
-    <!-- ── STEP 3: Confirmar primeiro código ── -->
-    @if (step === 'mfa-confirm') {
-      <div class="mfa-section">
-        <div class="mfa-icon">✅</div>
-        <h2>Confirme o Código</h2>
-        <p>
-          Digite o código de 6 dígitos que o aplicativo mostrou
-          após escanear o QR Code para ativar o 2FA.
-        </p>
-
-        <p *ngIf="mfaError" class="error-msg">
-          Código inválido. Verifique o app autenticador.
-        </p>
-
-        <div class="field-group">
-          <label>Código TOTP</label>
-          <input type="text" [formControl]="totpCode"
-            placeholder="000000" maxlength="6"
-            inputmode="numeric" class="totp-input" />
-        </div>
-
-        <button (click)="confirmSetup()" [disabled]="loading || totpCode.invalid" class="btn-primary btn-full">
-          {{ loading ? 'Ativando...' : 'Ativar 2FA e Entrar' }}
-        </button>
       </div>
     }
 

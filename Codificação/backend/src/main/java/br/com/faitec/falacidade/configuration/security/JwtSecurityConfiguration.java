@@ -84,8 +84,6 @@ public class JwtSecurityConfiguration {
                 .requestMatchers(HttpMethod.POST, "/api/authenticate").permitAll()
                 .requestMatchers(HttpMethod.POST,
                     "/api/authenticate/mfa",
-                    "/api/authenticate/mfa/setup",
-                    "/api/authenticate/mfa/confirm",
                     "/api/authenticate/mfa/send-email").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/user/register").permitAll()
                 .requestMatchers(HttpMethod.POST,

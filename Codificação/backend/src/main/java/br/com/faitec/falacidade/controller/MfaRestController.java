@@ -38,7 +38,7 @@ public class MfaRestController {
         if (user == null) return ResponseEntity.status(401).build();
         if (user.isMfaSetupDone()) return ResponseEntity.badRequest().build();
         MfaSetupResponseDto s = mfaService.generateSetup(user.getId(), user.getEmail());
-        return ResponseEntity.ok(new MfaSetupResponseDto(s.getQrCodeUri(), s.getSecret(), null, s.getMessage()));
+        return ResponseEntity.ok(new MfaSetupResponseDto(s.getQrCodeUri(), s.getSecret(), s.getMessage()));
     }
 
     @PostMapping("/confirm")
