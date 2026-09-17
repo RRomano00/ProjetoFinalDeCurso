@@ -6,17 +6,17 @@
 #
 # Personalizacao (variaveis de ambiente, ou edite os defaults abaixo):
 #   PORTA=8081 ./subir.sh                          -> troca a porta local do front
-#   DOMINIO=falacidade.ngrok-free.app ./subir.sh --celular
-#       -> endereco FIXO no celular via ngrok (free da 1 dominio permanente).
-#          Setup unico: instale o ngrok, `ngrok config add-authtoken <seu-token>`,
-#          e reserve o dominio em dashboard.ngrok.com > Domains.
-#          Sem DOMINIO (ou sem ngrok instalado) cai no cloudflared, com URL aleatoria.
+#   ./subir.sh --celular  -> ja usa o dominio fixo do ngrok reservado na conta
+#                            (veja DOMINIO abaixo); o tunel do backend segue no
+#                            cloudflared, com URL aleatoria injetada sozinha.
+#   DOMINIO= ./subir.sh --celular   -> forca cloudflared tambem no front
+#   DOMINIO=outro.ngrok-free.dev ./subir.sh --celular   -> troca o dominio
 set -euo pipefail
 cd "$(dirname "$0")"
 
 MODO=${1:-}
 PORTA=${PORTA:-4173}      # porta local do front
-DOMINIO=${DOMINIO:-}      # dominio ngrok fixo para o tunel do front (opcional)
+DOMINIO=${DOMINIO:-duration-dismiss-pacifist.ngrok-free.dev}   # dominio ngrok fixo do front
 FRONT=front-end
 ENV=$FRONT/src/environments/environment.ts
 DIST=$FRONT/dist/fala-cidade/browser

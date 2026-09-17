@@ -51,6 +51,7 @@ public class JwtSecurityConfiguration {
             "http://localhost:4173",
             "https://*.trycloudflare.com",
             "https://*.ngrok-free.app",
+            "https://*.ngrok-free.dev",
             "https://*.ngrok.io"
         ));
 

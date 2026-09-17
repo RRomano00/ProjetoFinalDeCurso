@@ -17,22 +17,24 @@ URL no `environment.ts`, roda o `npm run build`, serve o `dist` e abre o túnel 
 `Ctrl+C` derruba tudo e **restaura o `environment.ts` original**. Logs em `/tmp/falacidade/`.
 Se o backend já estiver rodando (IntelliJ), ele detecta e não sobe outro.
 
-**Endereço fixo no celular** (a URL do Cloudflare muda a cada execução):
+**Endereço do celular (fixo)** — `./subir.sh --celular` já abre o front no domínio
+reservado no ngrok, que não muda entre execuções:
 
-```bash
-DOMINIO=falacidade.ngrok-free.app ./subir.sh --celular
+```
+https://duration-dismiss-pacifist.ngrok-free.dev
 ```
 
-Setup uma vez só (nesta máquina os passos 1 e 2 já estão feitos):
-1. instalar o `ngrok` (`ngrok version` para conferir);
-2. `ngrok config add-authtoken <token>` — token em *dashboard.ngrok.com → Your Authtoken*;
-3. reservar o domínio em *dashboard.ngrok.com → Domains → New Domain*. O plano free dá
-   **1 domínio permanente** e é ele quem escolhe o nome (ex.: `fond-poodle-42.ngrok-free.app`).
+Ele está no alto do `subir.sh`, na variável `DOMINIO`. Para trocar, reserve outro em
+*dashboard.ngrok.com → Domains* (o plano free dá 1 domínio permanente e é ele quem
+escolhe o nome) e edite a linha — ou passe na hora: `DOMINIO=outro.ngrok-free.dev
+./subir.sh --celular`. Para voltar ao Cloudflare, com URL aleatória: `DOMINIO=
+./subir.sh --celular`.
 
 Na primeira visita o ngrok free mostra uma tela de aviso com o botão *Visit Site*; como o
 domínio é fixo, o cookie fica salvo e ela não volta a aparecer nesse navegador.
 Só o front usa domínio fixo — o túnel do backend continua aleatório, mas o script já o
-injeta sozinho no `environment.ts`. O CORS do backend já aceita `*.ngrok-free.app`.
+injeta sozinho no `environment.ts`. O CORS do backend aceita `*.ngrok-free.dev`,
+`*.ngrok-free.app` e `*.trycloudflare.com`.
 Outra porta local: `PORTA=8081 ./subir.sh`.
 
 Os passos manuais abaixo continuam válidos (Windows/IntelliJ, ou para depurar).
