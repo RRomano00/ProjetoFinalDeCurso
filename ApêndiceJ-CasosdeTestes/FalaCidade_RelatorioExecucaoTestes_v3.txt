@@ -1,0 +1,116 @@
+RELATÓRIO DE EXECUÇÃO DA BATERIA DE TESTES UNITÁRIOS AUTOMATIZADOS
+Projeto: Fala, Cidade! — Apêndice J (Casos de Testes)
+Componente: fala-cidade-api (back-end)
+Data da execução: 19/09/2026
+Ferramentas: JUnit 5 (Jupiter), Mockito, AssertJ, MockMvc, Apache Maven Surefire
+Apache Maven 3.9.9
+Plataforma: Java 21 (nível de compilação definido no pom.xml); execução em JDK 25.0.4.1
+Comando: mvn clean test
+
+RESULTADO CONSOLIDADO
+Casos de teste executados: 265
+Falhas: 0   Erros: 0   Ignorados: 0
+Classes e blocos aninhados de teste: 88 (23 classes de teste de primeiro nível)
+Tempo total de execução: 9.019 s
+Situação: APROVADO — todos os casos executados com êxito.
+
+Observação: a apuração exige a execução a partir da compilação integral do projeto
+(mvn clean test). A compilação incremental pode omitir classes de teste cujas
+dependências tenham sido alteradas, produzindo contagem inferior à real.
+
+DETALHAMENTO POR CLASSE / BLOCO ANINHADO
+Classe de teste                                                                             Testes  Falhas  Erros  Ign.  Tempo(s)
+---------------------------------------------------------------------------------------------------------------------------------
+br.com.faitec.falacidade.service.AnonymousTrackingCodeServiceTest                                0       0      0     0     0.164
+br.com.faitec.falacidade.service.AnonymousTrackingCodeServiceTest$GenerateCode                  13       0      0     0     0.134
+br.com.faitec.falacidade.service.AnonymousTrackingCodeServiceTest$Hash                           5       0      0     0     0.010
+br.com.faitec.falacidade.service.AnonymousTrackingCodeServiceTest$Matches                        7       0      0     0     0.015
+br.com.faitec.falacidade.service.CloudinaryMediaUploadServiceTest                                0       0      0     0     0.118
+br.com.faitec.falacidade.service.CloudinaryMediaUploadServiceTest$AsyncFlow                      8       0      0     0     0.088
+br.com.faitec.falacidade.service.CloudinaryMediaUploadServiceTest$UploadSync                     8       0      0     0     0.026
+br.com.faitec.falacidade.service.ContactMessagePostgresDaoTest                                   0       0      0     0     0.015
+br.com.faitec.falacidade.service.ContactMessagePostgresDaoTest$Save                              3       0      0     0     0.012
+br.com.faitec.falacidade.service.ContactServiceImplTest                                          3       0      0     0     0.066
+br.com.faitec.falacidade.service.CreateOccurrenceDtoTest                                         0       0      0     0     0.019
+br.com.faitec.falacidade.service.CreateOccurrenceDtoTest$Anonymous                               3       0      0     0     0.005
+br.com.faitec.falacidade.service.CreateOccurrenceDtoTest$FieldMapping                            1       0      0     0     0.005
+br.com.faitec.falacidade.service.CreateOccurrenceDtoTest$StatusAndPriority                       2       0      0     0     0.003
+br.com.faitec.falacidade.service.CustomUserDetailsServiceTest                                    0       0      0     0     0.105
+br.com.faitec.falacidade.service.CustomUserDetailsServiceTest$LoadUser                           8       0      0     0     0.102
+br.com.faitec.falacidade.service.DepartmentServiceImplTest                                       2       0      0     0     0.033
+br.com.faitec.falacidade.service.DepartmentServiceImplTest$Create                                7       0      0     0     0.006
+br.com.faitec.falacidade.service.EmailServiceImplTest                                            0       0      0     0     0.093
+br.com.faitec.falacidade.service.EmailServiceImplTest$SendReset                                  2       0      0     0     0.018
+br.com.faitec.falacidade.service.EmailServiceImplTest$SendStaffWelcome                           3       0      0     0     0.062
+br.com.faitec.falacidade.service.EmailServiceImplTest$SendWelcome                                1       0      0     0     0.009
+br.com.faitec.falacidade.service.JwtAuthenticationRestControllerMfaTest                          4       0      0     0     0.078
+br.com.faitec.falacidade.service.JwtAuthenticationServiceImplTest                                0       0      0     0     0.045
+br.com.faitec.falacidade.service.JwtAuthenticationServiceImplTest$Authenticate                   4       0      0     0     0.044
+br.com.faitec.falacidade.service.JwtServiceTest                                                  0       0      0     0     1.232
+br.com.faitec.falacidade.service.JwtServiceTest$CustomClaims                                     4       0      0     0     0.077
+br.com.faitec.falacidade.service.JwtServiceTest$GenerateToken                                    3       0      0     0     1.114
+br.com.faitec.falacidade.service.JwtServiceTest$GetEmail                                         2       0      0     0     0.014
+br.com.faitec.falacidade.service.JwtServiceTest$GetExpiration                                    2       0      0     0     0.009
+br.com.faitec.falacidade.service.JwtServiceTest$ValidToken                                       3       0      0     0     0.012
+br.com.faitec.falacidade.service.OccurrenceJurisdictionTest                                      8       0      0     0     0.017
+br.com.faitec.falacidade.service.OccurrencePriorityTest                                         14       0      0     0     0.027
+br.com.faitec.falacidade.service.OccurrenceRestControllerPublicTest                              0       0      0     0     0.707
+br.com.faitec.falacidade.service.OccurrenceRestControllerPublicTest$Authorship                   4       0      0     0     0.011
+br.com.faitec.falacidade.service.OccurrenceRestControllerPublicTest$DailyLimit                   1       0      0     0     0.005
+br.com.faitec.falacidade.service.OccurrenceRestControllerPublicTest$ListingScope                10       0      0     0     0.048
+br.com.faitec.falacidade.service.OccurrenceRestControllerPublicTest$MySupports                   3       0      0     0     0.623
+br.com.faitec.falacidade.service.OccurrenceRestControllerPublicTest$UploadLimits                 2       0      0     0     0.014
+br.com.faitec.falacidade.service.OccurrenceServiceImplTest                                       0       0      0     0     0.068
+br.com.faitec.falacidade.service.OccurrenceServiceImplTest$FindAll                               1       0      0     0     0.003
+br.com.faitec.falacidade.service.OccurrenceServiceImplTest$FindById                              2       0      0     0     0.005
+br.com.faitec.falacidade.service.OccurrenceServiceImplTest$FindByProtocol                        2       0      0     0     0.004
+br.com.faitec.falacidade.service.OccurrenceServiceImplTest$FindNearby                            2       0      0     0     0.004
+br.com.faitec.falacidade.service.OccurrenceServiceImplTest$Priority                              2       0      0     0     0.004
+br.com.faitec.falacidade.service.OccurrenceServiceImplTest$ScopedQueries                         4       0      0     0     0.008
+br.com.faitec.falacidade.service.OccurrenceServiceImplTest$SupportedIds                          2       0      0     0     0.004
+br.com.faitec.falacidade.service.OccurrenceServiceImplTest$ToConclude                            2       0      0     0     0.004
+br.com.faitec.falacidade.service.OccurrenceServiceImplTest$ToInProgress                          2       0      0     0     0.003
+br.com.faitec.falacidade.service.OccurrenceServiceImplTest$Unsupport                             4       0      0     0     0.010
+br.com.faitec.falacidade.service.OccurrenceServiceImplTest$UpdateStatus                          4       0      0     0     0.009
+br.com.faitec.falacidade.service.OccurrenceServiceImplWithTrackingTest                           0       0      0     0     0.226
+br.com.faitec.falacidade.service.OccurrenceServiceImplWithTrackingTest$CreateAnonymous           4       0      0     0     0.020
+br.com.faitec.falacidade.service.OccurrenceServiceImplWithTrackingTest$CreateIdentified          3       0      0     0     0.017
+br.com.faitec.falacidade.service.OccurrenceServiceImplWithTrackingTest$CreateValidations         3       0      0     0     0.008
+br.com.faitec.falacidade.service.OccurrenceServiceImplWithTrackingTest$FindByTrackingCode        5       0      0     0     0.011
+br.com.faitec.falacidade.service.OccurrenceServiceImplWithTrackingTest$ForwardToDepartment       4       0      0     0     0.148
+br.com.faitec.falacidade.service.OccurrenceServiceImplWithTrackingTest$RateLimiting              3       0      0     0     0.010
+br.com.faitec.falacidade.service.PasswordResetServiceImplTest                                    0       0      0     0     0.052
+br.com.faitec.falacidade.service.PasswordResetServiceImplTest$ConfirmReset                       8       0      0     0     0.036
+br.com.faitec.falacidade.service.PasswordResetServiceImplTest$RequestReset                       3       0      0     0     0.014
+br.com.faitec.falacidade.service.PasswordResetTokenPostgresDaoTest                               0       0      0     0     1.092
+br.com.faitec.falacidade.service.PasswordResetTokenPostgresDaoTest$DeleteExpired                 2       0      0     0     1.018
+br.com.faitec.falacidade.service.PasswordResetTokenPostgresDaoTest$FindByToken                   4       0      0     0     0.021
+br.com.faitec.falacidade.service.PasswordResetTokenPostgresDaoTest$MarkUsed                      2       0      0     0     0.009
+br.com.faitec.falacidade.service.PasswordResetTokenPostgresDaoTest$Save                          2       0      0     0     0.015
+br.com.faitec.falacidade.service.ResourceFileServiceImplTest                                     4       0      0     0     0.030
+br.com.faitec.falacidade.service.UploadStatusTest                                                6       0      0     0     0.002
+br.com.faitec.falacidade.service.UserAdministrationScopeTest                                     0       0      0     0     0.248
+br.com.faitec.falacidade.service.UserAdministrationScopeTest$Alcance                             5       0      0     0     0.190
+br.com.faitec.falacidade.service.UserAdministrationScopeTest$Criacao                             6       0      0     0     0.053
+br.com.faitec.falacidade.service.UserPostgresDaoTest                                             0       0      0     0     0.145
+br.com.faitec.falacidade.service.UserPostgresDaoTest$Add                                         2       0      0     0     0.014
+br.com.faitec.falacidade.service.UserPostgresDaoTest$AutoCommitState                             2       0      0     0     0.015
+br.com.faitec.falacidade.service.UserPostgresDaoTest$ReadByEmail                                 1       0      0     0     0.007
+br.com.faitec.falacidade.service.UserPostgresDaoTest$ReadById                                    3       0      0     0     0.030
+br.com.faitec.falacidade.service.UserPostgresDaoTest$Readall                                     1       0      0     0     0.005
+br.com.faitec.falacidade.service.UserPostgresDaoTest$Remove                                      2       0      0     0     0.038
+br.com.faitec.falacidade.service.UserPostgresDaoTest$UpdateInformation                           1       0      0     0     0.006
+br.com.faitec.falacidade.service.UserPostgresDaoTest$UpdatePassword                              2       0      0     0     0.014
+br.com.faitec.falacidade.service.UserServiceImplTest                                             0       0      0     0     0.111
+br.com.faitec.falacidade.service.UserServiceImplTest$Create                                      9       0      0     0     0.029
+br.com.faitec.falacidade.service.UserServiceImplTest$Delete                                      2       0      0     0     0.016
+br.com.faitec.falacidade.service.UserServiceImplTest$FindAll                                     1       0      0     0     0.002
+br.com.faitec.falacidade.service.UserServiceImplTest$FindByEmail                                 2       0      0     0     0.003
+br.com.faitec.falacidade.service.UserServiceImplTest$FindById                                    2       0      0     0     0.014
+br.com.faitec.falacidade.service.UserServiceImplTest$UpdatePassword                              2       0      0     0     0.005
+br.com.faitec.falacidade.service.UserServiceImplTest$UpdatePasswordEncoded                       2       0      0     0     0.034
+---------------------------------------------------------------------------------------------------------------------------------
+TOTAL                                                                                          265       0      0     0     9.019
+
+As saídas individuais geradas pelo Maven Surefire, uma por classe ou bloco
+aninhado, encontram-se na subpasta SaidasBrutasSurefire desta mesma pasta.
