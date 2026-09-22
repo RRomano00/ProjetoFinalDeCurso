@@ -11,8 +11,12 @@ declaração assinada da entidade parceira, lista de presença, ata de reunião,
 fotografias datadas e relatório da atividade com carga horária.
 
 Conteúdo atual desta pasta:
-- Pesquisa_Perfis_Usuarios_FalaCidade_.pdf — instrumento aplicado e compilação
-  das respostas (pesquisa on-line por Google Forms, 7 participantes).
-- Respostas.pdf — respostas obtidas, exportadas do formulário (24 páginas).
-Ambos são os mesmos arquivos do Apêndice G, aqui reproduzidos como comprovante
-da atividade de extensão.
+- FalaCidade_InstrumentoPesquisa_v1.pdf — instrumento da pesquisa: exportação do
+  formulário do Google Forms, com as onze perguntas aplicadas (24 páginas).
+- FalaCidade_PesquisaPerfilUsuarios_v2.pdf — compilação das respostas, com o período
+  de aplicação (4 de maio a 24 de junho de 2026), o número de participantes (18) e os
+  gráficos e quadros de todas as perguntas.
+- FalaCidade_RespostasPesquisa_v2.csv — exportação bruta das 18 respostas, base dos
+  gráficos e quadros do arquivo anterior.
+Os três arquivos são os mesmos do Apêndice G, aqui reproduzidos como comprovante da
+atividade de extensão.
