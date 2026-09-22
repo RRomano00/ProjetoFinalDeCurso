@@ -163,6 +163,28 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
 
   goToLogin() { this.router.navigate(['/account/sign-in']); }
 
+  /** Bússola em espera: as duas tentativas de leitura levam até 20 s. */
+  locating = false;
+
+  /**
+   * Leva a vista do mapa até onde a pessoa está. Aqui só move a câmera: não há
+   * endereço a preencher nem ponto a marcar, os marcadores são das ocorrências.
+   * Sem posição, o serviço já avisa o que fazer — liberar a permissão no
+   * navegador ou ligar o GPS do aparelho —, e a bússola volta ao normal; só
+   * tenta de novo no próximo clique.
+   */
+  async goToMyLocation() {
+    this.locating = true;
+    try {
+      const position = await this.locality.position();
+      if (!position) return;
+      const { latitude, longitude } = position.coords;
+      this.ngZone.run(() => this.map.setView([latitude, longitude], 17));
+    } finally {
+      this.ngZone.run(() => this.locating = false);
+    }
+  }
+
   ngOnInit() {
     this.username = localStorage.getItem('fullname') || 'Visitante';
   }

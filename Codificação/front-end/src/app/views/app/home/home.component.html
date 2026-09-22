@@ -48,6 +48,18 @@
 
       <div class="map-wrapper">
         <div id="incident-map"></div>
+        <!-- Bússola: leva o mapa até onde a pessoa está (a mesma da nova ocorrência) -->
+        <button type="button" class="map-locate" [class.locating]="locating"
+                (click)="goToMyLocation()" [disabled]="locating"
+                [attr.aria-busy]="locating"
+                [attr.aria-label]="locating ? 'Procurando a sua localização' : 'Ir para a minha localização'"
+                [title]="locating ? 'Procurando a sua localização...' : 'Ir para a minha localização'">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
+          </svg>
+        </button>
         <div class="map-loading" *ngIf="loadingMap">
           <div class="spinner"></div>
           <span>Carregando marcadores...</span>
@@ -119,7 +131,7 @@
           <div class="incident-foot">
             <span class="incident-id">{{ o.protocolNumber }}</span>
             <!-- "Recentes" é uma afirmação sobre data: mostra a data. -->
-            <time *ngIf="o.createdAt">{{ o.createdAt | date:'dd/MM/yyyy' }}</time>
+            <time *ngIf="o.createdAt">{{ o.createdAt | date:'dd/MM/yyyy, HH:mm' }}</time>
           </div>
         </a>
 
