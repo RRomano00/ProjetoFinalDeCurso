@@ -3,31 +3,30 @@
   <div class="page-header">
     <div>
       <h1>Estatísticas</h1>
-      <p>Visão geral de todas as ocorrências registradas</p>
+      <p>O que está registrado, o que está esperando e quanto a equipe está entregando.</p>
     </div>
-    <span class="total-badge">{{ total }} ocorrência{{ total !== 1 ? 's' : '' }}</span>
   </div>
 
   <!-- Filtros da dashboard (data, localização e tipo) -->
   <div class="stats-filters">
     <div class="filter-field">
-      <label>De</label>
-      <input type="date" [(ngModel)]="filterDateFrom" />
+      <label for="f-de">De</label>
+      <input id="f-de" type="date" [(ngModel)]="filterDateFrom" (ngModelChange)="recompute()" />
     </div>
     <div class="filter-field">
-      <label>Até</label>
-      <input type="date" [(ngModel)]="filterDateTo" />
+      <label for="f-ate">Até</label>
+      <input id="f-ate" type="date" [(ngModel)]="filterDateTo" (ngModelChange)="recompute()" />
     </div>
     <div class="filter-field">
-      <label>Localização (bairro)</label>
-      <select [(ngModel)]="filterNeighborhood">
+      <label for="f-bairro">Bairro</label>
+      <select id="f-bairro" [(ngModel)]="filterNeighborhood" (ngModelChange)="recompute()">
         <option value="">Todos os bairros</option>
         <option *ngFor="let n of neighborhoodOptions" [value]="n">{{ n }}</option>
       </select>
     </div>
     <div class="filter-field">
-      <label>Tipo de ocorrência</label>
-      <select [(ngModel)]="filterType">
+      <label for="f-tipo">Tipo</label>
+      <select id="f-tipo" [(ngModel)]="filterType" (ngModelChange)="recompute()">
         <option value="">Todos os tipos</option>
         <option *ngFor="let t of typeOptions" [value]="t.value">{{ t.label }}</option>
       </select>
@@ -37,182 +36,143 @@
     </button>
   </div>
 
-  <!-- KPIs -->
-  <div class="kpi-grid">
-    <div class="kpi-card">
-      <div class="kpi-top">
-        <div class="kpi-icon plate">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
-          </svg>
-        </div>
-        <div class="kpi-body">
-          <span class="kpi-num">{{ total }}</span>
-          <span class="kpi-lbl">Total</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="kpi-card">
-      <div class="kpi-top">
-        <div class="kpi-icon pending">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-          </svg>
-        </div>
-        <div class="kpi-body">
-          <span class="kpi-num pending">{{ pending }}</span>
-          <span class="kpi-lbl">Pendentes</span>
-        </div>
-      </div>
-      <div class="kpi-bar-mini" *ngIf="total > 0">
-        <div class="kpi-bar-fill pending" [style.width.%]="(pending/total)*100"></div>
-      </div>
-    </div>
-
-    <div class="kpi-card">
-      <div class="kpi-top">
-        <div class="kpi-icon em-andamento">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="23 4 23 10 17 10"/>
-            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
-          </svg>
-        </div>
-        <div class="kpi-body">
-          <span class="kpi-num em-andamento">{{ inProgress }}</span>
-          <span class="kpi-lbl">Em Andamento</span>
-        </div>
-      </div>
-      <div class="kpi-bar-mini" *ngIf="total > 0">
-        <div class="kpi-bar-fill em-andamento" [style.width.%]="(inProgress/total)*100"></div>
-      </div>
-    </div>
-
-    <div class="kpi-card">
-      <div class="kpi-top">
-        <div class="kpi-icon done">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
-          </svg>
-        </div>
-        <div class="kpi-body">
-          <span class="kpi-num done">{{ resolved }}</span>
-          <span class="kpi-lbl">Concluídas</span>
-        </div>
-      </div>
-      <div class="kpi-bar-mini" *ngIf="total > 0">
-        <div class="kpi-bar-fill done" [style.width.%]="(resolved/total)*100"></div>
-      </div>
-    </div>
-
-    <div class="kpi-card kpi-highlight">
-      <div class="kpi-top">
-        <div class="kpi-icon rate">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
-          </svg>
-        </div>
-        <div class="kpi-body">
-          <span class="kpi-num rate">{{ resolutionRate }}%</span>
-          <span class="kpi-lbl">Taxa de Resolução</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- RF13: tempo médio de resolução -->
-    <div class="kpi-card">
-      <div class="kpi-top">
-        <div class="kpi-icon plate">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-          </svg>
-        </div>
-        <div class="kpi-body">
-          <span class="kpi-num plate">{{ avgResolutionDays }}</span>
-          <span class="kpi-lbl">Tempo Médio de Resolução</span>
-        </div>
-      </div>
-    </div>
+  <div class="stats-empty" *ngIf="total === 0">
+    <p>Nenhuma ocorrência no período selecionado.</p>
+    <button class="btn-clear-filters" (click)="clearFilters()" *ngIf="hasActiveFilters">
+      Limpar filtros
+    </button>
   </div>
 
-  <!-- Gráficos -->
-  <div class="charts-row">
+  <ng-container *ngIf="total > 0">
 
-    <!-- Donut: distribuição por status -->
-    <div class="chart-card donut-card">
-      <div class="chart-header"><h2>Distribuição por Status</h2></div>
-      <div class="donut-empty" *ngIf="total === 0"><p>Sem dados</p></div>
-      <div class="donut-body" *ngIf="total > 0">
-        <svg viewBox="0 0 120 120" class="donut-svg">
-          <circle cx="60" cy="60" r="54" fill="none" stroke="#f3f4f6" stroke-width="16"/>
-          <circle *ngFor="let s of donutSlices" cx="60" cy="60" r="54" fill="none"
-            [attr.stroke]="s.color" stroke-width="16"
-            [attr.stroke-dasharray]="s.dash + ' ' + (donutCirc - s.dash)"
-            [attr.stroke-dashoffset]="s.offset" stroke-linecap="butt"/>
-          <text x="60" y="55" text-anchor="middle" class="donut-center-num">{{ resolutionRate }}%</text>
-          <text x="60" y="69" text-anchor="middle" class="donut-center-lbl">Resolvidas</text>
-        </svg>
-        <div class="donut-legend">
-          <div class="legend-row" *ngFor="let s of donutSlices">
-            <span class="legend-dot" [style.background]="s.color"></span>
-            <span class="legend-label">{{ s.label }}</span>
-            <span class="legend-val">{{ s.value }}</span>
-            <span class="legend-pct">{{ s.pct }}%</span>
-          </div>
+    <!-- A carga do período, numa faixa só: os mesmos quatro números que antes
+         apareciam em quatro cartões, quatro mini-barras e uma rosca. -->
+    <section class="load">
+      <div class="load-head">
+        <h2>Carga do período</h2>
+        <p class="load-count">{{ total }} ocorrência{{ total !== 1 ? 's' : '' }}</p>
+      </div>
+
+      <div class="load-band" role="img"
+           [attr.aria-label]="'Distribuição por situação: ' + pending + ' pendentes, ' + inProgress
+              + ' em andamento, ' + resolved + ' concluídas, ' + rejected + ' indeferidas.'">
+        <span *ngFor="let s of statusSlices" class="load-seg" [ngClass]="s.token"
+              [style.flex-grow]="s.pct" [title]="s.label + ': ' + s.value"></span>
+      </div>
+
+      <ul class="load-keys">
+        <li *ngFor="let s of statusSlices" [ngClass]="s.token">
+          <span class="key-num">{{ s.value }}</span>
+          <span class="key-lbl">{{ s.label }}</span>
+        </li>
+      </ul>
+
+      <dl class="load-figures">
+        <div>
+          <dt>Taxa de resolução</dt>
+          <dd>{{ resolutionRate }}<span class="unit">%</span></dd>
         </div>
-      </div>
-    </div>
-
-    <!-- Barras: por tipo -->
-    <div class="chart-card bar-card">
-      <div class="chart-header"><h2>Ocorrências por Tipo</h2></div>
-      <div class="empty-chart" *ngIf="barChartData.length === 0"><p>Sem dados</p></div>
-      <div class="bar-list" *ngIf="barChartData.length > 0">
-        <div class="bar-row" *ngFor="let b of barChartData">
-          <span class="bar-label" [title]="b.label">{{ b.label }}</span>
-          <div class="bar-track">
-            <div class="bar-fill" [style.width.%]="b.pct" [style.background]="b.color"></div>
-          </div>
-          <span class="bar-val">{{ b.value }}</span>
+        <div>
+          <dt>Tempo médio até concluir</dt>
+          <dd>{{ avgResolutionDays }}</dd>
         </div>
-      </div>
-    </div>
-  </div>
+        <div>
+          <dt>Prioridade alta em aberto</dt>
+          <dd [class.em-atraso]="highPriorityOpen > 0">{{ highPriorityOpen }}</dd>
+        </div>
+      </dl>
+    </section>
 
-  <!-- Top Bairros -->
-  <div class="charts-row">
-    <div class="chart-card bairros-card" style="width:100%">
-      <div class="chart-header">
-        <h2>Top Bairros</h2>
-        <span class="chart-hint">por número de ocorrências</span>
-      </div>
-      <div class="empty-chart" *ngIf="topNeighborhoods.length === 0"><p>Sem dados</p></div>
-      <div class="bairro-list" *ngIf="topNeighborhoods.length > 0">
-        <div class="bairro-row" *ngFor="let n of topNeighborhoods; let i = index">
-          <span class="bairro-rank"
-            [ngClass]="{'rank-gold':i===0,'rank-silver':i===1,'rank-bronze':i===2}">
-            {{ i + 1 }}
+      <section class="panel queue">
+        <div class="panel-head">
+          <h2>{{ open }} ocorrências em aberto</h2>
+        </div>
+
+        <p class="queue-lead" *ngIf="open > 0">
+          <span class="queue-num" [class.em-atraso]="ageBuckets[3].value > 0">{{ ageBuckets[3].value }}</span>
+          <span class="queue-say">esperando há mais de quinze dias</span>
+           <a class="oldest" *ngIf="oldestOpen" [routerLink]="['/occurrence/detail', oldestOpen.id]">
+          <span class="oldest-age" [class.em-atraso]="oldestOpenDays > 15">
+            {{ oldestOpenDays }}
+            <span class="oldest-unit">dia{{ oldestOpenDays !== 1 ? 's' : '' }}</span>
           </span>
-          <div class="bairro-info">
-            <div class="bairro-name-row">
-              <span class="bairro-name">{{ n.neighborhood }}</span>
-              <span class="bairro-total">{{ n.total }}</span>
-            </div>
-            <div class="bairro-track">
-              <div class="bairro-fill" [style.width.%]="n.pct"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+          <span class="oldest-body">
+            <span class="oldest-say">A que espera há mais tempo</span>
+            <span class="oldest-title">{{ oldestOpen.title || oldestOpen.neighborhood }}</span>
+            <span class="oldest-proto">{{ oldestOpen.protocolNumber }}</span>
+          </span>
+        </a>
+        </p>
 
+       
+
+        <div class="queue-body" *ngIf="open > 0">
+        <ol class="age-list">
+          <li *ngFor="let b of ageBuckets">
+            <span class="age-lbl">{{ b.label }}</span>
+            <span class="age-track"><span class="age-fill" [ngClass]="b.token" [style.width.%]="b.pct"></span></span>
+            <span class="age-val">{{ b.value }}</span>
+          </li>
+        </ol>
+
+        
+        </div>
+
+        <p class="panel-empty" *ngIf="open === 0">
+          Nada em aberto no período. A fila está zerada.
+        </p>
+      </section>
+
+    <div class="panel-row panel-row-three">
+
+      <section class="panel">
+        <div class="panel-head"><h2>Por tipo</h2></div>
+        <ol class="bar-list">
+          <li *ngFor="let b of barChartData">
+            <span class="bar-head">
+              <span class="bar-label">{{ b.label }}</span>
+              <span class="bar-val">{{ b.value }}</span>
+            </span>
+            <span class="bar-track"><span class="bar-fill" [style.width.%]="b.pct" [style.background]="b.color"></span></span>
+          </li>
+        </ol>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><h2>Por bairro</h2></div>
+        <ol class="bar-list">
+          <li *ngFor="let n of topNeighborhoods">
+            <span class="bar-head">
+              <span class="bar-label">{{ n.neighborhood }}</span>
+              <span class="bar-val">{{ n.total }}</span>
+            </span>
+            <span class="bar-track"><span class="bar-fill plate" [style.width.%]="n.pct"></span></span>
+          </li>
+        </ol>
+      </section>
+
+      <!-- O que a população está cobrando: apoios nas que seguem em aberto -->
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Mais apoiadas</h2>
+          <p>Entre as que seguem em aberto</p>
+        </div>
+        <ol class="support-list" *ngIf="mostSupported.length > 0">
+          <li *ngFor="let s of mostSupported">
+            <a [routerLink]="['/occurrence/detail', s.id]">
+              <span class="support-title">{{ s.title }}</span>
+              <span class="support-proto">{{ s.protocol }}</span>
+            </a>
+            <span class="support-count">{{ s.supports }}</span>
+          </li>
+        </ol>
+        <p class="panel-empty" *ngIf="mostSupported.length === 0">
+          Nenhuma ocorrência em aberto recebeu apoio no período.
+        </p>
+      </section>
+    </div>
+
+  </ng-container>
 </div>
 
 <ng-template #loadingTpl>

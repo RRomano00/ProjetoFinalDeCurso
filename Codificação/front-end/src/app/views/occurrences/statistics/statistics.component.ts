@@ -6,9 +6,18 @@ import { OccurrenceReadService } from '../../../services/occurrence-read.service
 import { Occurrence } from '../../../domain/model/occurrence';
 import { typeLabel, typeColor } from '../../../domain/occurrence-labels';
 
-export interface ChartBar   { label: string; value: number; color: string; pct: number; }
-export interface DonutSlice { label: string; value: number; color: string; pct: number; offset: number; dash: number; }
-export interface NeighborhoodStat { neighborhood: string; total: number; pct: number; }
+export interface ChartBar          { label: string; value: number; color: string; pct: number; }
+export interface NeighborhoodStat  { neighborhood: string; total: number; pct: number; }
+/**
+ * O token vira classe no elemento. Os nomes levam prefixo porque o Bootstrap é
+ * global neste projeto e define .progress e .alert: um <li class="progress">
+ * virava barra de progresso do Bootstrap, com o texto cortado dentro dela.
+ */
+export interface StatusSlice       { label: string; value: number; pct: number; token: string; }
+export interface AgeBucket         { label: string; value: number; pct: number; token: string; }
+export interface SupportedItem     { id?: number; protocol: string; title: string; supports: number; }
+
+const DIA = 86_400_000;
 
 @Component({
   selector: 'app-statistics',
@@ -25,6 +34,20 @@ export class StatisticsComponent implements OnInit {
   filterNeighborhood = '';
   filterType         = '';
 
+  total = 0;
+  pending = 0; inProgress = 0; resolved = 0; rejected = 0;
+  open = 0;                       // pendente + em andamento
+  highPriorityOpen = 0;
+  resolutionRate = 0;
+  avgResolutionDays = '—';
+  statusSlices:   StatusSlice[]      = [];
+  ageBuckets:     AgeBucket[]        = [];
+  oldestOpen:     Occurrence | null  = null;
+  oldestOpenDays  = 0;
+  barChartData:     ChartBar[]          = [];
+  topNeighborhoods: NeighborhoodStat[]  = [];
+  mostSupported:    SupportedItem[]     = [];
+
   constructor(private occurrenceReadService: OccurrenceReadService) {}
 
   async ngOnInit() {
@@ -34,29 +57,18 @@ export class StatisticsComponent implements OnInit {
       this.occurrences = [];
     }
     this.loading = false;
+    this.recompute();
   }
 
-  get filtered(): Occurrence[] {
-    return this.occurrences.filter(o => {
-      const created = o.createdAt ? o.createdAt.substring(0, 10) : '';
-      const matchFrom  = !this.filterDateFrom || (created && created >= this.filterDateFrom);
-      const matchTo    = !this.filterDateTo   || (created && created <= this.filterDateTo);
-      const matchHood  = !this.filterNeighborhood ||
-        (o.neighborhood?.trim() || 'Não informado') === this.filterNeighborhood;
-      const matchType  = !this.filterType || o.type === this.filterType;
-      return matchFrom && matchTo && matchHood && matchType;
-    });
-  }
+  // ── Filtros ───────────────────────────────────────────────────────────────
 
   get hasActiveFilters(): boolean {
     return !!(this.filterDateFrom || this.filterDateTo || this.filterNeighborhood || this.filterType);
   }
 
   clearFilters() {
-    this.filterDateFrom = '';
-    this.filterDateTo = '';
-    this.filterNeighborhood = '';
-    this.filterType = '';
+    this.filterDateFrom = this.filterDateTo = this.filterNeighborhood = this.filterType = '';
+    this.recompute();
   }
 
   get neighborhoodOptions(): string[] {
@@ -71,65 +83,110 @@ export class StatisticsComponent implements OnInit {
     return Array.from(set).sort().map(t => ({ value: t, label: typeLabel(t) }));
   }
 
-  get total()       { return this.filtered.length; }
-  get pending()     { return this.filtered.filter(o => o.status === 'PENDENTE').length; }
-  get inProgress()  { return this.filtered.filter(o => o.status === 'EM_ANDAMENTO').length; }
-  get resolved()    { return this.filtered.filter(o => o.status === 'CONCLUIDA').length; }
-  get rejected()    { return this.filtered.filter(o => o.status === 'INDEFERIDA').length; }
-  get resolutionRate() {
-    return this.total > 0 ? Math.round((this.resolved / this.total) * 100) : 0;
-  }
-
-  get avgResolutionDays(): string {
-    const done = this.filtered.filter(o =>
-      o.status === 'CONCLUIDA' && o.createdAt && o.updatedAt);
-    if (done.length === 0) return '—';
-    const totalMs = done.reduce((sum, o) =>
-      sum + (new Date(o.updatedAt!).getTime() - new Date(o.createdAt!).getTime()), 0);
-    const days = totalMs / done.length / 86_400_000;
-    if (days < 1) return `${Math.max(1, Math.round(days * 24))} h`;
-    // Dia é unidade inteira: "26,0 dias" sugere uma precisão que a medida não tem.
-    const inteiro = Math.round(days);
-    return `${inteiro} ${inteiro === 1 ? 'dia' : 'dias'}`;
-  }
-
-  get barChartData(): ChartBar[] {
-    const map: Record<string, number> = {};
-    this.filtered.forEach(o => { const k = o.type ?? 'OUTROS_PROBLEMAS'; map[k] = (map[k] || 0) + 1; });
-    const max = Math.max(...Object.values(map), 1);
-    return Object.entries(map).sort((a, b) => b[1] - a[1]).map(([type, qty]) => ({
-      label: typeLabel(type),
-      value: qty,
-      color: typeColor(type),
-      pct:   Math.round((qty / max) * 100),
-    }));
-  }
-
-  get donutSlices(): DonutSlice[] {
-    const CIRC = 2 * Math.PI * 54;
-    const data = [
-      { label: 'Pendente',     value: this.pending,    color: '#8a5800' },
-      { label: 'Em Andamento', value: this.inProgress, color: '#14487e' },
-      { label: 'Concluída',    value: this.resolved,   color: '#176242' },
-      { label: 'Indeferida',   value: this.rejected,   color: '#8b3a2d' },
-    ].filter(d => d.value > 0);
-    let accumulated = 0;
-    return data.map(d => {
-      const pct  = this.total > 0 ? d.value / this.total : 0;
-      const dash = pct * CIRC;
-      const slice: DonutSlice = { ...d, pct: Math.round(pct * 100), dash, offset: CIRC - accumulated };
-      accumulated += dash;
-      return slice;
+  private filtrar(): Occurrence[] {
+    return this.occurrences.filter(o => {
+      const criada = o.createdAt ? o.createdAt.substring(0, 10) : '';
+      return (!this.filterDateFrom || (criada && criada >= this.filterDateFrom))
+          && (!this.filterDateTo   || (criada && criada <= this.filterDateTo))
+          && (!this.filterNeighborhood ||
+              (o.neighborhood?.trim() || 'Não informado') === this.filterNeighborhood)
+          && (!this.filterType || o.type === this.filterType);
     });
   }
 
-  get donutCirc() { return 2 * Math.PI * 54; }
+  // ── Cálculo ───────────────────────────────────────────────────────────────
 
-  get topNeighborhoods(): NeighborhoodStat[] {
-    const map: Record<string, number> = {};
-    this.filtered.forEach(o => { const b = o.neighborhood?.trim() || 'Não informado'; map[b] = (map[b] || 0) + 1; });
-    const max = Math.max(...Object.values(map), 1);
-    return Object.entries(map).sort((a, b) => b[1] - a[1]).slice(0, 8)
-      .map(([neighborhood, total]) => ({ neighborhood, total, pct: Math.round((total / max) * 100) }));
+  recompute() {
+    const f = this.filtrar();
+    const agora = Date.now();
+
+    this.total      = f.length;
+    this.pending    = f.filter(o => o.status === 'PENDENTE').length;
+    this.inProgress = f.filter(o => o.status === 'EM_ANDAMENTO').length;
+    this.resolved   = f.filter(o => o.status === 'CONCLUIDA').length;
+    this.rejected   = f.filter(o => o.status === 'INDEFERIDA').length;
+
+    const emAberto = f.filter(o => o.status === 'PENDENTE' || o.status === 'EM_ANDAMENTO');
+    this.open             = emAberto.length;
+    this.highPriorityOpen = emAberto.filter(o => o.priority === 'ALTA').length;
+    this.resolutionRate   = this.total ? Math.round((this.resolved / this.total) * 100) : 0;
+
+    this.statusSlices = [
+      { label: 'Pendentes',    value: this.pending,    token: 'st-pending'  },
+      { label: 'Em andamento', value: this.inProgress, token: 'st-progress' },
+      { label: 'Concluídas',   value: this.resolved,   token: 'st-done'     },
+      { label: 'Indeferidas',  value: this.rejected,   token: 'st-refused'  },
+    ].filter(s => s.value > 0)
+     .map(s => ({ ...s, pct: this.total ? (s.value / this.total) * 100 : 0 }));
+
+    this.calcularTempoMedio(f);
+    this.calcularFila(emAberto, agora);
+
+    // Ocorrências por tipo
+    const porTipo: Record<string, number> = {};
+    f.forEach(o => { const k = o.type ?? 'OUTROS_PROBLEMAS'; porTipo[k] = (porTipo[k] || 0) + 1; });
+    const maiorTipo = Math.max(...Object.values(porTipo), 1);
+    this.barChartData = Object.entries(porTipo).sort((a, b) => b[1] - a[1]).map(([t, q]) => ({
+      label: typeLabel(t), value: q, color: typeColor(t), pct: (q / maiorTipo) * 100,
+    }));
+
+    // Bairros com mais registros
+    const porBairro: Record<string, number> = {};
+    f.forEach(o => { const b = o.neighborhood?.trim() || 'Não informado'; porBairro[b] = (porBairro[b] || 0) + 1; });
+    const maiorBairro = Math.max(...Object.values(porBairro), 1);
+    this.topNeighborhoods = Object.entries(porBairro).sort((a, b) => b[1] - a[1]).slice(0, 8)
+      .map(([neighborhood, total]) => ({ neighborhood, total, pct: (total / maiorBairro) * 100 }));
+
+    // Em aberto com mais apoio da população: a fila que o bairro está cobrando
+    this.mostSupported = emAberto
+      .filter(o => (o.supportCount ?? 0) > 0)
+      .sort((a, b) => (b.supportCount ?? 0) - (a.supportCount ?? 0))
+      .slice(0, 5)
+      .map(o => ({
+        id: o.id,
+        protocol: o.protocolNumber ?? '—',
+        title: o.title?.trim() || typeLabel(o.type ?? 'OUTROS_PROBLEMAS'),
+        supports: o.supportCount ?? 0,
+      }));
+  }
+
+  /** RF13: tempo médio entre o registro e a conclusão. */
+  private calcularTempoMedio(f: Occurrence[]) {
+    const concluidas = f.filter(o => o.status === 'CONCLUIDA' && o.createdAt && o.updatedAt);
+    if (!concluidas.length) { this.avgResolutionDays = '—'; return; }
+    const soma = concluidas.reduce((s, o) =>
+      s + (new Date(o.updatedAt!).getTime() - new Date(o.createdAt!).getTime()), 0);
+    const dias = soma / concluidas.length / DIA;
+    if (dias < 1) { this.avgResolutionDays = `${Math.max(1, Math.round(dias * 24))} h`; return; }
+    // Dia é unidade inteira: "26,4 dias" sugere uma precisão que a medida não tem.
+    const inteiro = Math.round(dias);
+    this.avgResolutionDays = `${inteiro} ${inteiro === 1 ? 'dia' : 'dias'}`;
+  }
+
+  private calcularFila(emAberto: Occurrence[], agora: number) {
+    const faixas = [
+      { label: 'até 3 dias',    token: 'age-fresh', min: 0,  max: 3   },
+      { label: '4 a 7 dias',    token: 'age-warm',  min: 4,  max: 7   },
+      { label: '8 a 15 dias',   token: 'age-hot',   min: 8,  max: 15  },
+      { label: 'mais de 15',    token: 'age-late',  min: 16, max: Infinity },
+    ];
+    const contagem = faixas.map(() => 0);
+    let maisAntiga: Occurrence | null = null;
+    let maiorEspera = -1;
+
+    for (const o of emAberto) {
+      if (!o.createdAt) continue;
+      const dias = Math.floor((agora - new Date(o.createdAt).getTime()) / DIA);
+      const i = faixas.findIndex(fx => dias >= fx.min && dias <= fx.max);
+      if (i >= 0) contagem[i]++;
+      if (dias > maiorEspera) { maiorEspera = dias; maisAntiga = o; }
+    }
+
+    const maior = Math.max(...contagem, 1);
+    this.ageBuckets = faixas.map((fx, i) => ({
+      label: fx.label, value: contagem[i], token: fx.token, pct: (contagem[i] / maior) * 100,
+    }));
+    this.oldestOpen     = maisAntiga;
+    this.oldestOpenDays = Math.max(maiorEspera, 0);
   }
 }

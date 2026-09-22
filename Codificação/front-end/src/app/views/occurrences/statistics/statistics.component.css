@@ -1,335 +1,309 @@
-/* ── Página ── */
-.page-stats { display: flex; flex-direction: column; gap: 1.25rem; }
+/* Estatísticas — quadro de plantão.
+   Lê-se de cima para baixo: a carga do período, quem está esperando, se a
+   equipe está dando conta, e só então os recortes por tipo, bairro e apoio.
 
-.page-header {
+   Toda a cor vem dos tokens do app (styles.css). A única regra nova é a rampa
+   de espera: quanto mais tempo parada, mais perto a barra chega do vermelho de
+   advertência — a mesma lógica das placas que dão nome ao azul do sistema. */
+
+.page-stats {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 1.5rem;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 0.75rem;
+  flex-direction: column;
+  gap: 1.5rem;
 }
+
+/* Numeral de largura fixa: o número não dança quando o filtro muda, e as
+   colunas de valores alinham sem precisar de fonte monoespaçada. */
+.page-stats :is(.key-num, .queue-num, .age-val, .bar-val, .support-count, .load-figures dd, .load-count) {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Cabeçalho ─────────────────────────────────────────────────────────── */
 .page-header h1 {
-  font-size: 1.5625rem;
+  font-size: 1.5rem;
   font-weight: 600;
-  letter-spacing: -0.012em;
   color: var(--ink);
-  margin: 0 0 0.125rem;
+  letter-spacing: -0.012em;
+  margin: 0 0 0.25rem 0;
 }
-.page-header p { font-size: 0.9375rem; color: var(--ink-mute); margin: 0; }
-
-.total-badge {
-  padding: 0.375rem 0.875rem;
-  background: var(--plate-wash);
-  color: var(--plate);
-  border: 1px solid var(--plate-line);
-  border-radius: 999px;
-  font-size: 0.8125rem;
-  font-weight: 600;
+.page-header p {
+  font-size: 0.9375rem;
+  color: var(--ink-mute);
+  margin: 0;
+  max-width: 62ch;
 }
 
-/* ── Filtros ── */
+/* ── Filtros ───────────────────────────────────────────────────────────── */
 .stats-filters {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
   gap: 0.75rem;
-  padding: 1rem 1.25rem;
+  padding: 0.875rem 1rem;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--r-card);
 }
-.filter-field { display: flex; flex-direction: column; gap: 0.25rem; }
-.filter-field label {
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--ink-mute);
-}
+.filter-field { display: flex; flex-direction: column; gap: 0.25rem; min-width: 150px; flex: 1 1 150px; }
+.filter-field label { font-size: 0.75rem; font-weight: 500; color: var(--ink-mute); }
 .filter-field input,
 .filter-field select {
-  padding: 0.5rem 0.625rem;
-  border: 1px solid var(--line);
-  border-radius: var(--r-ctl);
+  padding: 0.4375rem 0.625rem;
   font-size: 0.875rem;
-  min-width: 160px;
   color: var(--ink);
   background: var(--surface);
-  font-family: inherit;
+  border: 1px solid var(--line);
+  border-radius: var(--r-ctl);
 }
-.filter-field input:focus,
-.filter-field select:focus {
-  outline: none;
+.filter-field input:focus-visible,
+.filter-field select:focus-visible {
+  outline: 2px solid var(--plate);
+  outline-offset: 1px;
   border-color: var(--plate);
-  box-shadow: 0 0 0 3px var(--plate-wash);
 }
 .btn-clear-filters {
-  padding: 0.5rem 1rem;
-  border: 1px solid var(--line);
-  border-radius: var(--r-ctl);
-  background: var(--surface);
+  padding: 0.4375rem 0.875rem;
   font-size: 0.875rem;
   font-weight: 500;
-  color: var(--ink);
+  color: var(--ink-mute);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-ctl);
   cursor: pointer;
-  height: fit-content;
 }
-.btn-clear-filters:hover:not(:disabled) { background: var(--surface-2); border-color: var(--plate-line); }
-.btn-clear-filters:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn-clear-filters:hover:not(:disabled) { background: var(--bg); color: var(--ink); }
+.btn-clear-filters:disabled { opacity: 0.45; cursor: default; }
 
-/* ── Indicadores ──
-   O número é o dado: tabular, alinhado, na mesma família do protocolo. */
-.kpi-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 0.75rem;
-}
-
-.kpi-card {
+.stats-empty {
+  padding: 3rem 1.5rem;
+  text-align: center;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--r-card);
-  padding: 1rem 1.125rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
 }
+.stats-empty p { color: var(--ink-mute); margin: 0 0 1rem 0; }
 
-.kpi-top { display: flex; align-items: center; gap: 0.75rem; }
+/* Os nomes de estado levam prefixo de propósito: o Bootstrap é global neste
+   projeto e define .progress e .alert. Sem o prefixo, o <li> do "Em andamento"
+   virava barra de progresso do Bootstrap e engolia o próprio texto. */
 
-.kpi-icon {
-  width: 38px;
-  height: 38px;
-  border-radius: var(--r-ctl);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
+/* ── Carga do período ──────────────────────────────────────────────────── */
+.load {
+  padding: 1.25rem 1.5rem 1.5rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
 }
-.kpi-icon.plate   { background: var(--st-progress-bg); color: var(--st-progress); }
-.kpi-icon.pending    { background: var(--st-pending-bg);  color: var(--st-pending); }
-.kpi-icon.em-andamento { background: var(--st-progress-bg); color: var(--st-progress); }
-.kpi-icon.done  { background: var(--st-done-bg);     color: var(--st-done); }
-.kpi-icon.rate { background: var(--surface-2);      color: var(--ink-mute); }
-
-.kpi-body { display: flex; flex-direction: column; gap: 0.125rem; flex: 1; min-width: 0; }
-
-.kpi-num {
-  font-family: var(--mono);
-  font-size: 1.625rem;
+.load-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.load h2, .panel-head h2 {
+  font-size: 1rem;
   font-weight: 600;
   color: var(--ink);
-  line-height: 1.15;
-  /* Os cartões esticam para a altura da fileira; sem isto o número é o item
-     que cede espaço e chega a ser cortado ao meio (era o caso de "Em Andamento"). */
-  flex-shrink: 0;
+  margin: 0;
 }
-.kpi-num.pending    { color: var(--st-pending); }
-.kpi-num.em-andamento { color: var(--st-progress); }
-.kpi-num.done  { color: var(--st-done); }
-.kpi-num.plate   { color: var(--plate); }
-.kpi-num.rate { color: var(--plate-deep); }
+.load-count { font-size: 0.9375rem; color: var(--ink-mute); margin: 0; }
 
-.kpi-lbl { font-size: 0.8125rem; color: var(--ink-mute); }
-
-.kpi-bar-mini {
-  height: 4px;
-  background: var(--line-soft);
-  border-radius: 999px;
-  overflow: hidden;
+/* A faixa carrega a proporção; os números logo abaixo carregam o valor. */
+.load-band {
+  display: flex;
+  gap: 2px;
+  height: 14px;
+  margin: 0.875rem 0 0.75rem;
 }
-.kpi-bar-fill { height: 100%; border-radius: 999px; transition: width .5s ease; }
-.kpi-bar-fill.pending    { background: var(--st-pending); }
-.kpi-bar-fill.em-andamento { background: var(--st-progress); }
-.kpi-bar-fill.done  { background: var(--st-done); }
+.load-seg { flex-basis: 0; border-radius: 2px; min-width: 3px; }
+.load-seg.st-pending  { background: var(--st-pending);  }
+.load-seg.st-progress { background: var(--st-progress); }
+.load-seg.st-done     { background: var(--st-done);     }
+.load-seg.st-refused  { background: var(--st-refused);  }
 
-/* ── Gráficos ── */
-.charts-row { display: grid; grid-template-columns: 340px 1fr; gap: 1rem; }
-/* Linha com um único cartão (Top Bairros) ocupa a largura toda. */
-.charts-row:has(> :only-child) { grid-template-columns: 1fr; }
+.load-keys {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.875rem 3rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.load-keys li { position: relative; display: flex; flex-direction: column; gap: 0.125rem;
+                padding-top: 0.6875rem; min-width: 7.5rem; }
+.load-keys li::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0;
+  width: 22px; height: 3px;
+  border-radius: 2px;
+  background: currentColor;
+}
+.load-keys li.st-pending  { color: var(--st-pending);  }
+.load-keys li.st-progress { color: var(--st-progress); }
+.load-keys li.st-done     { color: var(--st-done);     }
+.load-keys li.st-refused  { color: var(--st-refused);  }
+.key-num { font-size: 1.5rem; font-weight: 600; color: var(--ink); line-height: 1.1; }
+.key-lbl { font-size: 0.8125rem; color: var(--ink-mute); }
 
-.chart-card {
+.load-figures {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 4rem;
+  margin: 1.25rem 0 0;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line-soft);
+}
+.load-figures > div { min-width: 10rem; }
+.load-figures dt { font-size: 0.8125rem; color: var(--ink-mute); margin-bottom: 0.125rem; }
+.load-figures dd { font-size: 1.375rem; font-weight: 600; color: var(--ink); margin: 0; line-height: 1.2; }
+.load-figures dd.em-atraso { color: var(--pr-high); }
+.load-figures .unit { font-size: 0.9375rem; font-weight: 500; color: var(--ink-mute); margin-left: 1px; }
+
+/* ── Painéis ───────────────────────────────────────────────────────────── */
+.panel-row { display: grid; gap: 1.5rem; align-items: stretch; }
+.panel-row-three { grid-template-columns: repeat(3, 1fr); }
+.panel {
+  padding: 1.25rem 1.5rem 1.5rem;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--r-card);
-  overflow: hidden;
 }
+.panel-head { margin-bottom: 1rem; }
+.panel-head p { font-size: 0.8125rem; color: var(--ink-mute); margin: 0.1875rem 0 0; }
+.panel-empty { font-size: 0.875rem; color: var(--ink-mute); margin: 0; }
 
-.chart-header {
+/* ── A fila: o único lugar onde a tela levanta a voz ───────────────────── */
+.queue-lead { display: flex; align-items: baseline; gap: 0.625rem; margin: 0 0 1.25rem; }
+.queue-num { font-size: 2.75rem; font-weight: 600; line-height: 1; color: var(--ink); }
+.queue-num.em-atraso { color: var(--pr-high); }
+.queue-say { font-size: 0.9375rem; color: var(--ink-mute); max-width: 18ch; }
+
+.age-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.625rem; }
+.age-list li { display: grid; grid-template-columns: 6.5rem 1fr 2rem; align-items: center; gap: 0.75rem; }
+.age-lbl { font-size: 0.8125rem; color: var(--ink-mute); }
+.age-track { height: 9px; background: var(--bg); border-radius: 2px; overflow: hidden; }
+/* Barra de dado com raio 2px, não pílula: a pílula arredonda os dois topos e
+   engorda visualmente os valores pequenos. */
+.age-fill { display: block; height: 100%; border-radius: 2px; min-width: 2px; }
+.age-fill.age-fresh { background: var(--st-done);     }
+.age-fill.age-warm  { background: var(--st-pending);  }
+.age-fill.age-hot   { background: #a35a1e;            }
+.age-fill.age-late  { background: var(--pr-high);     }
+.age-val { font-size: 0.875rem; font-weight: 600; color: var(--ink); text-align: right; }
+
+/* Com a largura inteira, a fila e o caso mais antigo dividem a linha. */
+.queue-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 20rem); gap: 1.5rem 2.5rem; align-items: start; }
+
+/* O tempo de espera lidera como dado, do mesmo jeito que os demais números da
+   página. Antes era uma tarja vermelha na lateral — decoração dizendo o que o
+   próprio número já diz. */
+.oldest {
   display: flex;
   align-items: baseline;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.875rem 1.25rem;
-  background: var(--surface-2);
-  border-bottom: 1px solid var(--line);
-}
-.chart-header h2 { font-size: 0.9375rem; font-weight: 600; color: var(--ink); margin: 0; }
-.chart-hint { font-size: 0.75rem; color: var(--ink-faint); }
-
-.empty-chart,
-.donut-empty {
-  padding: 2.5rem;
-  text-align: center;
-  color: var(--ink-faint);
-  font-size: 0.9375rem;
-}
-
-/* ── Rosca ── */
-.donut-body { display: flex; align-items: center; gap: 1.5rem; padding: 1.25rem 1.5rem; }
-
-.donut-svg {
-  width: 120px;
-  height: 120px;
-  flex-shrink: 0;
-  transform: rotate(-90deg);
-}
-.donut-center-num {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 17px;
-  font-weight: 600;
-  fill: var(--ink);
-  transform: rotate(90deg);
-  transform-origin: 60px 60px;
-}
-.donut-center-lbl {
-  font-size: 8px;
-  fill: var(--ink-mute);
-  transform: rotate(90deg);
-  transform-origin: 60px 60px;
-}
-
-.donut-legend { display: flex; flex-direction: column; gap: 0.5rem; flex: 1; }
-.legend-row { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8125rem; }
-.legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-.legend-label { flex: 1; color: var(--ink-mute); }
-.legend-val { font-family: var(--mono); font-weight: 600; color: var(--ink); }
-.legend-pct {
-  font-family: var(--mono);
-  color: var(--ink-faint);
-  min-width: 38px;
-  text-align: right;
-}
-
-/* ── Barras por categoria ── */
-.bar-list { padding: 0.5rem 0; }
-.bar-row {
-  display: flex;
-  align-items: center;
   gap: 0.875rem;
-  padding: 0.4375rem 1.25rem;
-  transition: background .15s;
-}
-.bar-row:hover { background: var(--surface-2); }
-.bar-label {
-  width: 200px;
-  flex-shrink: 0;
-  font-size: 0.8125rem;
-  color: var(--ink-mute);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.bar-track {
-  flex: 1;
-  height: 10px;
-  background: var(--line-soft);
-  border-radius: 999px;
-  overflow: hidden;
-}
-.bar-fill { height: 100%; border-radius: 999px; transition: width .5s ease; min-width: 4px; }
-.bar-val {
-  width: 30px;
-  text-align: right;
-  font-family: var(--mono);
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: var(--ink);
-}
-
-/* ── Bairros com mais registros ──
-   A numeração é legítima aqui: o conteúdo É um ranking. */
-.bairro-list { padding: 0.5rem 0; }
-.bairro-row {
-  display: flex;
-  align-items: center;
-  gap: 0.875rem;
-  padding: 0.5rem 1.25rem;
-  transition: background .15s;
-}
-.bairro-row:hover { background: var(--surface-2); }
-
-.bairro-rank {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--mono);
-  font-size: 0.75rem;
-  font-weight: 600;
-  flex-shrink: 0;
+  padding: 0.875rem;
   background: var(--surface-2);
   border: 1px solid var(--line);
-  color: var(--ink-mute);
+  border-radius: var(--r-ctl);
+  text-decoration: none;
 }
-.bairro-rank.rank-gold   { background: var(--plate); border-color: var(--plate); color: #fff; }
-.bairro-rank.rank-silver { background: var(--plate-wash); border-color: var(--plate-line); color: var(--plate); }
-.bairro-rank.rank-bronze { background: var(--plate-wash); border-color: var(--line); color: var(--plate); }
-
-.bairro-info { flex: 1; display: flex; flex-direction: column; gap: 0.3rem; }
-.bairro-name-row { display: flex; justify-content: space-between; align-items: baseline; gap: 0.75rem; }
-.bairro-name { font-size: 0.875rem; color: var(--ink); }
-.bairro-total { font-family: var(--mono); font-size: 0.875rem; font-weight: 600; color: var(--ink); }
-.bairro-track {
-  height: 6px;
-  background: var(--line-soft);
-  border-radius: 999px;
+.oldest:hover { background: var(--bg); }
+.oldest:focus-visible { outline: 2px solid var(--plate); outline-offset: 2px; }
+.oldest-age {
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+.oldest-age.em-atraso { color: var(--pr-high); }
+.oldest-unit { font-size: 0.8125rem; font-weight: 500; color: var(--ink-mute); }
+.oldest-body { min-width: 0; }
+.oldest-say { display: block; font-size: 0.875rem; font-weight: 500; color: var(--ink); }
+.oldest-title,
+.oldest-proto {
+  display: block;
   overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.bairro-fill { height: 100%; background: var(--plate); border-radius: 999px; transition: width .5s ease; }
+.oldest-title { font-size: 0.8125rem; color: var(--ink-mute); margin-top: 0.0625rem; }
+.oldest-proto { font-family: var(--mono); font-size: 0.6875rem; color: var(--ink-faint); margin-top: 0.125rem; }
 
-/* ── Carregando ── */
-.loading-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 4rem;
-  gap: 1rem;
-  color: var(--ink-mute);
+/* ── Listas de barras (tipo e bairro) ──────────────────────────────────── */
+.bar-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.8125rem; }
+.bar-list li { display: flex; flex-direction: column; gap: 0.3125rem; }
+.bar-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; }
+.bar-label {
+  font-size: 0.8125rem;
+  color: var(--ink);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
+.bar-track { height: 9px; background: var(--bg); border-radius: 2px; overflow: hidden; }
+.bar-fill { display: block; height: 100%; border-radius: 2px; min-width: 2px; }
+.bar-fill.plate { background: var(--plate); }
+.bar-val { font-size: 0.8125rem; font-weight: 600; color: var(--ink); flex-shrink: 0; }
+
+/* ── Mais apoiadas ─────────────────────────────────────────────────────── */
+.support-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.support-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.625rem 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+.support-list li:last-child { border-bottom: 0; padding-bottom: 0; }
+.support-list li:first-child { padding-top: 0; }
+.support-list a { flex: 1; min-width: 0; text-decoration: none; }
+.support-list a:focus-visible { outline: 2px solid var(--plate); outline-offset: 2px; border-radius: 2px; }
+.support-title {
+  display: block;
+  font-size: 0.8125rem;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.support-list a:hover .support-title { color: var(--plate); }
+.support-proto { display: block; font-family: var(--mono); font-size: 0.6875rem; color: var(--ink-faint); margin-top: 0.125rem; }
+.support-count {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--plate);
+  background: var(--plate-wash);
+  border-radius: var(--r-ctl);
+  padding: 0.125rem 0.4375rem;
+  flex-shrink: 0;
+}
+
+/* ── Carregando ────────────────────────────────────────────────────────── */
+.loading-state { display: flex; flex-direction: column; align-items: center; gap: 0.875rem; padding: 4rem 1.5rem; }
+.loading-state p { font-size: 0.875rem; color: var(--ink-mute); margin: 0; }
 .spinner {
-  width: 34px;
-  height: 34px;
+  width: 30px; height: 30px;
   border: 3px solid var(--line);
   border-top-color: var(--plate);
   border-radius: 50%;
-  animation: spin .7s linear infinite;
+  animation: spin 0.8s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ── Responsivo ── */
+@media (prefers-reduced-motion: reduce) {
+  .spinner { animation-duration: 2.4s; }
+}
+
+/* ── Telas estreitas ───────────────────────────────────────────────────── */
 @media (max-width: 900px) {
-  .charts-row { grid-template-columns: 1fr; }
-  .bar-label { width: 140px; }
+  .panel-row-three { grid-template-columns: 1fr; }
+  .queue-body { grid-template-columns: 1fr; }
 }
-
-@media (max-width: 640px) {
-  .stats-filters { flex-direction: column; align-items: stretch; }
-  .filter-field input,
-  .filter-field select { width: 100%; min-width: 0; }
-  .btn-clear-filters { width: 100%; }
-  .donut-body { flex-direction: column; align-items: stretch; gap: 1rem; }
-  .donut-svg { align-self: center; }
-}
-
-@media (max-width: 560px) {
-  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
-  .bar-row { flex-wrap: wrap; }
-  .bar-label { width: 100%; }
-}
-
-@media (max-width: 380px) {
-  .kpi-grid { grid-template-columns: 1fr; }
-  .kpi-num { font-size: 1.375rem; }
+@media (max-width: 600px) {
+  .page-stats { padding: 1rem; gap: 1rem; }
+  .load, .panel { padding: 1rem 1.125rem 1.25rem; }
+  .queue-num { font-size: 2.25rem; }
+  .age-list li { grid-template-columns: 5.5rem 1fr 1.75rem; }
 }
