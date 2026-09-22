@@ -229,13 +229,26 @@ class OccurrenceRestControllerPublicTest {
         }
 
         @Test
-        @DisplayName("administrador vê todas COM os dados do autor")
-        void administratorKeepsAuthorData() {
+        @DisplayName("super administrador vê todas COM os dados do autor")
+        void superAdminKeepsAuthorData() {
             when(occurrenceService.findAll()).thenReturn(List.of(occurrence(1, "joao@email.com")));
 
-            GetOccurrenceDto o = listAs(authAs("admin@email.com", UserModel.UserRole.ADMINISTRATOR)).get(0);
+            GetOccurrenceDto o = listAs(authAs("admin@email.com", UserModel.UserRole.SUPER_ADMIN)).get(0);
             assertThat(o.getEmail()).isEqualTo("joao@email.com");
             assertThat(o.getFullname()).isNotNull();
+        }
+
+        @Test
+        @DisplayName("administrador municipal vê apenas as ocorrências do seu município")
+        void municipalAdminStaysScopedToCity() {
+            UserModel admin = new UserModel();
+            admin.setCity("Santa Rita do Sapucaí");
+            when(userService.findByEmail("admin.sr@email.com")).thenReturn(admin);
+            when(occurrenceService.findAllByCity("Santa Rita do Sapucaí"))
+                .thenReturn(List.of(occurrence(1, "joao@email.com")));
+
+            assertThat(listAs(authAs("admin.sr@email.com", UserModel.UserRole.ADMINISTRATOR))).hasSize(1);
+            verify(occurrenceService, never()).findAll();
         }
 
         @Test
@@ -262,13 +275,13 @@ class OccurrenceRestControllerPublicTest {
         }
 
         @Test
-        @DisplayName("administrador continua vendo as anônimas")
-        void administratorStillSeesAnonymous() {
+        @DisplayName("super administrador continua vendo as anônimas")
+        void superAdminStillSeesAnonymous() {
             GetOccurrenceDto anonima = occurrence(3, null);
             anonima.setAnonymous(true);
             when(occurrenceService.findAll()).thenReturn(List.of(anonima));
 
-            assertThat(listAs(authAs("admin@email.com", UserModel.UserRole.ADMINISTRATOR))).hasSize(1);
+            assertThat(listAs(authAs("admin@email.com", UserModel.UserRole.SUPER_ADMIN))).hasSize(1);
         }
 
         @Test

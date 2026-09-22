@@ -14,6 +14,8 @@ public class Occurrence {
     private String number;
     private String street;
     private String city;
+    /** UF do endereço da ocorrência; par do município (há homônimos entre estados). */
+    private String state;
     private String urlMedia;
     private String cloudinaryPublicId;
     private boolean imageBlurred;
@@ -62,7 +64,7 @@ public class Occurrence {
     }
 
     public enum OccurrenceStatus {
-        PENDENTE, EM_ANDAMENTO, ATENDIDA, INDEFERIDA
+        PENDENTE, EM_ANDAMENTO, CONCLUIDA, INDEFERIDA
     }
 
     public enum Priority {
@@ -101,6 +103,11 @@ public class Occurrence {
     public String getStreet() { return street; }
     public void setStreet(String street) { this.street = street; }
     public String getCity() { return city; }
+    public String getState() { return state; }
+    /** Guarda em maiúsculas: a UF é comparada com os códigos do IBGE. */
+    public void setState(String state) {
+        this.state = state == null || state.isBlank() ? null : state.trim().toUpperCase();
+    }
     /** Ver UserModel.setCity: os dois lados da comparação precisam do trim. */
     public void setCity(String city) { this.city = city == null ? null : city.trim(); }
     public String getUrlMedia() { return urlMedia; }

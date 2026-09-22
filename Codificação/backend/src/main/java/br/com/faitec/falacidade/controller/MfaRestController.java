@@ -128,8 +128,7 @@ public class MfaRestController {
     }
 
     private boolean isStaff(UserModel user) {
-        return user.getRole() == UserModel.UserRole.EMPLOYEE
-            || user.getRole() == UserModel.UserRole.ADMINISTRATOR;
+        return user.isStaff();
     }
 
     private UserModel getUser(Authentication auth) {

@@ -59,18 +59,21 @@ class UserPostgresDaoTest {
             user.setFullname("Teste");
             user.setEmail("teste@email.com");
             user.setRole(UserModel.UserRole.CITIZEN);
+            user.setState("sp");          // guardado em maiúsculas pelo modelo
             user.setAcceptsTerms(true);
 
             int id = sut.add(user);
 
             assertThat(id).isEqualTo(99);
             // Layout do INSERT: 1=password, 2=fullname, 3=email, 4=date_of_birth, 5=phone,
-            // 6=street, 7=neighborhood, 8=number, 9=cep, 10=city, 11=role, 12=is_active, 13=accepts_terms
+            // 6=street, 7=neighborhood, 8=number, 9=cep, 10=city, 11=state, 12=role,
+            // 13=is_active, 14=accepts_terms, 15=mfa_email_enabled
             verify(ps).setString(1, "$2a$HASH");
             verify(ps).setString(2, "Teste");
             verify(ps).setString(3, "teste@email.com");
-            verify(ps).setString(11, "CITIZEN");
-            verify(ps).setBoolean(13, true);
+            verify(ps).setString(11, "SP");
+            verify(ps).setString(12, "CITIZEN");
+            verify(ps).setBoolean(14, true);
             verify(connection).commit();
         }
 
@@ -149,6 +152,7 @@ class UserPostgresDaoTest {
             when(rs.getString("number")).thenReturn("100");
             when(rs.getString("cep")).thenReturn("14400-000");
             when(rs.getString("city")).thenReturn("Franca");
+            when(rs.getString("state")).thenReturn("SP");
             when(rs.getBoolean("is_active")).thenReturn(true);
             when(rs.getBoolean("accepts_terms")).thenReturn(true);
             when(rs.getString("role")).thenReturn("CITIZEN");
@@ -189,6 +193,7 @@ class UserPostgresDaoTest {
             when(rs.getString("number")).thenReturn(null);
             when(rs.getString("cep")).thenReturn(null);
             when(rs.getString("city")).thenReturn(null);
+            when(rs.getString("state")).thenReturn(null);
             when(rs.getBoolean("is_active")).thenReturn(true);
             when(rs.getBoolean("accepts_terms")).thenReturn(false);
             when(rs.getTimestamp("created_at")).thenReturn(null);
@@ -250,13 +255,23 @@ class UserPostgresDaoTest {
         @DisplayName("executa UPDATE com hash e id corretos e retorna true")
         void updatesPassword() throws Exception {
             when(connection.prepareStatement(contains("SET password"))).thenReturn(ps);
+            when(ps.executeUpdate()).thenReturn(1);
 
             boolean result = sut.updatePassword(1, "$2a$NEWHASH");
 
             assertThat(result).isTrue();
             verify(ps).setString(1, "$2a$NEWHASH");
             verify(ps).setInt(2, 1);
-            verify(ps).execute();
+            verify(ps).executeUpdate();
+        }
+
+        @Test
+        @DisplayName("retorna false quando nenhuma linha foi alterada")
+        void returnsFalseWhenNothingUpdated() throws Exception {
+            when(connection.prepareStatement(contains("SET password"))).thenReturn(ps);
+            when(ps.executeUpdate()).thenReturn(0);
+
+            assertThat(sut.updatePassword(999, "$2a$NEWHASH")).isFalse();
         }
 
         @Test
@@ -291,11 +306,15 @@ class UserPostgresDaoTest {
             u.setNumber("200");
             u.setCep("14400-001");
             u.setCity("Franca");
+            u.setState("SP");
 
             sut.updateInformation(1, u);
 
+            // 1=fullname … 7=city, 8=state, 9=id
             verify(ps).setString(1, "Maria");
-            verify(ps).setInt(8, 1);
+            verify(ps).setString(7, "Franca");
+            verify(ps).setString(8, "SP");
+            verify(ps).setInt(9, 1);
             verify(ps).execute();
         }
     }

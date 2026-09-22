@@ -41,4 +41,17 @@ public interface OccurrenceService extends ReadService<GetOccurrenceDto> {
      */
     void changeStatus(int occurrenceId, String newStatus, int changedBy,
                       String message, boolean collective);
+
+    /**
+     * RF22: encaminha a ocorrência ao departamento responsável.
+     *
+     * Envia ao e-mail do departamento os dados do problema — sem nenhum dado
+     * pessoal do autor — com as fotografias anexadas, move a ocorrência para
+     * EM_ANDAMENTO e registra o trâmite no histórico. Se o e-mail não sair, o
+     * estado não muda: não se registra um encaminhamento que não aconteceu.
+     *
+     * @return o nome do departamento para o qual seguiu a ocorrência
+     * @throws IllegalArgumentException ocorrência ou departamento inexistentes
+     */
+    String forwardToDepartment(int occurrenceId, int departmentId, int changedBy);
 }

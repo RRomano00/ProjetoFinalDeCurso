@@ -11,4 +11,10 @@ public interface UserService extends CrudService<UserModel>, ReadByEmailService,
 
     /** RF15: ativa/inativa a conta do usuário. */
     void setActive(int userId, boolean active);
+
+    /** RF25: troca o perfil da conta. */
+    void setRole(int userId, UserModel.UserRole role);
+
+    /** Há equipe cadastrada para atender o município? Usado no aviso de cobertura. */
+    boolean hasStaffInCity(String city, String state);
 }

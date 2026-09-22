@@ -30,13 +30,14 @@ public class OccurrencePostgresDao implements OccurrenceDao {
 
     @Override
     public int add(Occurrence entity) {
-        String findUser = "SELECT id FROM users WHERE email = ? LIMIT 1";
+        String findUser = "SELECT id FROM \"user\" WHERE email = ? LIMIT 1";
         String sql =
             "INSERT INTO occurrence " +
             "(protocol_number,title,description,number,street,neighborhood,address_reference,city," +
             " latitude,longitude,url_media,cloudinary_public_id,image_blurred," +
-            " type,status,priority,is_anonymous,anonymous_tracking_code_hash,users_id,ip_address,group_id)" +
-            " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+            " type,status,priority,is_anonymous,anonymous_tracking_code_hash,user_id,ip_address,group_id," +
+            " state)" +
+            " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
         try {
             connection.setAutoCommit(false);
             Integer userId = null;
@@ -78,6 +79,7 @@ public class OccurrencePostgresDao implements OccurrenceDao {
                 else ps.setNull(20, Types.VARCHAR);
                 if (entity.getGroupId() != null) ps.setInt(21, entity.getGroupId());
                 else ps.setNull(21, Types.INTEGER);
+                ps.setString(22, entity.getState());
                 ps.execute();
                 ResultSet keys = ps.getGeneratedKeys();
                 int id = keys.next() ? keys.getInt(1) : 0;
@@ -108,7 +110,7 @@ public class OccurrencePostgresDao implements OccurrenceDao {
 
     @Override public GetOccurrenceDto readById(int id) {
         GetOccurrenceDto dto = queryOne(SELECT_FIELDS +
-                        "LEFT JOIN users u ON o.users_id=u.id WHERE o.id=?", id);
+                        "LEFT JOIN \"user\" u ON o.user_id=u.id WHERE o.id=?", id);
         if (dto != null) dto.setMedia(readMedia(id));
         return dto;
     }
@@ -130,7 +132,7 @@ public class OccurrencePostgresDao implements OccurrenceDao {
     public List<GetOccurrenceDto> readGroup(int rootId) {
         List<GetOccurrenceDto> list = new ArrayList<>();
         String sql = SELECT_FIELDS +
-                     "LEFT JOIN users u ON o.users_id=u.id " +
+                     "LEFT JOIN \"user\" u ON o.user_id=u.id " +
                      "WHERE o.id=? OR o.group_id=? ORDER BY o.created_at";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, rootId);
@@ -145,7 +147,7 @@ public class OccurrencePostgresDao implements OccurrenceDao {
     public List<OccurrenceHistoryDto> readHistory(int occurrenceId) {
         List<OccurrenceHistoryDto> list = new ArrayList<>();
         String sql = "SELECT h.old_status, h.new_status, h.observation, h.changed_at, u.fullname " +
-                     "FROM occurrence_history h LEFT JOIN users u ON h.changed_by=u.id " +
+                     "FROM occurrence_history h LEFT JOIN \"user\" u ON h.changed_by=u.id " +
                      "WHERE h.occurrence_id=? ORDER BY h.changed_at DESC";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, occurrenceId);
@@ -166,25 +168,25 @@ public class OccurrencePostgresDao implements OccurrenceDao {
 
     @Override public List<GetOccurrenceDto> readall() {
         return queryList(SELECT_FIELDS +
-                         "LEFT JOIN users u ON o.users_id=u.id ORDER BY o.created_at DESC");
+                         "LEFT JOIN \"user\" u ON o.user_id=u.id ORDER BY o.created_at DESC");
     }
 
     @Override public GetOccurrenceDto readByProtocolNumber(String protocol) {
         return queryOne(SELECT_FIELDS +
-                        "LEFT JOIN users u ON o.users_id=u.id WHERE o.protocol_number=?", protocol);
+                        "LEFT JOIN \"user\" u ON o.user_id=u.id WHERE o.protocol_number=?", protocol);
     }
 
     @Override public GetOccurrenceDto findByAnonymousTrackingCodeHash(String hash) {
         return queryOne(SELECT_FIELDS +
-                        "LEFT JOIN users u ON o.users_id=u.id WHERE o.anonymous_tracking_code_hash=?", hash);
+                        "LEFT JOIN \"user\" u ON o.user_id=u.id WHERE o.anonymous_tracking_code_hash=?", hash);
     }
 
     @Override public List<GetOccurrenceDto> findNearby(double lat, double lon, String type, double radius) {
         double dLat = radius / 111_111.0;
         double dLon = radius / (111_111.0 * Math.cos(Math.toRadians(lat)));
         String sql  = SELECT_FIELDS +
-                      "LEFT JOIN users u ON o.users_id=u.id " +
-                      "WHERE o.status NOT IN ('ATENDIDA','INDEFERIDA') AND o.type=? " +
+                      "LEFT JOIN \"user\" u ON o.user_id=u.id " +
+                      "WHERE o.status NOT IN ('CONCLUIDA','INDEFERIDA') AND o.type=? " +
                       "AND o.latitude BETWEEN ? AND ? AND o.longitude BETWEEN ? AND ?";
         List<GetOccurrenceDto> list = new ArrayList<>();
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
@@ -198,9 +200,10 @@ public class OccurrencePostgresDao implements OccurrenceDao {
     }
 
     @Override public void updateOccurrenceStatusToInProgress(int id) { simpleUpdate(id, "EM_ANDAMENTO"); }
-    @Override public void updateOccurrenceStatusToConclude(int id)    { simpleUpdate(id, "ATENDIDA"); }
+    @Override public void updateOccurrenceStatusToConclude(int id)    { simpleUpdate(id, "CONCLUIDA"); }
 
-    @Override public void updateStatus(int id, String newStatus, int changedBy, String obs) {
+    @Override public void updateStatus(int id, String newStatus, int changedBy, String obs,
+                                       Integer departmentId) {
         try {
             connection.setAutoCommit(false);
             String old = null;
@@ -213,9 +216,12 @@ public class OccurrencePostgresDao implements OccurrenceDao {
                 ps.setString(1, newStatus); ps.setInt(2, id); ps.execute();
             }
             try (PreparedStatement ps = connection.prepareStatement(
-                    "INSERT INTO occurrence_history(occurrence_id,changed_by,old_status,new_status,observation) VALUES(?,?,?,?,?)")) {
+                    "INSERT INTO occurrence_history(occurrence_id,changed_by,old_status,new_status,observation,department_id)" +
+                    " VALUES(?,?,?,?,?,?)")) {
                 ps.setInt(1, id); ps.setInt(2, changedBy);
-                ps.setString(3, old); ps.setString(4, newStatus); ps.setString(5, obs); ps.execute();
+                ps.setString(3, old); ps.setString(4, newStatus); ps.setString(5, obs);
+                if (departmentId != null) ps.setInt(6, departmentId); else ps.setNull(6, java.sql.Types.INTEGER);
+                ps.execute();
             }
             connection.commit();
         } catch (SQLException e) { rollback(); throw new RuntimeException("Erro ao atualizar status", e); }
@@ -256,6 +262,7 @@ public class OccurrencePostgresDao implements OccurrenceDao {
         o.setNeighborhood(rs.getString("neighborhood"));
         o.setAddressReference(rs.getString("address_reference"));
         o.setCity(rs.getString("city"));
+        o.setState(rs.getString("state"));
         double lat = rs.getDouble("latitude");  if (!rs.wasNull()) o.setLatitude(lat);
         double lon = rs.getDouble("longitude"); if (!rs.wasNull()) o.setLongitude(lon);
         o.setUrlMedia(rs.getString("url_media"));
@@ -267,7 +274,7 @@ public class OccurrencePostgresDao implements OccurrenceDao {
         int gid = rs.getInt("group_id"); if (!rs.wasNull()) o.setGroupId(gid);
         o.setSupportCount(rs.getInt("support_count"));
         o.setEmail(rs.getString("user_email"));
-        // users_id é ON DELETE SET NULL: se o autor apagou a conta, a ocorrência fica
+        // user_id é ON DELETE SET NULL: se o autor apagou a conta, a ocorrência fica
         // sem nome/e-mail. Identifica o autor perdido em vez de exibir um campo vazio.
         String fullname = rs.getString("fullname");
         o.setFullname(!o.isAnonymous() && fullname == null ? "Usuário Desconhecido" : fullname);
@@ -280,7 +287,7 @@ public class OccurrencePostgresDao implements OccurrenceDao {
     public List<GetOccurrenceDto> readAllByUserEmail(String email) {
         List<GetOccurrenceDto> list = new ArrayList<>();
         String sql = SELECT_FIELDS +
-                     "LEFT JOIN users u ON o.users_id=u.id " +
+                     "LEFT JOIN \"user\" u ON o.user_id=u.id " +
                      "WHERE u.email=? ORDER BY o.created_at DESC";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, email);
@@ -294,7 +301,7 @@ public class OccurrencePostgresDao implements OccurrenceDao {
     public List<GetOccurrenceDto> readAllByCity(String city) {
         List<GetOccurrenceDto> list = new ArrayList<>();
         String sql = SELECT_FIELDS +
-                     "LEFT JOIN users u ON o.users_id=u.id " +
+                     "LEFT JOIN \"user\" u ON o.user_id=u.id " +
                      "WHERE o.city=? ORDER BY o.created_at DESC";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, city);
@@ -307,7 +314,7 @@ public class OccurrencePostgresDao implements OccurrenceDao {
     @Override
     public int countTodayByEmail(String email) {
         String sql = "SELECT COUNT(*) FROM occurrence o " +
-                     "JOIN users u ON o.users_id = u.id " +
+                     "JOIN \"user\" u ON o.user_id = u.id " +
                      "WHERE u.email = ? AND o.is_anonymous = false AND DATE(o.created_at) = CURRENT_DATE";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, email);

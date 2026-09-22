@@ -1,6 +1,7 @@
 package br.com.faitec.falacidade.implementation.service.email;
 
 import br.com.faitec.falacidade.domain.UserModel;
+import br.com.faitec.falacidade.domain.dto.occurrence.GetOccurrenceDto;
 import br.com.faitec.falacidade.port.service.email.EmailService;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -9,6 +10,8 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 /**
  * Envio de e-mails transacionais do sistema.
@@ -165,7 +168,8 @@ public class EmailServiceImpl implements EmailService {
     @Async("emailExecutor")
     public void sendStaffWelcomeEmail(String toEmail, String fullname, UserModel.UserRole role, String city) {
         String name = (fullname == null || fullname.isBlank()) ? "colega" : fullname;
-        boolean isAdmin = role == UserModel.UserRole.ADMINISTRATOR;
+        boolean isAdmin = role == UserModel.UserRole.ADMINISTRATOR
+                       || role == UserModel.UserRole.SUPER_ADMIN;
         String roleLabel = isAdmin ? "Administrador" : "Funcionário";
         String cityLabel = (city == null || city.isBlank()) ? "não informado" : city;
 
@@ -271,13 +275,13 @@ public class EmailServiceImpl implements EmailService {
         String name = (fullname == null || fullname.isBlank()) ? "cidadão" : fullname;
         String statusLabel = switch (newStatus) {
             case "EM_ANDAMENTO" -> "Em Andamento";
-            case "ATENDIDA"     -> "Atendida";
+            case "CONCLUIDA"    -> "Concluída";
             case "INDEFERIDA"   -> "Indeferida";
             default             -> newStatus;
         };
         String statusColor = switch (newStatus) {
             case "EM_ANDAMENTO" -> "#d97706";
-            case "ATENDIDA"     -> "#16a34a";
+            case "CONCLUIDA"    -> "#16a34a";
             case "INDEFERIDA"   -> "#6b7280";
             default             -> BRAND_COLOR;
         };
@@ -311,7 +315,202 @@ public class EmailServiceImpl implements EmailService {
              withFooter(text), layout(content), "Falha ao enviar e-mail de mudança de status");
     }
 
-    // ── Layout padrão ─────────────────────────────────────────────────────────
+
+    /**
+     * RF22: encaminhamento ao departamento responsável.
+     *
+     * O corpo carrega apenas o que descreve o problema — protocolo, categoria,
+     * prioridade, endereço, data e relato. Nome, e-mail e endereço de rede do
+     * autor ficam de fora, inclusive nas ocorrências identificadas: o
+     * departamento precisa do problema, não de quem o relatou (LGPD).
+     *
+     * Envio síncrono, ao contrário dos demais e-mails do sistema: quem
+     * encaminha precisa saber se a mensagem saiu antes de a ocorrência mudar
+     * de estado.
+     */
+    @Override
+    public void sendOccurrenceForwardEmail(String toEmail, String departmentName,
+                                           GetOccurrenceDto o) {
+        String protocol = o.getProtocolNumber();
+        String category = label(o.getType() == null ? null : o.getType().name());
+        String priority = o.getPriority() == null ? "—" : label(o.getPriority().name());
+        String address  = address(o);
+        String opened   = o.getCreatedAt() == null ? "—"
+            : o.getCreatedAt().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
+        String maps = o.getLatitude() != null && o.getLongitude() != null
+            ? "https://www.openstreetmap.org/?mlat=" + o.getLatitude() + "&mlon=" + o.getLongitude() + "#map=18/"
+              + o.getLatitude() + "/" + o.getLongitude()
+            : null;
+
+        List<Photo> photos = downloadPhotos(o);
+
+        String text =
+            "Encaminhamento de ocorrência — " + departmentName + "\n\n" +
+            "Protocolo: " + protocol + "\n" +
+            "Categoria: " + category + "\n" +
+            "Prioridade: " + priority + "\n" +
+            "Registrada em: " + opened + "\n" +
+            "Endereço: " + address + "\n" +
+            (maps != null ? "Local no mapa: " + maps + "\n" : "") +
+            "\nRelato:\n" + nvl(o.getDescription()) + "\n\n" +
+            (photos.isEmpty()
+                ? "Sem fotografias anexadas.\n"
+                : photos.size() + " fotografia(s) em anexo.\n") +
+            "\nEste encaminhamento não contém dados pessoais do autor da ocorrência.";
+
+        String content =
+            "<h2 style='margin:0 0 4px; font-size:20px; color:#111;'>Ocorrência encaminhada</h2>" +
+            "<p style='font-size:15px; color:#333; margin:0 0 20px;'>" +
+            "  Esta ocorrência foi encaminhada ao <strong>" + esc(departmentName) + "</strong> " +
+            "  para providências." +
+            "</p>" +
+            "<div style='background:#eef4fb; border-radius:8px; padding:14px 16px; margin:0 0 20px;'>" +
+            "  <p style='font-size:12px; color:#777; margin:0 0 4px;'>Protocolo</p>" +
+            "  <p style='font-size:20px; font-weight:bold; letter-spacing:1px; color:" + BRAND_COLOR + "; margin:0;'>" +
+                 esc(protocol) + "</p>" +
+            "</div>" +
+            row("Categoria", category) +
+            row("Prioridade", priority) +
+            row("Registrada em", opened) +
+            row("Endereço", address) +
+            (maps != null
+                ? "<p style='font-size:14px; margin:14px 0 0;'>" +
+                  "<a href='" + maps + "' style='color:" + BRAND_COLOR + ";'>Ver o local no mapa</a></p>"
+                : "") +
+            "<div style='margin:20px 0 0; padding:14px 16px; background:#f9fafb;" +
+            "     border-left:4px solid " + BRAND_COLOR + "; border-radius:6px;'>" +
+            "  <p style='font-size:13px; color:#777; margin:0 0 6px;'>Relato do cidadão</p>" +
+            "  <p style='font-size:15px; color:#333; margin:0; white-space:pre-wrap;'>" +
+                 esc(nvl(o.getDescription())) + "</p>" +
+            "</div>" +
+            (photos.isEmpty()
+                ? "<p style='font-size:13px; color:#777; margin:18px 0 0;'>Sem fotografias anexadas.</p>"
+                : "<p style='font-size:13px; color:#777; margin:18px 0 0;'>" + photos.size() +
+                  " fotografia(s) em anexo, com rostos e placas desfocados.</p>") +
+            "<p style='font-size:12px; color:#aaa; margin:14px 0 0;'>" +
+            "  Este encaminhamento não contém dados pessoais do autor da ocorrência (LGPD).</p>";
+
+        sendWithAttachments(toEmail, "Fala, Cidade! – Ocorrência " + protocol + " encaminhada",
+            withFooter(text), layout(content), photos,
+            "Falha ao encaminhar a ocorrência ao departamento");
+    }
+
+    /** Linha rótulo/valor do corpo do e-mail de encaminhamento. */
+    private String row(String label, String value) {
+        return "<p style='font-size:14px; color:#333; margin:0 0 6px;'>" +
+               "<span style='color:#777;'>" + label + ":</span> " + esc(value) + "</p>";
+    }
+
+    private String address(GetOccurrenceDto o) {
+        StringBuilder sb = new StringBuilder();
+        if (o.getStreet() != null && !o.getStreet().isBlank()) sb.append(o.getStreet());
+        if (o.getNumber() != null && !o.getNumber().isBlank()) sb.append(", ").append(o.getNumber());
+        if (o.getNeighborhood() != null && !o.getNeighborhood().isBlank()) sb.append(" — ").append(o.getNeighborhood());
+        if (o.getCity() != null && !o.getCity().isBlank()) sb.append(", ").append(o.getCity());
+        if (o.getAddressReference() != null && !o.getAddressReference().isBlank())
+            sb.append(" (referência: ").append(o.getAddressReference()).append(")");
+        return sb.length() == 0 ? "—" : sb.toString();
+    }
+
+    /**
+     * Rótulos das enumerações como o cidadão e o servidor os leem na tela.
+     * O e-mail vai para fora do sistema, então não pode mostrar
+     * SINALIZACAO_OU_SEMAFORO_COM_DEFEITO nem "Media" sem acento.
+     */
+    private static final java.util.Map<String, String> LABELS = java.util.Map.ofEntries(
+        java.util.Map.entry("BURACO_NA_RUA_OU_CALCADA",              "Buraco na rua ou calçada"),
+        java.util.Map.entry("POSTE_COM_LUZ_QUEIMADA",                "Poste com luz queimada"),
+        java.util.Map.entry("LIXO_ACUMULADO_OU_TERRENO_SUJO",        "Lixo acumulado ou terreno sujo"),
+        java.util.Map.entry("SINALIZACAO_OU_SEMAFORO_COM_DEFEITO",   "Sinalização ou semáforo com defeito"),
+        java.util.Map.entry("PROBLEMAS_EM_PRACAS_E_PARQUES",         "Problemas em praças e parques"),
+        java.util.Map.entry("FALHAS_NO_TRANSPORTE_PUBLICO",          "Falhas no transporte público"),
+        java.util.Map.entry("PROBLEMAS_EM_POSTO_DE_SAUDE_OU_ESCOLA", "Problemas em posto de saúde ou escola"),
+        java.util.Map.entry("SOM_ALTO_OU_PERTURBACAO_DO_SOSSEGO",    "Som alto ou perturbação do sossego"),
+        java.util.Map.entry("OBRA_IRREGULAR_OU_IMOVEL_ABANDONADO",   "Obra irregular ou imóvel abandonado"),
+        java.util.Map.entry("MAUS_TRATOS_AOS_ANIMAIS",               "Maus-tratos aos animais"),
+        java.util.Map.entry("PESSOA_PRECISANDO_DE_AJUDA",            "Pessoa precisando de ajuda"),
+        java.util.Map.entry("OUTROS_PROBLEMAS",                      "Outros problemas"),
+        java.util.Map.entry("PENDENTE",     "Pendente"),
+        java.util.Map.entry("EM_ANDAMENTO", "Em andamento"),
+        java.util.Map.entry("CONCLUIDA",    "Concluída"),
+        java.util.Map.entry("INDEFERIDA",   "Indeferida"),
+        java.util.Map.entry("ALTA",  "Alta"),
+        java.util.Map.entry("MEDIA", "Média"),
+        java.util.Map.entry("BAIXA", "Baixa")
+    );
+
+    /** Rótulo da enumeração; sem correspondência, troca o sublinhado por espaço. */
+    private String label(String enumName) {
+        if (enumName == null || enumName.isBlank()) return "—";
+        String known = LABELS.get(enumName);
+        if (known != null) return known;
+        String s = enumName.replace('_', ' ').toLowerCase();
+        return Character.toUpperCase(s.charAt(0)) + s.substring(1);
+    }
+
+    private String nvl(String s) { return s == null || s.isBlank() ? "—" : s; }
+
+    /** Escapa o que vem do cidadão antes de entrar no HTML do e-mail. */
+    private String esc(String s) {
+        return s == null ? "" : s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+    }
+
+    /** Fotografia baixada do serviço de mídias para seguir anexada. */
+    private record Photo(String filename, byte[] bytes, String contentType) {}
+
+    /**
+     * Baixa as fotografias da ocorrência. As URLs já são as de entrega, com o
+     * desfoque de rostos e placas aplicado. Falha no download não impede o
+     * encaminhamento: o e-mail segue sem o anexo correspondente.
+     */
+    private List<Photo> downloadPhotos(GetOccurrenceDto o) {
+        java.util.LinkedHashSet<String> urls = new java.util.LinkedHashSet<>();
+        if (o.getUrlMedia() != null && !o.getUrlMedia().isBlank()) urls.add(o.getUrlMedia());
+        if (o.getMedia() != null)
+            for (var m : o.getMedia())
+                if (m.getUrl() != null && !m.getUrl().isBlank()) urls.add(m.getUrl());
+
+        List<Photo> photos = new java.util.ArrayList<>();
+        int i = 1;
+        java.net.http.HttpClient client = java.net.http.HttpClient.newBuilder()
+            .connectTimeout(java.time.Duration.ofSeconds(5)).build();
+        for (String url : urls) {
+            try {
+                var request = java.net.http.HttpRequest.newBuilder(java.net.URI.create(url))
+                    .timeout(java.time.Duration.ofSeconds(15)).GET().build();
+                var response = client.send(request, java.net.http.HttpResponse.BodyHandlers.ofByteArray());
+                if (response.statusCode() != 200 || response.body().length == 0) continue;
+                String type = response.headers().firstValue("content-type").orElse("image/jpeg");
+                String ext  = type.contains("png") ? "png" : type.contains("webp") ? "webp" : "jpg";
+                photos.add(new Photo("ocorrencia-" + o.getProtocolNumber() + "-" + i + "." + ext,
+                                     response.body(), type));
+                i++;
+            } catch (Exception ignored) { /* anexo é melhor esforço */ }
+        }
+        return photos;
+    }
+
+    /** Mesmo envio multipart dos outros e-mails, com as fotografias anexadas. */
+    private void sendWithAttachments(String to, String subject, String text, String html,
+                                     List<Photo> photos, String failureMessage) {
+        try {
+            MimeMessage msg = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(msg, true, "UTF-8");
+            helper.setFrom(fromEmail);
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(text, html);
+            for (Photo p : photos)
+                helper.addAttachment(p.filename(),
+                    new org.springframework.core.io.ByteArrayResource(p.bytes()), p.contentType());
+            mailSender.send(msg);
+        } catch (MessagingException e) {
+            throw new RuntimeException(failureMessage, e);
+        }
+    }
+
+    // ── Layout padrão ───────────────────────────────────────────────────────
+
 
     /** Envolve o conteúdo no layout padrão: marca no topo, cartão branco e rodapé escuro. */
     private String layout(String contentHtml) {

@@ -25,6 +25,7 @@ public class RegisterUserDto {
     private String number;
     private String cep;
     private String city;
+    private String state;
 
     @NotNull(message = "Você deve aceitar os termos de uso")
     private Boolean acceptsTerms;
@@ -39,6 +40,7 @@ public class RegisterUserDto {
         u.setPhoneNumber(phoneNumber); u.setStreet(street);
         u.setNeighborhood(neighborhood); u.setNumber(number);
         u.setCep(cep);               u.setCity(city);
+        u.setState(state);
         u.setAcceptsTerms(Boolean.TRUE.equals(acceptsTerms));
         u.setMfaEmailEnabled(Boolean.TRUE.equals(mfaEmailEnabled));
         u.setRole(UserModel.UserRole.CITIZEN);
@@ -66,6 +68,8 @@ public class RegisterUserDto {
     public void      setCep(String v)          { this.cep = v; }
     public String    getCity()         { return city; }
     public void      setCity(String v)         { this.city = v; }
+    public String    getState()        { return state; }
+    public void      setState(String v)        { this.state = v; }
     public Boolean   getAcceptsTerms() { return acceptsTerms; }
     public void      setAcceptsTerms(Boolean v){ this.acceptsTerms = v; }
     public Boolean   getMfaEmailEnabled() { return mfaEmailEnabled; }

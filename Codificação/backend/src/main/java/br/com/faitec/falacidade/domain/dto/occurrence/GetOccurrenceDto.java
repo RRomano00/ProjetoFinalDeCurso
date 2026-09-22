@@ -7,6 +7,7 @@ public class GetOccurrenceDto {
     private int                      id;
     private String                   protocolNumber, title, description;
     private String                   neighborhood, number, street, addressReference, city;
+    private String                   state;
     private Double                   latitude, longitude;
     private String                   urlMedia;
     private boolean                  imageBlurred;
@@ -38,6 +39,8 @@ public class GetOccurrenceDto {
     public void                    setAddressReference(String v){ this.addressReference = v; }
     public String                  getCity()            { return city; }
     public void                    setCity(String v)    { this.city = v; }
+    public String                  getState()           { return state; }
+    public void                    setState(String v)   { this.state = v; }
     public Double                  getLatitude()        { return latitude; }
     public void                    setLatitude(Double v){ this.latitude = v; }
     public Double                  getLongitude()       { return longitude; }
