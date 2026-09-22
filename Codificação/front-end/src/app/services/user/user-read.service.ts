@@ -24,4 +24,14 @@ export class UserReadService {
   setActive(id: number, active: boolean): Promise<any> {
     return firstValueFrom(this.http.put<any>(`${environment.api_endpoint}/user/${id}/active`, { active }));
   }
+
+  /** RF25: troca o perfil da conta — só Administrador, dentro do seu alcance. */
+  setRole(id: number, role: string): Promise<any> {
+    return firstValueFrom(this.http.put<any>(`${environment.api_endpoint}/user/${id}/role`, { role }));
+  }
+
+  /** RF15: exclui a conta — só Administrador, e só depois de inativada. */
+  delete(id: number): Promise<any> {
+    return firstValueFrom(this.http.delete<any>(`${environment.api_endpoint}/user/${id}`));
+  }
 }

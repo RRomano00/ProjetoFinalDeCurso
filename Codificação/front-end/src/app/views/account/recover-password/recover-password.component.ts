@@ -4,12 +4,13 @@ import { FormControl, FormsModule, ReactiveFormsModule, Validators } from '@angu
 import { CommonModule } from '@angular/common';
 import { PasswordResetService } from '../../../services/security/password-reset.service';
 import { ToastrService } from 'ngx-toastr';
+import { PasswordRevealDirective } from '../../../shared/password-reveal.directive';
 
 type ResetStep = 'request' | 'confirm';
 
 @Component({
   selector: 'app-recover-password',
-  imports: [RouterModule, CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [RouterModule, CommonModule, FormsModule, ReactiveFormsModule, PasswordRevealDirective],
   templateUrl: './recover-password.component.html',
   styleUrls: ['../auth-shell.css', './recover-password.component.css']
 })
@@ -26,6 +27,12 @@ export class RecoverPasswordComponent {
     Validators.required, Validators.minLength(8),
     Validators.pattern(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])/)
   ]);
+  confirmPassword = new FormControl('', [Validators.required]);
+
+  /** A senha nova é digitada às cegas; sem repetir, um typo vira senha perdida. */
+  passwordsMatch(): boolean {
+    return this.newPassword.value === this.confirmPassword.value;
+  }
 
   constructor(
     private resetService: PasswordResetService,
@@ -50,9 +57,15 @@ export class RecoverPasswordComponent {
   }
 
   async confirmReset() {
-    if (this.token.invalid || this.newPassword.invalid) {
+    if (this.token.invalid || this.newPassword.invalid || this.confirmPassword.invalid) {
       this.token.markAsTouched();
       this.newPassword.markAsTouched();
+      this.confirmPassword.markAsTouched();
+      return;
+    }
+    if (!this.passwordsMatch()) {
+      this.confirmPassword.markAsTouched();
+      this.toastr.error('As senhas não coincidem!');
       return;
     }
     this.loading = true;

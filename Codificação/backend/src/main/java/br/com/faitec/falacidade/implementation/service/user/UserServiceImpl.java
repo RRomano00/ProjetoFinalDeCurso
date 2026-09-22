@@ -61,6 +61,16 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public void setRole(int userId, UserModel.UserRole role) {
+        if (userId > 0 && role != null) userDao.setRole(userId, role);
+    }
+
+    @Override
+    public boolean hasStaffInCity(String city, String state) {
+        return city != null && !city.isBlank() && userDao.existsStaffInCity(city, state);
+    }
+
+    @Override
     public void update(int id, UserModel entity) {
         if (id != entity.getId()) return;
         if (findById(id) == null) return;

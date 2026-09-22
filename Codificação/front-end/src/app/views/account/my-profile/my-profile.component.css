@@ -275,3 +275,10 @@
   .qr-actions .btn-primary,
   .qr-actions .btn-secondary { width: 100%; }
 }
+
+/* A UF tem duas letras: o campo não precisa da largura de um município. */
+.input-uf { text-transform: uppercase; letter-spacing: 0.06em; max-width: 6rem; }
+
+/* Município antes da UF: aceita valor, não aceita digitação. */
+.form-input[readonly] { background: var(--surface-2); color: var(--ink-mute); cursor: not-allowed; }
+.field-hint { font-size: 0.75rem; color: var(--ink-faint); line-height: 1.4; }

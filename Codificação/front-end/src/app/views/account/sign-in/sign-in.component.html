@@ -106,6 +106,7 @@
           <label>Código de verificação</label>
           <input type="text" [formControl]="totpCode"
             placeholder="000000" maxlength="6"
+            (keyup.enter)="loading || totpCode.invalid || verifyMfa()"
             inputmode="numeric" class="totp-input" />
         </div>
 

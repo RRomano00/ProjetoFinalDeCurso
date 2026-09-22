@@ -1,5 +1,6 @@
 package br.com.faitec.falacidade.configuration;
 
+import br.com.faitec.falacidade.implementation.dao.postgres.DepartmentPostgresDao;
 import br.com.faitec.falacidade.implementation.dao.postgres.ContactMessagePostgresDao;
 import br.com.faitec.falacidade.implementation.dao.postgres.OccurrencePostgresDao;
 import br.com.faitec.falacidade.implementation.dao.postgres.OccurrenceSupportPostgresDao;
@@ -10,6 +11,7 @@ import br.com.faitec.falacidade.port.dao.contact.ContactMessageDao;
 import br.com.faitec.falacidade.port.dao.occurrence.OccurrenceDao;
 import br.com.faitec.falacidade.port.dao.occurrence.OccurrenceSupportDao;
 import br.com.faitec.falacidade.port.dao.password.PasswordResetTokenDao;
+import br.com.faitec.falacidade.port.dao.department.DepartmentDao;
 import br.com.faitec.falacidade.port.dao.user.UserDao;
 import br.com.faitec.falacidade.port.service.authentication.AuthenticationService;
 import br.com.faitec.falacidade.port.service.user.UserService;
@@ -73,6 +75,11 @@ public class AppConfiguration {
     @Bean
     public ContactMessageDao getContactMessageDao(Connection connection) {
         return new ContactMessagePostgresDao(connection);
+    }
+
+    @Bean
+    public DepartmentDao getDepartmentDao(Connection connection) {
+        return new DepartmentPostgresDao(connection);
     }
 
     @Bean

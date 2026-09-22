@@ -16,6 +16,8 @@ public class UserModel {
     private String number;
     private String cep;
     private String city;
+    /** UF de residência (duas letras), par do município. */
+    private String state;
     private UserRole role;
     private boolean active;
     private boolean acceptsTerms;
@@ -33,6 +35,8 @@ public class UserModel {
     public UserModel() {}
 
     public enum UserRole {
+        /** Super Administrador: o único perfil sem recorte municipal (RF25). */
+        SUPER_ADMIN,
         ADMINISTRATOR,
         EMPLOYEE,
         CITIZEN
@@ -78,6 +82,11 @@ public class UserModel {
      * Normaliza aqui, no ponto por onde todos os DTOs passam.
      */
     public void setCity(String city) { this.city = city == null ? null : city.trim(); }
+    public String getState() { return state; }
+    /** Guarda sempre em maiúsculas: a UF é comparada com os códigos do IBGE. */
+    public void setState(String state) {
+        this.state = state == null || state.isBlank() ? null : state.trim().toUpperCase();
+    }
 
     public UserRole getRole() { return role; }
     public void setRole(UserRole role) { this.role = role; }
@@ -111,13 +120,21 @@ public class UserModel {
     /** MFA por e-mail ativo. */
     public boolean isEmailMfaActive() { return mfaEmailEnabled; }
 
+    /** Perfil nacional, sem recorte de município (RF25). */
+    public boolean isSuperAdmin() { return role == UserRole.SUPER_ADMIN; }
+
+    /** Perfis da administração pública: atendem e administram um município. */
+    public boolean isStaff() {
+        return role == UserRole.SUPER_ADMIN || role == UserRole.ADMINISTRATOR || role == UserRole.EMPLOYEE;
+    }
+
     /**
      * Retorna true se este usuário PRECISA passar pelo 2FA.
-     * EMPLOYEE e ADMINISTRATOR: obrigatório sempre.
+     * SUPER_ADMIN, ADMINISTRATOR e EMPLOYEE: obrigatório sempre.
      * CITIZEN: só se tiver ativado voluntariamente.
      */
     public boolean requiresMfa() {
-        if (role == UserRole.EMPLOYEE || role == UserRole.ADMINISTRATOR) {
+        if (isStaff()) {
             return mfaSetupDone || mfaEmailEnabled; // obrigado a configurar pelo menos um método
         }
         return (mfaEnabled && mfaSetupDone) || mfaEmailEnabled;

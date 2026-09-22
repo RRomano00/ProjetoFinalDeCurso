@@ -3,14 +3,16 @@ import { Router, RouterModule } from '@angular/router';
 import { FormControl, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { AuthenticationService } from '../../../services/security/authentication.service';
+import { LocalityPreferenceService } from '../../../services/local/locality-preference.service';
 import { ToastrService } from 'ngx-toastr';
+import { PasswordRevealDirective } from '../../../shared/password-reveal.directive';
 
 type LoginStep = 'credentials' | 'mfa-select' | 'mfa-verify';
 type MfaMethod = 'APP' | 'EMAIL';
 
 @Component({
   selector: 'app-sign-in',
-  imports: [RouterModule, CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [RouterModule, CommonModule, FormsModule, ReactiveFormsModule, PasswordRevealDirective],
   templateUrl: './sign-in.component.html',
   styleUrls: ['../auth-shell.css', './sign-in.component.css']
 })
@@ -40,11 +42,23 @@ export class SignInComponent implements OnInit, OnDestroy {
   constructor(
     private router: Router,
     private auth: AuthenticationService,
+    private locality: LocalityPreferenceService,
     private toastr: ToastrService
   ) {}
 
-  ngOnInit() {
-    if (this.auth.isAuthenticated()) this.router.navigate(['']);
+  async ngOnInit() {
+    if (this.auth.isAuthenticated()) { this.router.navigate(['']); return; }
+    this.askLocation();
+  }
+
+  /**
+   * Ao abrir a tela de entrada, o próprio navegador pede a localização — no
+   * celular e no computador. Concedida, o município encontrado passa a reger as
+   * telas; recusada, a navegação segue global, sem travar nada.
+   */
+  private async askLocation() {
+    if (await this.locality.deniedBefore()) return;   // já recusada: não insiste
+    this.locality.detect();
   }
 
   /** RF08/RF11: entra sem conta (leitura + registro de ocorrência anônima). */

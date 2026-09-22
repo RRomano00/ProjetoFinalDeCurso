@@ -6,8 +6,9 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 /**
- * Payload para criar EMPLOYEE ou ADMINISTRATOR — POST /api/user/employee.
- * Apenas ADMINISTRATOR pode chamar esse endpoint.
+ * Payload para criar SUPER_ADMIN, ADMINISTRATOR ou EMPLOYEE — POST /api/user/employee.
+ * O Super Administrador cria qualquer perfil; o administrador municipal, apenas
+ * funcionários do seu município.
  * No primeiro login, o sistema exige configuração obrigatória do 2FA.
  */
 public class CreateEmployeeDto {
@@ -16,11 +17,15 @@ public class CreateEmployeeDto {
     @Email @NotBlank private String email;
     @NotBlank private String password;
 
-    /** Município ao qual o funcionário/administrador fica vinculado (b.2). */
-    @NotBlank(message = "Município é obrigatório")
+    /**
+     * Município ao qual a conta fica vinculada. Obrigatório para funcionário e
+     * administrador municipal, e vazio para o Super Administrador, que não tem
+     * recorte territorial (RF25) — a exigência é verificada no controlador.
+     */
     private String city;
+    private String state;
 
-    @NotNull(message = "Role é obrigatório: EMPLOYEE ou ADMINISTRATOR")
+    @NotNull(message = "Role é obrigatório: EMPLOYEE, ADMINISTRATOR ou SUPER_ADMIN")
     private UserModel.UserRole role;
 
     public UserModel toUserModel() {
@@ -29,6 +34,7 @@ public class CreateEmployeeDto {
         UserModel u = new UserModel();
         u.setFullname(fullname); u.setEmail(email); u.setPassword(password);
         u.setCity(city);
+        u.setState(state);
         u.setRole(role);         u.setActive(true); u.setAcceptsTerms(true);
         u.setMfaEnabled(false);  u.setMfaSetupDone(false);
         return u;
@@ -42,6 +48,8 @@ public class CreateEmployeeDto {
     public void               setPassword(String v) { this.password = v; }
     public String             getCity()     { return city; }
     public void               setCity(String v)     { this.city = v; }
+    public String             getState()    { return state; }
+    public void               setState(String v)    { this.state = v; }
     public UserModel.UserRole getRole()     { return role; }
     public void               setRole(UserModel.UserRole v) { this.role = v; }
 }

@@ -1,5 +1,6 @@
 package br.com.faitec.falacidade.implementation.service.occurrence;
 
+import br.com.faitec.falacidade.domain.Department;
 import br.com.faitec.falacidade.domain.Occurrence;
 import br.com.faitec.falacidade.domain.dto.occurrence.CreateOccurrenceResponseDto;
 import br.com.faitec.falacidade.domain.dto.occurrence.GetOccurrenceDto;
@@ -7,6 +8,7 @@ import br.com.faitec.falacidade.implementation.service.tracking.AnonymousTrackin
 import br.com.faitec.falacidade.port.dao.occurrence.OccurrenceDao;
 import br.com.faitec.falacidade.port.dao.occurrence.OccurrenceSupportDao;
 import br.com.faitec.falacidade.port.service.email.EmailService;
+import br.com.faitec.falacidade.port.service.department.DepartmentService;
 import br.com.faitec.falacidade.port.service.occurrence.OccurrenceService;
 import org.springframework.stereotype.Service;
 
@@ -21,15 +23,18 @@ public class OccurrenceServiceImpl implements OccurrenceService {
     private final OccurrenceSupportDao          supportDao;
     private final AnonymousTrackingCodeService  trackingCodeService;
     private final EmailService                  emailService;
+    private final DepartmentService             departmentService;
 
     public OccurrenceServiceImpl(OccurrenceDao occurrenceDao,
                                 OccurrenceSupportDao supportDao,
                                 AnonymousTrackingCodeService trackingCodeService,
-                                EmailService emailService) {
+                                EmailService emailService,
+                                DepartmentService departmentService) {
         this.occurrenceDao      = occurrenceDao;
         this.supportDao         = supportDao;
         this.trackingCodeService = trackingCodeService;
         this.emailService       = emailService;
+        this.departmentService  = departmentService;
     }
 
     private static final int MAX_IDENTIFIED_PER_DAY = 5;
@@ -46,10 +51,13 @@ public class OccurrenceServiceImpl implements OccurrenceService {
 
         String plainCode = null;
         if (entity.isAnonymous()) {
+            // RNF17: o endereço de rede é persistido e comparado apenas sob resumo
+            // SHA-256 — o IP em texto claro não chega ao banco de dados.
+            String ipHash = clientIp == null ? null : trackingCodeService.hash(clientIp);
             // RF08: limite de 3 ocorrências anônimas por IP por dia
-            if (clientIp != null && occurrenceDao.countTodayAnonymousByIp(clientIp) >= MAX_ANONYMOUS_PER_DAY)
+            if (ipHash != null && occurrenceDao.countTodayAnonymousByIp(ipHash) >= MAX_ANONYMOUS_PER_DAY)
                 throw new IllegalStateException("Limite de " + MAX_ANONYMOUS_PER_DAY + " ocorrências anônimas por dia atingido");
-            entity.setIpAddress(clientIp);
+            entity.setIpAddress(ipHash);
             plainCode = trackingCodeService.generateCode();
             entity.setAnonymousTrackingCodeHash(trackingCodeService.hash(plainCode));
         } else {
@@ -187,6 +195,29 @@ public class OccurrenceServiceImpl implements OccurrenceService {
             occurrenceDao.updateStatus(o.getId(), newStatus, changedBy, message);
             notifyAuthor(o, newStatus, message);
         }
+    }
+
+    /** RF22: texto fixo do trâmite, exigido no histórico da ocorrência. */
+    private static final String FORWARD_NOTE = "Ocorrência encaminhada para departamento responsável";
+
+    @Override
+    public String forwardToDepartment(int occurrenceId, int departmentId, int changedBy) {
+        GetOccurrenceDto occurrence = findById(occurrenceId);
+        if (occurrence == null) throw new IllegalArgumentException("Ocorrência não encontrada");
+
+        Department department = departmentService.findById(departmentId);
+        if (department == null) throw new IllegalArgumentException("Departamento não encontrado");
+
+        // O e-mail vem primeiro, e de forma síncrona: se ele falhar, a exceção sobe
+        // e a ocorrência continua como estava. Registrar o encaminhamento de uma
+        // mensagem que não saiu seria pior do que falhar.
+        emailService.sendOccurrenceForwardEmail(department.getEmail(), department.getName(), occurrence);
+
+        String note = FORWARD_NOTE + " — " + department.getName() + ".";
+        occurrenceDao.updateStatus(occurrenceId, Occurrence.OccurrenceStatus.EM_ANDAMENTO.name(),
+                                   changedBy, note, departmentId);
+        notifyAuthor(occurrence, Occurrence.OccurrenceStatus.EM_ANDAMENTO.name(), note);
+        return department.getName();
     }
 
     private void notifyAuthor(GetOccurrenceDto o, String newStatus, String message) {

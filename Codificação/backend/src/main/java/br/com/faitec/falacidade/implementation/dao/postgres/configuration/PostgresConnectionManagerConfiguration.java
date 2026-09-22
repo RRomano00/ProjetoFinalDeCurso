@@ -20,6 +20,9 @@ public class PostgresConnectionManagerConfiguration {
     private static final Logger log =
         Logger.getLogger(PostgresConnectionManagerConfiguration.class.getName());
 
+    /** Senha das contas de demonstração quando FALACIDADE_SEED_PASSWORD não é informada. */
+    private static final String DEFAULT_SEED_PASSWORD = "Admin@1234";
+
     @Value("${spring.datasource.base.url}")
     private String databaseBaseUrl;
 
@@ -119,14 +122,14 @@ public class PostgresConnectionManagerConfiguration {
         try (Connection connection = hikariDataSource.getConnection()) {
 
             String createSql = resourceFileService.read(
-                basePath + "/PID_SCRIPT_CRIACAO-TABELAS.sql");
+                basePath + "/FalaCidade_DDL_CriacaoTabelas.sql");
             try (PreparedStatement ps = connection.prepareStatement(createSql)) {
                 ps.execute();
                 log.info("Tabelas verificadas/criadas com sucesso.");
             }
 
-            String insertSql = resourceFileService.read(
-                basePath + "/PID_SCRIPT_POPULAR-TABELAS-JWT.sql");
+            String insertSql = resolveSeedPassword(resourceFileService.read(
+                basePath + "/FalaCidade_DML_PopulacaoTabelas.sql"));
             try (PreparedStatement ps = connection.prepareStatement(insertSql)) {
                 ps.execute();
                 log.info("Dados iniciais inseridos (ON CONFLICT DO NOTHING).");
@@ -134,5 +137,24 @@ public class PostgresConnectionManagerConfiguration {
         }
 
         return true;
+    }
+
+    /**
+     * RNF17: o script DML não guarda credenciais. O marcador
+     * ${FALACIDADE_SEED_PASSWORD} é substituído pela variável de ambiente de
+     * mesmo nome; na ausência dela, vale a senha padrão das contas de
+     * demonstração, que deve ser alterada no primeiro acesso.
+     */
+    private String resolveSeedPassword(String sql) {
+        String password = System.getenv("FALACIDADE_SEED_PASSWORD");
+        if (password == null || password.isBlank()) {
+            password = DEFAULT_SEED_PASSWORD;
+            log.info("FALACIDADE_SEED_PASSWORD não definida. Contas de demonstração usam "
+                + "a senha padrão " + DEFAULT_SEED_PASSWORD + " — altere-a no primeiro acesso.");
+        }
+        if (password.contains("'")) {
+            throw new IllegalArgumentException("FALACIDADE_SEED_PASSWORD não pode conter apóstrofo");
+        }
+        return sql.replace("${FALACIDADE_SEED_PASSWORD}", password);
     }
 }

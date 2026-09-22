@@ -5,7 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableAsync;
 
 @SpringBootApplication
-@EnableAsync  // habilita o processamento assíncrono com @Async
+@EnableAsync
 public class FalaCidadeApplication {
     public static void main(String[] args) {
         SpringApplication.run(FalaCidadeApplication.class, args);

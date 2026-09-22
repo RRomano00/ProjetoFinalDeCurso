@@ -5,7 +5,7 @@ import br.com.faitec.falacidade.domain.UserModel;
 /** Payload de atualização de perfil — PUT /api/user/{id}. */
 public class UpdateUserDto {
     private int id;
-    private String fullname, phoneNumber, street, neighborhood, number, cep, city;
+    private String fullname, phoneNumber, street, neighborhood, number, cep, city, state;
 
     public UserModel toUserModel() {
         UserModel u = new UserModel();
@@ -13,6 +13,7 @@ public class UpdateUserDto {
         u.setPhoneNumber(phoneNumber); u.setStreet(street);
         u.setNeighborhood(neighborhood); u.setNumber(number);
         u.setCep(cep);           u.setCity(city);
+        u.setState(state);
         return u;
     }
 
@@ -32,4 +33,6 @@ public class UpdateUserDto {
     public void   setCep(String v)          { this.cep = v; }
     public String getCity()         { return city; }
     public void   setCity(String v)         { this.city = v; }
+    public String getState()        { return state; }
+    public void   setState(String v)        { this.state = v; }
 }

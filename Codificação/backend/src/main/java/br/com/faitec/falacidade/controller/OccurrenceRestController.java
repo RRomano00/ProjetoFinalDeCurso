@@ -2,6 +2,7 @@ package br.com.faitec.falacidade.controller;
 
 import br.com.faitec.falacidade.domain.Occurrence;
 import br.com.faitec.falacidade.domain.UploadStatus;
+import br.com.faitec.falacidade.domain.Municipality;
 import br.com.faitec.falacidade.domain.UserModel;
 import br.com.faitec.falacidade.domain.dto.occurrence.*;
 import br.com.faitec.falacidade.port.service.email.EmailService;
@@ -137,10 +138,12 @@ public class OccurrenceRestController {
 
     @GetMapping
     public ResponseEntity<List<GetOccurrenceDto>> getAll(Authentication auth) {
-        if (hasRole(auth, UserModel.UserRole.ADMINISTRATOR))
+        // Só o Super Administrador enxerga o país inteiro (RF25).
+        if (hasRole(auth, UserModel.UserRole.SUPER_ADMIN))
             return ResponseEntity.ok(occurrenceService.findAll());
 
-        if (hasRole(auth, UserModel.UserRole.EMPLOYEE)) {
+        if (hasRole(auth, UserModel.UserRole.EMPLOYEE)
+         || hasRole(auth, UserModel.UserRole.ADMINISTRATOR)) {
             UserModel user = safeFindUser(auth);
             return ResponseEntity.ok(occurrenceService.findAllByCity(user != null ? user.getCity() : null));
         }
@@ -152,6 +155,33 @@ public class OccurrenceRestController {
             .toList();
         all.forEach(o -> maskIfNotPrivileged(o, auth));
         return ResponseEntity.ok(all);
+    }
+
+    /**
+     * Ocorrências de quem está autenticado, por AUTORIA — independentemente do
+     * município. Quem mora em Santa Rita e registrou um problema em Itajubá
+     * continua vendo o próprio registro, mesmo que a listagem geral um dia
+     * passe a ser filtrada por município.
+     */
+    @GetMapping("/mine")
+    public ResponseEntity<List<GetOccurrenceDto>> mine(Authentication auth) {
+        if (auth == null || auth.getName() == null) return ResponseEntity.ok(List.of());
+        return ResponseEntity.ok(occurrenceService.findAllByUserEmail(auth.getName()));
+    }
+
+    /**
+     * Cobertura do município: diz se há equipe cadastrada para atender ali. A
+     * tela de registro usa isso para avisar quem relata um problema em município
+     * ainda sem adesão — o registro é aceito do mesmo jeito, mas a pessoa fica
+     * sabendo que não há equipe para recebê-lo agora.
+     *
+     * Público, porque quem registra pode ser visitante sem conta.
+     */
+    @GetMapping("/coverage")
+    public ResponseEntity<Map<String, Object>> coverage(@RequestParam String city,
+                                                        @RequestParam(required = false) String state) {
+        boolean served = userService.hasStaffInCity(city, state);
+        return ResponseEntity.ok(Map.of("city", city, "state", state == null ? "" : state, "served", served));
     }
 
     /** RF16: ids das ocorrências que o usuário logado já apoia. */
@@ -233,8 +263,10 @@ public class OccurrenceRestController {
 
     /** Muda o status; mensagem opcional vai ao histórico e ao e-mail do autor (RF12: coletivo). */
     @PutMapping("/{id}/status")
-    public ResponseEntity<Void> updateStatus(@PathVariable int id,
+    public ResponseEntity<?> updateStatus(@PathVariable int id,
             @Valid @RequestBody UpdateOccurrenceStatusDto dto, Authentication auth) {
+        ResponseEntity<Map<String, String>> denied = outOfJurisdiction(auth, id);
+        if (denied != null) return denied;
         occurrenceService.changeStatus(id, dto.getNewStatus().name(), getUserId(auth),
             dto.getObservation(), dto.isCollective());
         return ResponseEntity.noContent().build();
@@ -242,8 +274,10 @@ public class OccurrenceRestController {
 
     /** RN03: registra quem iniciou; RF12: opcionalmente aplica ao grupo todo e notifica autores. */
     @PutMapping("/progress/{id}")
-    public ResponseEntity<Void> toInProgress(@PathVariable int id,
+    public ResponseEntity<?> toInProgress(@PathVariable int id,
             @RequestBody(required = false) UpdateOccurrenceStatusDto body, Authentication auth) {
+        ResponseEntity<Map<String, String>> denied = outOfJurisdiction(auth, id);
+        if (denied != null) return denied;
         occurrenceService.changeStatus(id, Occurrence.OccurrenceStatus.EM_ANDAMENTO.name(), getUserId(auth),
             body != null ? body.getObservation() : null, body != null && body.isCollective());
         return ResponseEntity.noContent().build();
@@ -251,11 +285,37 @@ public class OccurrenceRestController {
 
     /** RN03: registra quem concluiu; RF12: opcionalmente aplica ao grupo todo e notifica autores. */
     @PutMapping("/conclude/{id}")
-    public ResponseEntity<Void> toConclude(@PathVariable int id,
+    public ResponseEntity<?> toConclude(@PathVariable int id,
             @RequestBody(required = false) UpdateOccurrenceStatusDto body, Authentication auth) {
-        occurrenceService.changeStatus(id, Occurrence.OccurrenceStatus.ATENDIDA.name(), getUserId(auth),
+        ResponseEntity<Map<String, String>> denied = outOfJurisdiction(auth, id);
+        if (denied != null) return denied;
+        occurrenceService.changeStatus(id, Occurrence.OccurrenceStatus.CONCLUIDA.name(), getUserId(auth),
             body != null ? body.getObservation() : null, body != null && body.isCollective());
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * RF22: encaminha a ocorrência ao departamento responsável.
+     * O e-mail sai sem dados pessoais do autor, com as fotografias anexadas; em
+     * seguida a ocorrência passa a Em andamento e o trâmite entra no histórico.
+     */
+    @PostMapping("/{id}/forward")
+    public ResponseEntity<?> forward(@PathVariable int id,
+            @Valid @RequestBody ForwardOccurrenceDto dto, Authentication auth) {
+        ResponseEntity<Map<String, String>> denied = outOfJurisdiction(auth, id);
+        if (denied != null) return denied;
+        try {
+            String department = occurrenceService.forwardToDepartment(id, dto.getDepartmentId(), getUserId(auth));
+            return ResponseEntity.ok(Map.of(
+                "department", department,
+                "status", Occurrence.OccurrenceStatus.EM_ANDAMENTO.name()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
+        } catch (RuntimeException e) {
+            // falha no envio do e-mail: a ocorrência continua como estava
+            return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(Map.of(
+                "error", "Não foi possível enviar o e-mail ao departamento. A ocorrência não foi alterada."));
+        }
     }
 
     /** RF12: ocorrências do mesmo grupo de duplicatas (autores mascarados p/ não-staff). */
@@ -286,9 +346,10 @@ public class OccurrenceRestController {
         e.setFullname(null);
     }
 
-    /** RF12: administrador ou funcionário têm acesso a dados sensíveis. */
+    /** RF12: a equipe da administração pública tem acesso a dados sensíveis. */
     private boolean isPrivileged(Authentication auth) {
-        return hasRole(auth, UserModel.UserRole.ADMINISTRATOR)
+        return hasRole(auth, UserModel.UserRole.SUPER_ADMIN)
+            || hasRole(auth, UserModel.UserRole.ADMINISTRATOR)
             || hasRole(auth, UserModel.UserRole.EMPLOYEE);
     }
 
@@ -296,6 +357,35 @@ public class OccurrenceRestController {
         if (auth == null) return false;
         return auth.getAuthorities().stream().map(GrantedAuthority::getAuthority)
                 .anyMatch(a -> a.contains(role.name()));
+    }
+
+    /**
+     * RF24: a equipe só age sobre as ocorrências do próprio município — o do
+     * ENDEREÇO da ocorrência, não o do cadastro de quem a registrou. Vale
+     * também para o administrador municipal; só o Super Administrador, que não
+     * tem município, atravessa essa fronteira (RF25).
+     *
+     * Devolve null quando pode seguir; caso contrário, a resposta de recusa.
+     */
+    private ResponseEntity<Map<String, String>> outOfJurisdiction(Authentication auth, int occurrenceId) {
+        if (hasRole(auth, UserModel.UserRole.SUPER_ADMIN)) return null;
+
+        GetOccurrenceDto occurrence = occurrenceService.findById(occurrenceId);
+        if (occurrence == null)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                "error", "Ocorrência não encontrada."));
+
+        UserModel user = safeFindUser(auth);
+        if (user == null || user.getCity() == null || user.getCity().isBlank())
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                "error", "Sua conta não tem município definido. Atualize o seu perfil para atender ocorrências."));
+
+        if (Municipality.same(user.getCity(), user.getState(),
+                              occurrence.getCity(), occurrence.getState())) return null;
+
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+            "error", "Esta ocorrência é de " + (occurrence.getCity() == null ? "outro município" : occurrence.getCity())
+                   + " e só pode ser tratada pela equipe daquele município."));
     }
 
     private int getUserId(Authentication auth) {

@@ -11,6 +11,11 @@
     <input type="search" [(ngModel)]="search" (ngModelChange)="applyFilters()"
            aria-label="Pesquisar ocorrência por protocolo ou título"
            placeholder="Pesquisar ocorrência (protocolo ou título)" class="filter-input" />
+    <select [(ngModel)]="filterCity" (ngModelChange)="onCityChange()" class="filter-select filter-select--city"
+            aria-label="Município em exibição">
+      <option value="">Todos os municípios</option>
+      <option *ngFor="let m of municipalityOptions" [value]="cityKey(m.city)">{{ municipalityLabel(m) }}</option>
+    </select>
     <select [(ngModel)]="filterStatus" (ngModelChange)="applyFilters()" class="filter-select">
       <option value="">Todos os status</option>
       <option *ngFor="let s of statusOptions" [value]="s">{{ statusLabel(s) }}</option>
@@ -23,7 +28,7 @@
       <option value="status">Agrupar por status</option>
     </select>
     <label *ngIf="auth.isCitizen()" class="filter-check">
-      <input type="checkbox" [(ngModel)]="filterMine" (ngModelChange)="applyFilters()" />
+      <input type="checkbox" [(ngModel)]="filterMine" (ngModelChange)="toggleMine()" />
       Minhas ocorrências
     </label>
     <button (click)="clearFilters()" class="btn-secondary">Limpar</button>
@@ -88,12 +93,11 @@
             {{ o.city }}
           </span>
           <span class="protocol">{{ o.protocolNumber }}</span>
-          <time *ngIf="o.createdAt">{{ o.createdAt | date:'dd/MM/yyyy' }}</time>
         </div>
       </a>
 
-      <!-- Sem apoio possível nem apoios registrados não há rodapé a mostrar -->
-      <div class="card-footer" *ngIf="auth.canSupport() || o.supportCount">
+      <!-- O rodapé é fixo: é ele que data o registro. O apoio entra quando há. -->
+      <div class="card-footer">
         <!-- Um botão só: apoia e desfaz. Ver .btn-support em styles.css. -->
         <button *ngIf="auth.canSupport()" type="button" class="btn-support btn-support--sm"
                 [class.supported]="isSupported(o.id)"
@@ -109,6 +113,7 @@
         <span class="support-count" *ngIf="o.supportCount">
           {{ o.supportCount }} {{ o.supportCount === 1 ? 'apoio' : 'apoios' }}
         </span>
+        <time *ngIf="o.createdAt">{{ o.createdAt | date:'dd/MM/yyyy, HH:mm' }}</time>
       </div>
     </div>
   </ng-template>

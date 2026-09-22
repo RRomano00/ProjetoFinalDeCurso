@@ -1,7 +1,9 @@
 <div class="page-create">
   <div class="page-header">
     <h1>Criar Usuário</h1>
-    <p>Adicione um novo funcionário ou administrador ao sistema</p>
+    <p>{{ isSuperAdmin
+          ? 'Cadastre funcionários, administradores de município e super administradores'
+          : 'Cadastre funcionários do seu município' }}</p>
   </div>
 
   <form [formGroup]="form" (ngSubmit)="create()" class="form-card">
@@ -34,21 +36,40 @@
           </span>
         </div>
 
-        <div class="field-group">
+        <div class="field-group" *ngIf="!isSuperAdminSelected">
+          <label>UF <span class="required">*</span></label>
+          <input type="text" formControlName="state" placeholder="MG" class="form-input input-uf"
+            list="staff-uf-options" maxlength="2" autocapitalize="characters" spellcheck="false"
+            autocomplete="off" [readOnly]="localityLocked">
+          <datalist id="staff-uf-options">
+            <option *ngFor="let u of units" [value]="u.uf">{{ u.name }}</option>
+          </datalist>
+        </div>
+
+        <div class="field-group" *ngIf="!isSuperAdminSelected">
           <label>Município <span class="required">*</span></label>
-          <input type="text" formControlName="city" placeholder="Município de atuação" class="form-input"
-            list="city-options" autocomplete="off"
+          <input type="text" formControlName="city" class="form-input" list="city-options"
+            [readOnly]="localityLocked || !cityOptions.ready" autocomplete="off" spellcheck="false"
+            [placeholder]="cityOptions.ready ? 'Município de atuação' : 'Informe a UF primeiro'"
             [class.input-error]="form.controls['city'].touched && form.controls['city'].invalid">
           <datalist id="city-options">
-            <option *ngFor="let c of cities" [value]="c"></option>
+            <option *ngFor="let c of cityOptions.list" [value]="c"></option>
           </datalist>
           <span class="field-error"
             *ngIf="form.controls['city'].touched && form.controls['city'].invalid">
             Município é obrigatório.
           </span>
-          <p class="field-hint" *ngIf="cities.length">
-            Escolha um município da lista para garantir que o funcionário veja as
-            ocorrências certas. Digite um novo apenas se for outro município.
+          <p class="field-hint" *ngIf="localityLocked">
+            O município é o seu: o administrador do município cadastra apenas a
+            própria equipe.
+          </p>
+          <p class="field-hint" *ngIf="!localityLocked && !cityOptions.ready">
+            Selecione a UF para ver os municípios.
+          </p>
+          <p class="field-hint" *ngIf="!localityLocked && cityOptions.ready">
+            Escolha o município da lista: é ele que define quais ocorrências o
+            funcionário atende, e o nome precisa ser o mesmo que o endereço das
+            ocorrências usa.
           </p>
         </div>
 
@@ -58,9 +79,11 @@
             <option *ngFor="let r of roles" [value]="r.value">{{ r.label }}</option>
           </select>
           <p class="field-hint">
-            Funcionários e administradores deverão configurar o
+            Toda conta da administração configura o
             <strong>autenticador de dois fatores</strong> no primeiro acesso.
-            O funcionário verá apenas as ocorrências do município informado.
+            {{ isSuperAdminSelected
+                ? 'O Super Administrador enxerga e administra todos os municípios.'
+                : 'A conta atende apenas as ocorrências e as contas do município informado.' }}
           </p>
         </div>
       </div>

@@ -1,0 +1,370 @@
+<mxfile host="app.diagrams.net" type="device" version="24.7.17">
+  <diagram id="DER-FalaCidade" name="DER - Fala, Cidade!">
+    <mxGraphModel dx="1422" dy="795" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="city" value="city" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;html=1;rounded=0;shadow=0;strokeColor=#1F4E79;fillColor=#DEEBF7;fontColor=#1F4E79;fontSize=12;align=center;collapsible=0;marginBottom=0;" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="260" height="86" as="geometry" />
+        </mxCell>
+        <mxCell id="city.id" value="PK id : serial" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;fontStyle=5;" vertex="1" parent="city">
+          <mxGeometry y="26" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="city.name" value="UK name : varchar(100)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="city">
+          <mxGeometry y="46" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="city.state" value="UK state : char(2)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="city">
+          <mxGeometry y="66" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="department" value="department" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;html=1;rounded=0;shadow=0;strokeColor=#1F4E79;fillColor=#DEEBF7;fontColor=#1F4E79;fontSize=12;align=center;collapsible=0;marginBottom=0;" vertex="1" parent="1">
+          <mxGeometry x="40" y="170" width="260" height="126" as="geometry" />
+        </mxCell>
+        <mxCell id="department.id" value="PK id : serial" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;fontStyle=5;" vertex="1" parent="department">
+          <mxGeometry y="26" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="department.name" value="UK name : varchar(100)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="department">
+          <mxGeometry y="46" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="department.email" value="UK email : varchar(150)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="department">
+          <mxGeometry y="66" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="department.city" value="UK city : varchar(100)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="department">
+          <mxGeometry y="86" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="department.state" value="UK state : char(2)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="department">
+          <mxGeometry y="106" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="classification" value="classification" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;html=1;rounded=0;shadow=0;strokeColor=#1F4E79;fillColor=#DEEBF7;fontColor=#1F4E79;fontSize=12;align=center;collapsible=0;marginBottom=0;" vertex="1" parent="1">
+          <mxGeometry x="40" y="300" width="260" height="166" as="geometry" />
+        </mxCell>
+        <mxCell id="classification.id" value="PK id : serial" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;fontStyle=5;" vertex="1" parent="classification">
+          <mxGeometry y="26" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="classification.code" value="UK code : varchar(60)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="classification">
+          <mxGeometry y="46" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="classification.name" value="name : varchar(80)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="classification">
+          <mxGeometry y="66" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="classification.description" value="description : varchar(200)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="classification">
+          <mxGeometry y="86" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="classification.priority" value="priority : varchar(10)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="classification">
+          <mxGeometry y="106" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="classification.requires_sharp_image" value="requires_sharp_image : boolean" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="classification">
+          <mxGeometry y="126" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="classification.department_id" value="FK department_id : integer" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;fontStyle=2;fontColor=#8B4000;" vertex="1" parent="classification">
+          <mxGeometry y="146" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="contact_message" value="contact_message" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;html=1;rounded=0;shadow=0;strokeColor=#1F4E79;fillColor=#DEEBF7;fontColor=#1F4E79;fontSize=12;align=center;collapsible=0;marginBottom=0;" vertex="1" parent="1">
+          <mxGeometry x="40" y="520" width="260" height="146" as="geometry" />
+        </mxCell>
+        <mxCell id="contact_message.id" value="PK id : serial" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;fontStyle=5;" vertex="1" parent="contact_message">
+          <mxGeometry y="26" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="contact_message.name" value="name : varchar(150)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="contact_message">
+          <mxGeometry y="46" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="contact_message.email" value="email : varchar(150)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="contact_message">
+          <mxGeometry y="66" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="contact_message.subject" value="subject : varchar(255)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="contact_message">
+          <mxGeometry y="86" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="contact_message.message" value="message : text" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="contact_message">
+          <mxGeometry y="106" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="contact_message.created_at" value="created_at : timestamp" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="contact_message">
+          <mxGeometry y="126" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="user" value="user" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;html=1;rounded=0;shadow=0;strokeColor=#1F4E79;fillColor=#DEEBF7;fontColor=#1F4E79;fontSize=12;align=center;collapsible=0;marginBottom=0;" vertex="1" parent="1">
+          <mxGeometry x="360" y="40" width="260" height="486" as="geometry" />
+        </mxCell>
+        <mxCell id="user.id" value="PK id : serial" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;fontStyle=5;" vertex="1" parent="user">
+          <mxGeometry y="26" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="user.fullname" value="fullname : varchar(150)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="user">
+          <mxGeometry y="46" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="user.email" value="UK email : varchar(150)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="user">
+          <mxGeometry y="66" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="user.password" value="password : varchar(255)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="user">
+          <mxGeometry y="86" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="user.date_of_birth" value="date_of_birth : date" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="user">
+          <mxGeometry y="106" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="user.phone_number" value="phone_number : varchar(20)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="user">
+          <mxGeometry y="126" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="user.street" value="street : varchar(200)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="user">
+          <mxGeometry y="146" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="user.neighborhood" value="neighborhood : varchar(100)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="user">
+          <mxGeometry y="166" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="user.number" value="number : varchar(10)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="user">
+          <mxGeometry y="186" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="user.cep" value="cep : varchar(10)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="user">
+          <mxGeometry y="206" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="user.city" value="city : varchar(100)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="user">
+          <mxGeometry y="226" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="user.state" value="state : char(2)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="user">
+          <mxGeometry y="246" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="user.city_id" value="FK city_id : integer" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;fontStyle=2;fontColor=#8B4000;" vertex="1" parent="user">
+          <mxGeometry y="266" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="user.department_id" value="FK department_id : integer" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;fontStyle=2;fontColor=#8B4000;" vertex="1" parent="user">
+          <mxGeometry y="286" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="user.role" value="role : varchar(20)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="user">
+          <mxGeometry y="306" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="user.is_active" value="is_active : boolean" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="user">
+          <mxGeometry y="326" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="user.accepts_terms" value="accepts_terms : boolean" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="user">
+          <mxGeometry y="346" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="user.mfa_enabled" value="mfa_enabled : boolean" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="user">
+          <mxGeometry y="366" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="user.mfa_secret" value="mfa_secret : varchar(255)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="user">
+          <mxGeometry y="386" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="user.mfa_setup_done" value="mfa_setup_done : boolean" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="user">
+          <mxGeometry y="406" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="user.mfa_email_enabled" value="mfa_email_enabled : boolean" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="user">
+          <mxGeometry y="426" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="user.created_at" value="created_at : timestamp" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="user">
+          <mxGeometry y="446" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="user.updated_at" value="updated_at : timestamp" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="user">
+          <mxGeometry y="466" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="occurrence" value="occurrence" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;html=1;rounded=0;shadow=0;strokeColor=#1F4E79;fillColor=#DEEBF7;fontColor=#1F4E79;fontSize=12;align=center;collapsible=0;marginBottom=0;" vertex="1" parent="1">
+          <mxGeometry x="700" y="40" width="260" height="586" as="geometry" />
+        </mxCell>
+        <mxCell id="occurrence.id" value="PK id : serial" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;fontStyle=5;" vertex="1" parent="occurrence">
+          <mxGeometry y="26" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="occurrence.protocol_number" value="UK protocol_number : varchar(20)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="occurrence">
+          <mxGeometry y="46" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="occurrence.title" value="title : varchar(200)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="occurrence">
+          <mxGeometry y="66" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="occurrence.description" value="description : text" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="occurrence">
+          <mxGeometry y="86" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="occurrence.number" value="number : varchar(10)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="occurrence">
+          <mxGeometry y="106" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="occurrence.street" value="street : varchar(200)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="occurrence">
+          <mxGeometry y="126" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="occurrence.neighborhood" value="neighborhood : varchar(100)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="occurrence">
+          <mxGeometry y="146" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="occurrence.address_reference" value="address_reference : varchar(300)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="occurrence">
+          <mxGeometry y="166" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="occurrence.city" value="city : varchar(100)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="occurrence">
+          <mxGeometry y="186" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="occurrence.state" value="state : char(2)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="occurrence">
+          <mxGeometry y="206" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="occurrence.city_id" value="FK city_id : integer" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;fontStyle=2;fontColor=#8B4000;" vertex="1" parent="occurrence">
+          <mxGeometry y="226" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="occurrence.latitude" value="latitude : double" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="occurrence">
+          <mxGeometry y="246" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="occurrence.longitude" value="longitude : double" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="occurrence">
+          <mxGeometry y="266" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="occurrence.url_media" value="url_media : varchar(500)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="occurrence">
+          <mxGeometry y="286" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="occurrence.cloudinary_public_id" value="cloudinary_public_id : varchar(255)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="occurrence">
+          <mxGeometry y="306" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="occurrence.image_blurred" value="image_blurred : boolean" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="occurrence">
+          <mxGeometry y="326" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="occurrence.type" value="type : varchar(60)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="occurrence">
+          <mxGeometry y="346" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="occurrence.classification_id" value="FK classification_id : integer" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;fontStyle=2;fontColor=#8B4000;" vertex="1" parent="occurrence">
+          <mxGeometry y="366" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="occurrence.department_id" value="FK department_id : integer" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;fontStyle=2;fontColor=#8B4000;" vertex="1" parent="occurrence">
+          <mxGeometry y="386" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="occurrence.status" value="status : varchar(20)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="occurrence">
+          <mxGeometry y="406" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="occurrence.priority" value="priority : varchar(10)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="occurrence">
+          <mxGeometry y="426" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="occurrence.is_anonymous" value="is_anonymous : boolean" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="occurrence">
+          <mxGeometry y="446" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="occurrence.anonymous_tracking_code_hash" value="anonymous_tracking_code_hash : varchar(64)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="occurrence">
+          <mxGeometry y="466" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="occurrence.ip_address" value="ip_address : varchar(64)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="occurrence">
+          <mxGeometry y="486" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="occurrence.user_id" value="FK user_id : integer" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;fontStyle=2;fontColor=#8B4000;" vertex="1" parent="occurrence">
+          <mxGeometry y="506" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="occurrence.group_id" value="FK group_id : integer" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;fontStyle=2;fontColor=#8B4000;" vertex="1" parent="occurrence">
+          <mxGeometry y="526" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="occurrence.created_at" value="created_at : timestamp" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="occurrence">
+          <mxGeometry y="546" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="occurrence.updated_at" value="updated_at : timestamp" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="occurrence">
+          <mxGeometry y="566" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="occurrence_history" value="occurrence_history" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;html=1;rounded=0;shadow=0;strokeColor=#1F4E79;fillColor=#DEEBF7;fontColor=#1F4E79;fontSize=12;align=center;collapsible=0;marginBottom=0;" vertex="1" parent="1">
+          <mxGeometry x="1060" y="40" width="260" height="186" as="geometry" />
+        </mxCell>
+        <mxCell id="occurrence_history.id" value="PK id : serial" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;fontStyle=5;" vertex="1" parent="occurrence_history">
+          <mxGeometry y="26" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="occurrence_history.occurrence_id" value="FK occurrence_id : integer" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;fontStyle=2;fontColor=#8B4000;" vertex="1" parent="occurrence_history">
+          <mxGeometry y="46" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="occurrence_history.changed_by" value="FK changed_by : integer" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;fontStyle=2;fontColor=#8B4000;" vertex="1" parent="occurrence_history">
+          <mxGeometry y="66" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="occurrence_history.department_id" value="FK department_id : integer" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;fontStyle=2;fontColor=#8B4000;" vertex="1" parent="occurrence_history">
+          <mxGeometry y="86" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="occurrence_history.old_status" value="old_status : varchar(20)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="occurrence_history">
+          <mxGeometry y="106" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="occurrence_history.new_status" value="new_status : varchar(20)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="occurrence_history">
+          <mxGeometry y="126" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="occurrence_history.observation" value="observation : text" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="occurrence_history">
+          <mxGeometry y="146" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="occurrence_history.changed_at" value="changed_at : timestamp" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="occurrence_history">
+          <mxGeometry y="166" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="occurrence_media" value="occurrence_media" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;html=1;rounded=0;shadow=0;strokeColor=#1F4E79;fillColor=#DEEBF7;fontColor=#1F4E79;fontSize=12;align=center;collapsible=0;marginBottom=0;" vertex="1" parent="1">
+          <mxGeometry x="1060" y="240" width="260" height="126" as="geometry" />
+        </mxCell>
+        <mxCell id="occurrence_media.id" value="PK id : serial" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;fontStyle=5;" vertex="1" parent="occurrence_media">
+          <mxGeometry y="26" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="occurrence_media.occurrence_id" value="FK occurrence_id : integer" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;fontStyle=2;fontColor=#8B4000;" vertex="1" parent="occurrence_media">
+          <mxGeometry y="46" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="occurrence_media.url" value="url : varchar(500)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="occurrence_media">
+          <mxGeometry y="66" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="occurrence_media.cloudinary_public_id" value="cloudinary_public_id : varchar(255)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="occurrence_media">
+          <mxGeometry y="86" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="occurrence_media.image_blurred" value="image_blurred : boolean" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="occurrence_media">
+          <mxGeometry y="106" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="occurrence_support" value="occurrence_support" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;html=1;rounded=0;shadow=0;strokeColor=#1F4E79;fillColor=#DEEBF7;fontColor=#1F4E79;fontSize=12;align=center;collapsible=0;marginBottom=0;" vertex="1" parent="1">
+          <mxGeometry x="1060" y="400" width="260" height="106" as="geometry" />
+        </mxCell>
+        <mxCell id="occurrence_support.id" value="PK id : serial" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;fontStyle=5;" vertex="1" parent="occurrence_support">
+          <mxGeometry y="26" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="occurrence_support.occurrence_id" value="FK occurrence_id : integer" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;fontStyle=2;fontColor=#8B4000;" vertex="1" parent="occurrence_support">
+          <mxGeometry y="46" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="occurrence_support.citizen_id" value="FK citizen_id : integer" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;fontStyle=2;fontColor=#8B4000;" vertex="1" parent="occurrence_support">
+          <mxGeometry y="66" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="occurrence_support.supported_at" value="supported_at : timestamp" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="occurrence_support">
+          <mxGeometry y="86" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="password_reset_token" value="password_reset_token" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;html=1;rounded=0;shadow=0;strokeColor=#1F4E79;fillColor=#DEEBF7;fontColor=#1F4E79;fontSize=12;align=center;collapsible=0;marginBottom=0;" vertex="1" parent="1">
+          <mxGeometry x="1060" y="540" width="260" height="146" as="geometry" />
+        </mxCell>
+        <mxCell id="password_reset_token.id" value="PK id : serial" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;fontStyle=5;" vertex="1" parent="password_reset_token">
+          <mxGeometry y="26" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="password_reset_token.user_id" value="FK user_id : integer" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;fontStyle=2;fontColor=#8B4000;" vertex="1" parent="password_reset_token">
+          <mxGeometry y="46" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="password_reset_token.token" value="token : varchar(255)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="password_reset_token">
+          <mxGeometry y="66" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="password_reset_token.expires_at" value="expires_at : timestamp" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="password_reset_token">
+          <mxGeometry y="86" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="password_reset_token.used" value="used : boolean" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="password_reset_token">
+          <mxGeometry y="106" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="password_reset_token.created_at" value="created_at : timestamp" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="password_reset_token">
+          <mxGeometry y="126" width="260" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="rel1" value="N:1" style="edgeStyle=entityRelationEdgeStyle;rounded=0;html=1;endArrow=ERoneToMany;endFill=0;startArrow=ERone;startFill=0;strokeColor=#1F4E79;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="city.id" target="user.city_id">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel2" value="N:1" style="edgeStyle=entityRelationEdgeStyle;rounded=0;html=1;endArrow=ERoneToMany;endFill=0;startArrow=ERone;startFill=0;strokeColor=#1F4E79;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="department.id" target="user.department_id">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel3" value="N:1" style="edgeStyle=entityRelationEdgeStyle;rounded=0;html=1;endArrow=ERoneToMany;endFill=0;startArrow=ERone;startFill=0;strokeColor=#1F4E79;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="department.id" target="classification.department_id">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel4" value="N:1" style="edgeStyle=entityRelationEdgeStyle;rounded=0;html=1;endArrow=ERoneToMany;endFill=0;startArrow=ERone;startFill=0;strokeColor=#1F4E79;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="city.id" target="occurrence.city_id">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel5" value="N:1" style="edgeStyle=entityRelationEdgeStyle;rounded=0;html=1;endArrow=ERoneToMany;endFill=0;startArrow=ERone;startFill=0;strokeColor=#1F4E79;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="classification.id" target="occurrence.classification_id">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel6" value="N:1" style="edgeStyle=entityRelationEdgeStyle;rounded=0;html=1;endArrow=ERoneToMany;endFill=0;startArrow=ERone;startFill=0;strokeColor=#1F4E79;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="department.id" target="occurrence.department_id">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel7" value="N:1" style="edgeStyle=entityRelationEdgeStyle;rounded=0;html=1;endArrow=ERoneToMany;endFill=0;startArrow=ERone;startFill=0;strokeColor=#1F4E79;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="user.id" target="occurrence.user_id">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel8" value="N:1" style="edgeStyle=entityRelationEdgeStyle;rounded=0;html=1;endArrow=ERoneToMany;endFill=0;startArrow=ERone;startFill=0;strokeColor=#1F4E79;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="occurrence.id" target="occurrence.group_id">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel9" value="N:1" style="edgeStyle=entityRelationEdgeStyle;rounded=0;html=1;endArrow=ERoneToMany;endFill=0;startArrow=ERone;startFill=0;strokeColor=#1F4E79;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="occurrence.id" target="occurrence_history.occurrence_id">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel10" value="N:1" style="edgeStyle=entityRelationEdgeStyle;rounded=0;html=1;endArrow=ERoneToMany;endFill=0;startArrow=ERone;startFill=0;strokeColor=#1F4E79;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="user.id" target="occurrence_history.changed_by">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel11" value="N:1" style="edgeStyle=entityRelationEdgeStyle;rounded=0;html=1;endArrow=ERoneToMany;endFill=0;startArrow=ERone;startFill=0;strokeColor=#1F4E79;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="department.id" target="occurrence_history.department_id">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel12" value="N:1" style="edgeStyle=entityRelationEdgeStyle;rounded=0;html=1;endArrow=ERoneToMany;endFill=0;startArrow=ERone;startFill=0;strokeColor=#1F4E79;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="occurrence.id" target="occurrence_media.occurrence_id">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel13" value="N:1" style="edgeStyle=entityRelationEdgeStyle;rounded=0;html=1;endArrow=ERoneToMany;endFill=0;startArrow=ERone;startFill=0;strokeColor=#1F4E79;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="occurrence.id" target="occurrence_support.occurrence_id">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel14" value="N:1" style="edgeStyle=entityRelationEdgeStyle;rounded=0;html=1;endArrow=ERoneToMany;endFill=0;startArrow=ERone;startFill=0;strokeColor=#1F4E79;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="user.id" target="occurrence_support.citizen_id">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel15" value="N:1" style="edgeStyle=entityRelationEdgeStyle;rounded=0;html=1;endArrow=ERoneToMany;endFill=0;startArrow=ERone;startFill=0;strokeColor=#1F4E79;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="user.id" target="password_reset_token.user_id">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -11,7 +11,15 @@ public interface OccurrenceDao extends CreateDao<Occurrence>, ReadDao<GetOccurre
 
     void updateOccurrenceStatusToInProgress(int id);
     void updateOccurrenceStatusToConclude(int id);
-    void updateStatus(int id, String newStatus, int changedBy, String observation);
+    default void updateStatus(int id, String newStatus, int changedBy, String observation) {
+        updateStatus(id, newStatus, changedBy, observation, null);
+    }
+
+    /**
+     * RF22: mesma mudança de status, guardando no histórico o departamento para
+     * o qual a ocorrência foi encaminhada (nulo quando não houve encaminhamento).
+     */
+    void updateStatus(int id, String newStatus, int changedBy, String observation, Integer departmentId);
     GetOccurrenceDto readByProtocolNumber(String protocolNumber);
     List<GetOccurrenceDto> findNearby(double lat, double lon, String type, double radiusMeters);
     GetOccurrenceDto findByAnonymousTrackingCodeHash(String codeHash);
@@ -19,7 +27,7 @@ public interface OccurrenceDao extends CreateDao<Occurrence>, ReadDao<GetOccurre
     /** RF07: conta ocorrências identificadas do usuário no dia atual. */
     int countTodayByEmail(String email);
 
-    /** RF08: conta ocorrências anônimas do IP no dia atual. Requer coluna ip_address na tabela. */
+    /** RF08: conta ocorrências anônimas do IP no dia atual. Recebe o resumo SHA-256 do IP (RNF17). */
     int countTodayAnonymousByIp(String ip);
 
     /** Cidadão: lista apenas as ocorrências abertas pelo próprio usuário. */

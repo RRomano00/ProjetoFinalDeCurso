@@ -56,8 +56,24 @@
               <input type="text" formControlName="neighborhood" class="form-input" placeholder="Centro" />
             </div>
             <div class="field-group">
+              <label>UF</label>
+              <input type="text" formControlName="state" class="form-input input-uf" list="profile-uf-options"
+                     placeholder="MG" maxlength="2" autocapitalize="characters" spellcheck="false" />
+              <datalist id="profile-uf-options">
+                <option *ngFor="let u of units" [value]="u.uf">{{ u.name }}</option>
+              </datalist>
+            </div>
+          </div>
+          <div class="profile-grid">
+            <div class="field-group">
               <label>Município</label>
-              <input type="text" formControlName="city" class="form-input" placeholder="Santa Rita do Sapucaí" />
+              <input type="text" formControlName="city" class="form-input" list="profile-city-options"
+                     [readOnly]="!cityOptions.ready" spellcheck="false"
+                     [placeholder]="cityOptions.ready ? 'Santa Rita do Sapucaí' : 'Informe a UF primeiro'" />
+              <datalist id="profile-city-options">
+                <option *ngFor="let c of cityOptions.list" [value]="c"></option>
+              </datalist>
+              <span class="field-hint" *ngIf="!cityOptions.ready">Selecione a UF para ver os municípios.</span>
               <span class="field-error" *ngIf="profileForm.controls['city'].touched && profileForm.controls['city'].invalid">O município é obrigatório</span>
             </div>
           </div>
@@ -143,6 +159,7 @@
           <div class="mfa-disable-form" *ngIf="enablingEmail">
             <p>Digite o código que enviamos ao seu e-mail para ativar.</p>
             <input type="text" [(ngModel)]="emailEnableCode" maxlength="6" inputmode="numeric"
+             (keyup.enter)="savingMfa || confirmEnableEmail()"
                    placeholder="000000" class="form-input qr-code-input" />
             <div class="qr-actions">
               <button class="btn-secondary" (click)="cancelEnableEmail()">Cancelar</button>
@@ -156,6 +173,7 @@
           <div class="mfa-disable-form" *ngIf="disablingEmail">
             <p>Digite o código que enviamos ao seu e-mail para desativar.</p>
             <input type="text" [(ngModel)]="emailDisableCode" maxlength="6" inputmode="numeric"
+             (keyup.enter)="savingMfa || confirmDisableEmail()"
                    placeholder="000000" class="form-input qr-code-input" />
             <div class="qr-actions">
               <button class="btn-secondary" (click)="cancelDisableEmail()">Cancelar</button>
@@ -182,6 +200,7 @@
           <div class="mfa-disable-form" *ngIf="disablingApp">
             <p>Digite o código atual do seu aplicativo autenticador para desativar.</p>
             <input type="text" [(ngModel)]="appDisableCode" maxlength="6" inputmode="numeric"
+             (keyup.enter)="savingMfa || confirmDisableApp()"
                    placeholder="000000" class="form-input qr-code-input" />
             <div class="qr-actions">
               <button class="btn-secondary" (click)="cancelDisableApp()">Cancelar</button>
@@ -200,6 +219,7 @@
               <code>{{ secret }}</code>
             </details>
             <input type="text" [(ngModel)]="confirmCode" maxlength="6" inputmode="numeric"
+             (keyup.enter)="savingMfa || confirmAppSetup()"
                    placeholder="000000" class="form-input qr-code-input" />
             <div class="qr-actions">
               <button class="btn-secondary" (click)="cancelAppSetup()">Cancelar</button>
@@ -224,27 +244,33 @@
 
         <p class="mfa-desc">A exclusão é permanente: suas ocorrências continuam registradas, mas sem o seu nome.</p>
 
-        <button class="btn-danger" *ngIf="!deletingAccount" (click)="startDeleteAccount()">
+        <button class="btn-danger" (click)="startDeleteAccount()">
           Excluir minha conta
         </button>
+      </div>
+    </div>
+  </div>
 
-        <div class="mfa-disable-form" *ngIf="deletingAccount">
-          <p *ngIf="deleteNeedsCode">
-            Para confirmar, digite o código
-            {{ deleteUsesEmailCode ? 'enviado ao seu e-mail' : 'do seu aplicativo autenticador' }}.
-          </p>
-          <p *ngIf="!deleteNeedsCode">
-            Tem certeza? Esta ação é permanente e excluirá todos os seus dados.
-          </p>
-          <input *ngIf="deleteNeedsCode" type="text" [(ngModel)]="deleteCode" maxlength="6" inputmode="numeric"
-                 placeholder="000000" class="form-input qr-code-input" />
-          <div class="qr-actions">
-            <button class="btn-secondary" (click)="cancelDeleteAccount()">Cancelar</button>
-            <button class="btn-danger" [disabled]="deletingNow" (click)="confirmDeleteAccount()">
-              {{ deletingNow ? 'Excluindo...' : 'Excluir definitivamente' }}
-            </button>
-          </div>
-        </div>
+  <!-- Confirmação da exclusão: mesma caixa da administração de contas -->
+  <div class="modal-overlay" *ngIf="deletingAccount" (click)="cancelDeleteAccount()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <h2>Excluir conta</h2>
+      <p>
+        Sua conta será apagada do sistema e esta ação não pode ser desfeita. Suas
+        ocorrências continuam registradas, mas sem o seu nome.
+      </p>
+      <p *ngIf="deleteNeedsCode">
+        Para confirmar, digite o código
+        {{ deleteUsesEmailCode ? 'enviado ao seu e-mail' : 'do seu aplicativo autenticador' }}.
+      </p>
+      <input *ngIf="deleteNeedsCode" type="text" [(ngModel)]="deleteCode" maxlength="6" inputmode="numeric"
+             (keyup.enter)="deletingNow || confirmDeleteAccount()"
+             placeholder="000000" class="form-input qr-code-input" />
+      <div class="modal-actions">
+        <button class="btn-secondary" [disabled]="deletingNow" (click)="cancelDeleteAccount()">Cancelar</button>
+        <button class="btn-danger" [disabled]="deletingNow" (click)="confirmDeleteAccount()">
+          {{ deletingNow ? 'Excluindo...' : 'Excluir definitivamente' }}
+        </button>
       </div>
     </div>
   </div>

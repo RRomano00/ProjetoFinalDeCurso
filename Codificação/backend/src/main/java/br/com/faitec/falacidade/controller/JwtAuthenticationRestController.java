@@ -75,7 +75,8 @@ public class JwtAuthenticationRestController {
         if (user == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 
         boolean mandatory = (user.getRole() == UserModel.UserRole.EMPLOYEE
-                          || user.getRole() == UserModel.UserRole.ADMINISTRATOR)
+                          || user.getRole() == UserModel.UserRole.ADMINISTRATOR
+                          || user.getRole() == UserModel.UserRole.SUPER_ADMIN)
                          && !isMfaExempt(user.getEmail());
 
         boolean app   = user.isAppMfaActive();

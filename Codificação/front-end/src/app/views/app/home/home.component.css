@@ -191,6 +191,15 @@
   background: var(--surface);
   color: var(--ink);
 }
+/* O município é o escopo da tela — mapa, números e recentes —, e não mais um
+   recorte do mapa: fica sozinho na primeira linha, acima dos três filtros. */
+.map-filters .select-city {
+  flex-basis: 100%;
+  font-weight: 600;
+  color: var(--plate);
+  border-color: var(--plate);
+  background: var(--plate-wash);
+}
 .map-filters select:focus-visible {
   outline: var(--focus);
   outline-offset: 1px;

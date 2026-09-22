@@ -93,6 +93,7 @@ public class JwtSecurityConfiguration {
                 .requestMatchers(HttpMethod.POST, "/api/occurrence").permitAll()
                 // RF08/RF11: visitante (sem login) consulta ocorrências, protocolo, apoios e histórico
                 // (leitura apenas; dados do autor são mascarados no controller)
+                .requestMatchers(HttpMethod.GET, "/api/occurrence/mine").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/occurrence", "/api/occurrence/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/contact").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/occurrence/upload-media").permitAll()
@@ -104,20 +105,41 @@ public class JwtSecurityConfiguration {
                     "/api/occurrence/conclude/**")
                     .hasAnyRole(
                         UserModel.UserRole.EMPLOYEE.name(),
-                        UserModel.UserRole.ADMINISTRATOR.name())
+                        UserModel.UserRole.ADMINISTRATOR.name(),
+                        UserModel.UserRole.SUPER_ADMIN.name())
+                // RF22: editar o setor é do administrador — o funcionário cadastra e consulta
+                .requestMatchers(HttpMethod.PUT, "/api/department/*")
+                    .hasAnyRole(
+                        UserModel.UserRole.ADMINISTRATOR.name(),
+                        UserModel.UserRole.SUPER_ADMIN.name())
+                // RF22: departamentos e encaminhamento de ocorrência — equipe
+                .requestMatchers("/api/department/**", "/api/occurrence/*/forward")
+                    .hasAnyRole(
+                        UserModel.UserRole.EMPLOYEE.name(),
+                        UserModel.UserRole.ADMINISTRATOR.name(),
+                        UserModel.UserRole.SUPER_ADMIN.name())
+                // RF25: o Super Administrador cria qualquer perfil; o administrador
+                // municipal, apenas funcionários do seu município (trava no controller).
                 .requestMatchers(HttpMethod.POST, "/api/user/employee")
-                    .hasRole(UserModel.UserRole.ADMINISTRATOR.name())
-                // RF15: listagem e ativação/inativação de usuários — só Administrador
+                    .hasAnyRole(
+                        UserModel.UserRole.ADMINISTRATOR.name(),
+                        UserModel.UserRole.SUPER_ADMIN.name())
+                // RF15: listagem e ativação/inativação de contas — administração
                 .requestMatchers(HttpMethod.GET, "/api/user")
-                    .hasRole(UserModel.UserRole.ADMINISTRATOR.name())
-                .requestMatchers(HttpMethod.PUT, "/api/user/*/active")
-                    .hasRole(UserModel.UserRole.ADMINISTRATOR.name())
+                    .hasAnyRole(
+                        UserModel.UserRole.ADMINISTRATOR.name(),
+                        UserModel.UserRole.SUPER_ADMIN.name())
+                .requestMatchers(HttpMethod.PUT, "/api/user/*/active", "/api/user/*/role")
+                    .hasAnyRole(
+                        UserModel.UserRole.ADMINISTRATOR.name(),
+                        UserModel.UserRole.SUPER_ADMIN.name())
                 // Auto-exclusão da própria conta (qualquer usuário autenticado) — RF06
                 .requestMatchers(HttpMethod.DELETE, "/api/user/account").authenticated()
                 .requestMatchers(HttpMethod.DELETE, "/api/user/**")
                     .hasAnyRole(
                         UserModel.UserRole.CITIZEN.name(),
-                        UserModel.UserRole.ADMINISTRATOR.name())
+                        UserModel.UserRole.ADMINISTRATOR.name(),
+                        UserModel.UserRole.SUPER_ADMIN.name())
                 .anyRequest().authenticated()
             )
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

@@ -28,12 +28,14 @@ class OccurrenceServiceImplTest {
     @Mock br.com.faitec.falacidade.port.dao.occurrence.OccurrenceSupportDao supportDao;
     @Mock AnonymousTrackingCodeService trackingCodeService;
     @Mock br.com.faitec.falacidade.port.service.email.EmailService emailService;
+    @Mock br.com.faitec.falacidade.port.service.department.DepartmentService departmentService;
 
     OccurrenceServiceImpl sut;
 
     @BeforeEach
     void setUp() {
-        sut = new OccurrenceServiceImpl(occurrenceDao, supportDao, trackingCodeService, emailService);
+        sut = new OccurrenceServiceImpl(occurrenceDao, supportDao, trackingCodeService, emailService,
+                                        departmentService);
     }
 
     private Occurrence validAnonymous() {
@@ -160,7 +162,7 @@ class OccurrenceServiceImplTest {
 
         @Test @DisplayName("id negativo é ignorado")
         void ignoresNegativeId() {
-            sut.updateStatus(-1, "ATENDIDA", 1, "obs");
+            sut.updateStatus(-1, "CONCLUIDA", 1, "obs");
             verifyNoInteractions(occurrenceDao);
         }
 

@@ -28,6 +28,7 @@ public class CreateOccurrenceDto {
 
     @NotBlank(message = "Cidade é obrigatória")
     private String city;
+    private String state;
 
     private Double latitude, longitude;
     private String email;
@@ -43,7 +44,7 @@ public class CreateOccurrenceDto {
         o.setType(type);               o.setStreet(street);
         o.setNumber(number);           o.setNeighborhood(neighborhood);
         o.setAddressReference(addressReference);
-        o.setCity(city);               o.setLatitude(latitude);
+        o.setCity(city);               o.setState(state);               o.setLatitude(latitude);
         o.setLongitude(longitude);     o.setEmail(email);
         o.setCloudinaryPublicId(cloudinaryPublicId);
         o.setUrlMedia(urlMedia);
@@ -75,6 +76,8 @@ public class CreateOccurrenceDto {
     public void                  setAddressReference(String v){ this.addressReference = v; }
     public String                getCity()               { return city; }
     public void                  setCity(String v)       { this.city = v; }
+    public String                getState()              { return state; }
+    public void                  setState(String v)      { this.state = v; }
     public Double                getLatitude()           { return latitude; }
     public void                  setLatitude(Double v)   { this.latitude = v; }
     public Double                getLongitude()          { return longitude; }

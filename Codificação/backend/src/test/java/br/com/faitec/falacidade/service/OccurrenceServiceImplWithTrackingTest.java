@@ -29,12 +29,14 @@ class OccurrenceServiceImplWithTrackingTest {
     @Mock br.com.faitec.falacidade.port.dao.occurrence.OccurrenceSupportDao supportDao;
     @Mock AnonymousTrackingCodeService trackingCodeService;
     @Mock br.com.faitec.falacidade.port.service.email.EmailService emailService;
+    @Mock br.com.faitec.falacidade.port.service.department.DepartmentService departmentService;
 
     OccurrenceServiceImpl sut;
 
     @BeforeEach
     void setUp() {
-        sut = new OccurrenceServiceImpl(occurrenceDao, supportDao, trackingCodeService, emailService);
+        sut = new OccurrenceServiceImpl(occurrenceDao, supportDao, trackingCodeService, emailService,
+                                        departmentService);
     }
 
     // ================================================================
@@ -304,7 +306,9 @@ class OccurrenceServiceImplWithTrackingTest {
         @Test
         @DisplayName("RF08: bloqueia 4ª ocorrência anônima do mesmo IP no dia")
         void blocksAnonymousOverDailyLimit() {
-            when(occurrenceDao.countTodayAnonymousByIp("1.2.3.4")).thenReturn(3);
+            // RNF17: a contagem diária é feita sobre o resumo SHA-256 do IP
+            when(trackingCodeService.hash("1.2.3.4")).thenReturn("ipHash1234");
+            when(occurrenceDao.countTodayAnonymousByIp("ipHash1234")).thenReturn(3);
 
             assertThatThrownBy(() -> sut.createOccurrence(anonymousOccurrence(), "1.2.3.4"))
                 .isInstanceOf(IllegalStateException.class);
@@ -313,18 +317,20 @@ class OccurrenceServiceImplWithTrackingTest {
         }
 
         @Test
-        @DisplayName("RF08: grava o IP na ocorrência anônima dentro do limite")
-        void storesIpForAnonymousWithinLimit() {
-            when(occurrenceDao.countTodayAnonymousByIp("9.9.9.9")).thenReturn(0);
+        @DisplayName("RNF17: grava o resumo SHA-256 do IP, nunca o IP em texto claro")
+        void storesHashedIpForAnonymousWithinLimit() {
+            when(trackingCodeService.hash("9.9.9.9")).thenReturn("ipHash9999");
+            when(occurrenceDao.countTodayAnonymousByIp("ipHash9999")).thenReturn(0);
             when(trackingCodeService.generateCode()).thenReturn("CODE1234");
-            when(trackingCodeService.hash(any())).thenReturn("hash");
+            when(trackingCodeService.hash("CODE1234")).thenReturn("hash");
             when(occurrenceDao.add(any())).thenReturn(1);
 
             sut.createOccurrence(anonymousOccurrence(), "9.9.9.9");
 
             ArgumentCaptor<Occurrence> captor = ArgumentCaptor.forClass(Occurrence.class);
             verify(occurrenceDao).add(captor.capture());
-            assertThat(captor.getValue().getIpAddress()).isEqualTo("9.9.9.9");
+            assertThat(captor.getValue().getIpAddress()).isEqualTo("ipHash9999");
+            assertThat(captor.getValue().getIpAddress()).isNotEqualTo("9.9.9.9");
         }
 
         @Test
@@ -336,6 +342,88 @@ class OccurrenceServiceImplWithTrackingTest {
                 .isInstanceOf(IllegalStateException.class);
 
             verify(occurrenceDao, never()).add(any());
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // RF22: encaminhamento ao departamento responsável
+    // ─────────────────────────────────────────────────────────────────────────
+    @Nested
+    @DisplayName("forwardToDepartment()")
+    class ForwardToDepartment {
+
+        private br.com.faitec.falacidade.domain.Department departamento() {
+            return new br.com.faitec.falacidade.domain.Department(
+                3, "Secretaria de Obras", "obras@prefeitura.exemplo.br",
+                "Santa Rita do Sapucaí", "MG");
+        }
+
+        private GetOccurrenceDto ocorrencia() {
+            GetOccurrenceDto o = new GetOccurrenceDto();
+            o.setId(10);
+            o.setProtocolNumber("FC-20260918-A1B2C");
+            o.setStatus(Occurrence.OccurrenceStatus.PENDENTE);
+            return o;
+        }
+
+        @Test
+        @DisplayName("envia ao e-mail do departamento e passa a ocorrência para EM_ANDAMENTO")
+        void forwardsAndMovesToInProgress() {
+            when(occurrenceDao.readById(10)).thenReturn(ocorrencia());
+            when(departmentService.findById(3)).thenReturn(departamento());
+
+            String nome = sut.forwardToDepartment(10, 3, 5);
+
+            assertThat(nome).isEqualTo("Secretaria de Obras");
+            verify(emailService).sendOccurrenceForwardEmail(
+                eq("obras@prefeitura.exemplo.br"), eq("Secretaria de Obras"), any());
+            verify(occurrenceDao).updateStatus(eq(10), eq("EM_ANDAMENTO"), eq(5),
+                contains("Ocorrência encaminhada para departamento responsável"), eq(3));
+        }
+
+        @Test
+        @DisplayName("o histórico nomeia o departamento e guarda o seu identificador")
+        void writesDepartmentInHistory() {
+            when(occurrenceDao.readById(10)).thenReturn(ocorrencia());
+            when(departmentService.findById(3)).thenReturn(departamento());
+
+            sut.forwardToDepartment(10, 3, 5);
+
+            ArgumentCaptor<String> nota = ArgumentCaptor.forClass(String.class);
+            verify(occurrenceDao).updateStatus(anyInt(), anyString(), anyInt(), nota.capture(), eq(3));
+            assertThat(nota.getValue()).isEqualTo(
+                "Ocorrência encaminhada para departamento responsável — Secretaria de Obras.");
+        }
+
+        @Test
+        @DisplayName("falha no envio do e-mail não altera a ocorrência")
+        void keepsOccurrenceUntouchedWhenEmailFails() {
+            when(occurrenceDao.readById(10)).thenReturn(ocorrencia());
+            when(departmentService.findById(3)).thenReturn(departamento());
+            doThrow(new RuntimeException("SMTP fora do ar"))
+                .when(emailService).sendOccurrenceForwardEmail(anyString(), anyString(), any());
+
+            assertThatThrownBy(() -> sut.forwardToDepartment(10, 3, 5))
+                .isInstanceOf(RuntimeException.class);
+
+            verify(occurrenceDao, never()).updateStatus(anyInt(), anyString(), anyInt(), anyString(), any());
+        }
+
+        @Test
+        @DisplayName("recusa ocorrência ou departamento inexistentes, sem enviar e-mail")
+        void rejectsUnknownOccurrenceOrDepartment() {
+            when(occurrenceDao.readById(99)).thenReturn(null);
+            assertThatThrownBy(() -> sut.forwardToDepartment(99, 3, 5))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Ocorrência");
+
+            when(occurrenceDao.readById(10)).thenReturn(ocorrencia());
+            when(departmentService.findById(77)).thenReturn(null);
+            assertThatThrownBy(() -> sut.forwardToDepartment(10, 77, 5))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Departamento");
+
+            verify(emailService, never()).sendOccurrenceForwardEmail(anyString(), anyString(), any());
         }
     }
 }

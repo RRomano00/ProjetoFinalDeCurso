@@ -13,5 +13,7 @@ export interface UpdateProfileDto {
     neighborhood?: string;
     number?: string;
     cep?: string;
+    /** UF de residência (duas letras). */
+    state?: string;
     city?: string;
 }

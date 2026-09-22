@@ -64,13 +64,30 @@
 
       <!-- Mapa: clique para marcar o local; o endereço é preenchido automaticamente (RF09) -->
       <div class="map-select-wrapper">
-        <div class="map-hint" [class.loading]="geocodeStatus === 'loading'" [class.success]="geocodeStatus === 'success'">
+        <div class="map-hint" [class.loading]="geocodeStatus === 'loading'" [class.success]="geocodeStatus === 'success'"
+             [class.partial]="geocodeStatus === 'partial'" [class.error]="geocodeStatus === 'error'">
           <span *ngIf="geocodeStatus === 'loading'" class="spinner-sm"></span>
           <span *ngIf="geocodeStatus === 'idle'">📍 Clique no mapa para marcar o local da ocorrência.</span>
           <span *ngIf="geocodeStatus === 'loading'">Buscando endereço...</span>
           <span *ngIf="geocodeStatus === 'success'">✓ Endereço preenchido. Confira e informe o número.</span>
+          <span *ngIf="geocodeStatus === 'partial'">Este ponto não tem logradouro cadastrado no mapa. Confira a rua antes de enviar.</span>
+          <span *ngIf="geocodeStatus === 'error'">Não foi possível buscar o endereço deste ponto. Preencha os campos à mão.</span>
         </div>
-        <div id="create-map"></div>
+        <div class="map-holder">
+          <div id="create-map"></div>
+          <!-- Bússola: leva o mapa até onde a pessoa está e marca o ponto (RF09) -->
+          <button type="button" class="map-locate" [class.locating]="locating"
+                  (click)="requestCurrentLocation()" [disabled]="locating"
+                  [attr.aria-busy]="locating"
+                  [attr.aria-label]="locating ? 'Procurando a sua localização' : 'Ir para a minha localização'"
+                  [title]="locating ? 'Procurando a sua localização...' : 'Ir para a minha localização'">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
+            </svg>
+          </button>
+        </div>
       </div>
 
       <div class="form-row">
@@ -95,12 +112,48 @@
             Bairro é obrigatório.
           </span>
         </div>
+        <div class="form-group form-group--uf">
+          <label>UF *</label>
+          <input type="text" formControlName="state" list="occ-uf-options" maxlength="2"
+                 placeholder="MG" autocapitalize="characters" spellcheck="false" autocomplete="off"
+                 class="input-uf" />
+          <datalist id="occ-uf-options">
+            <option *ngFor="let u of units" [value]="u.uf">{{ u.name }}</option>
+          </datalist>
+          <span *ngIf="form.get('state')?.touched && form.get('state')?.invalid" class="field-error">
+            Informe a UF.
+          </span>
+        </div>
         <div class="form-group">
           <label>Cidade *</label>
-          <input type="text" formControlName="city" />
+          <!-- Só recebe digitação depois da UF: é ela que traz os municípios. -->
+          <input type="text" formControlName="city" list="occ-city-options"
+                 [readOnly]="!cityOptions.ready" spellcheck="false" autocomplete="off"
+                 [placeholder]="cityOptions.ready ? 'Comece a digitar o município' : 'Informe a UF primeiro'" />
+          <datalist id="occ-city-options">
+            <option *ngFor="let c of cityOptions.list" [value]="c"></option>
+          </datalist>
           <span *ngIf="form.get('city')?.touched && form.get('city')?.invalid" class="field-error">
             Cidade é obrigatória.
           </span>
+          <span *ngIf="!cityOptions.ready" class="field-hint">Selecione a UF para ver os municípios.</span>
+        </div>
+      </div>
+
+      <!-- Município sem equipe cadastrada: avisa, mas não impede o registro. -->
+      <div class="coverage-notice" *ngIf="cityServed === false" role="status">
+        <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+        <div>
+          <strong>{{ form.value.city }} ainda não tem equipe no Fala, Cidade!</strong>
+          <p>
+            Você pode registrar assim mesmo: a ocorrência fica guardada com o seu protocolo
+            e entra na fila para ser concluída quando o município aderir. Enquanto isso, ela
+            não será encaminhada a nenhuma secretaria.
+          </p>
         </div>
       </div>
 

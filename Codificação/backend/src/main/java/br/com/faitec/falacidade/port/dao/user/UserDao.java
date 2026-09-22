@@ -20,6 +20,16 @@ public interface UserDao extends CrudDao<UserModel>, ReadByEmailDao, UpdatePassw
     /** RF15: lista TODOS os usuários (inclusive inativos) para o painel do administrador. */
     java.util.List<UserModel> readAllUsers();
 
+    /**
+     * Existe funcionário ou administrador ativo cadastrado no município? É o que
+     * define se o município é atendido pelo sistema. A UF é opcional: contas
+     * anteriores à municipalização ficaram sem ela.
+     */
+    boolean existsStaffInCity(String city, String state);
+
     /** RF15: ativa/inativa a conta do usuário. */
     void setActive(int userId, boolean active);
+
+    /** RF25: troca o perfil da conta (a trava de quem pode está no controlador). */
+    void setRole(int userId, UserModel.UserRole role);
 }

@@ -23,6 +23,16 @@ public interface EmailService {
     /** Confirma o registro da ocorrência e agradece o comprometimento com a cidade. */
     void sendOccurrenceCreatedEmail(String toEmail, String fullname, String protocol, String title);
 
+    /**
+     * RF22: encaminha a ocorrência ao departamento responsável. O corpo leva
+     * apenas os dados do problema — nenhum dado pessoal do autor — e as
+     * fotografias vão anexadas. Diferente dos demais, este envio é síncrono:
+     * o funcionário precisa saber se o encaminhamento saiu antes de a
+     * ocorrência mudar de estado.
+     */
+    void sendOccurrenceForwardEmail(String toEmail, String departmentName,
+                                    br.com.faitec.falacidade.domain.dto.occurrence.GetOccurrenceDto occurrence);
+
     /** Notifica o autor sobre a mudança de status da ocorrência (com mensagem opcional do funcionário). */
     void sendStatusChangeEmail(String toEmail, String fullname, String protocol,
                                String newStatus, String message);

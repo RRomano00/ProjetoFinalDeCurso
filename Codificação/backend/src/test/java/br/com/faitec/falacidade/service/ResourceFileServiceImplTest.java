@@ -18,7 +18,7 @@ class ResourceFileServiceImplTest {
     void readsExistingFile() throws IOException {
         // Usa o próprio SQL de criação de tabelas como arquivo de teste
         String content = sut.read(
-            "fala-cidade-db-scripts/PID_SCRIPT_CRIACAO-TABELAS.sql");
+            "fala-cidade-db-scripts/FalaCidade_DDL_CriacaoTabelas.sql");
 
         assertThat(content).isNotBlank();
         assertThat(content).contains("CREATE TABLE");
@@ -36,7 +36,7 @@ class ResourceFileServiceImplTest {
     @DisplayName("conteúdo retornado inclui quebra de linha entre linhas")
     void preservesLineBreaks() throws IOException {
         String content = sut.read(
-            "fala-cidade-db-scripts/PID_SCRIPT_CRIACAO-TABELAS.sql");
+            "fala-cidade-db-scripts/FalaCidade_DDL_CriacaoTabelas.sql");
         // Um arquivo SQL com múltiplas linhas deve conter newlines
         assertThat(content).contains("\n");
     }
@@ -47,7 +47,7 @@ class ResourceFileServiceImplTest {
         // Teste de fumaça: ler o arquivo 100 vezes deve ser rápido (< 2 segundos)
         assertThatCode(() -> {
             for (int i = 0; i < 100; i++) {
-                sut.read("fala-cidade-db-scripts/PID_SCRIPT_CRIACAO-TABELAS.sql");
+                sut.read("fala-cidade-db-scripts/FalaCidade_DDL_CriacaoTabelas.sql");
             }
         }).doesNotThrowAnyException();
     }

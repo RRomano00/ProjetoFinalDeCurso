@@ -24,6 +24,8 @@ export interface Occurrence {
     neighborhood?:      string;
     addressReference?:  string;
     city:               string;
+    /** UF do endereço da ocorrência. */
+    state?:             string;
     latitude?:       number;
     longitude?:      number;
     urlMedia?:       string;

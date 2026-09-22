@@ -126,3 +126,30 @@
   .terms-footer .btn-primary,
   .terms-footer .btn-secondary { width: 100%; }
 }
+
+/* ── UF + Município na mesma linha ──
+   A UF é curta e determina as sugestões do município, então fica antes e
+   ocupa só o que precisa. No celular, cada campo pega a linha inteira. */
+.field-row {
+  display: grid;
+  grid-template-columns: 5.5rem 1fr;
+  gap: 0.75rem;
+  align-items: start;
+}
+.field-uf input { text-transform: uppercase; letter-spacing: 0.06em; }
+
+/* "(opcional)" pesa menos que o rótulo: informa sem competir com ele. */
+.label-optional { font-weight: 400; color: var(--ink-faint); }
+
+.field-hint {
+  font-size: 0.75rem;
+  color: var(--ink-faint);
+  line-height: 1.4;
+}
+
+@media (max-width: 400px) {
+  .field-row { grid-template-columns: 1fr; }
+}
+
+/* Município antes da UF: aceita valor, não aceita digitação. */
+.input-wrapper input[readonly] { background: var(--surface-2); color: var(--ink-mute); cursor: not-allowed; }
