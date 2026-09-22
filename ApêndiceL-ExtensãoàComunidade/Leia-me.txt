@@ -20,3 +20,10 @@ Conteúdo atual desta pasta:
   gráficos e quadros do arquivo anterior.
 Os três arquivos são os mesmos do Apêndice G, aqui reproduzidos como comprovante da
 atividade de extensão.
+- FalaCidade_RelatorioContribuicaoOpenStreetMap_v1.docx — relatório da segunda atividade
+  de extensão: correção dos nomes de logradouros de Santa Rita do Sapucaí na base
+  colaborativa OpenStreetMap, conforme o registro da Prefeitura Municipal. Traz a tabela
+  dos vinte e um objetos alterados, com o registro anterior e o atual, e os endereços
+  públicos dos dois conjuntos de alterações (changesets 189415583 e 189416255), que
+  servem de comprovação: são permanentes e atribuídos nominalmente ao executor.
+  Falta preencher a carga horária no item 1.
