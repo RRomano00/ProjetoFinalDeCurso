@@ -1,9 +1,3 @@
-/**
- * Fonte única de labels e cores de ocorrência (categoria, status e prioridade).
- * Evita duplicar os mesmos mapas em cada componente.
- */
-
-/** Categorias disponíveis (valor do enum do back-end + label exibido). */
 export const OCCURRENCE_TYPES: { value: string; label: string }[] = [
   { value: 'BURACO_NA_RUA_OU_CALCADA',              label: 'Buraco na Rua ou Calçada' },
   { value: 'POSTE_COM_LUZ_QUEIMADA',                label: 'Poste com Luz Queimada' },
@@ -19,9 +13,6 @@ export const OCCURRENCE_TYPES: { value: string; label: string }[] = [
   { value: 'OUTROS_PROBLEMAS',                      label: 'Outros Problemas' },
 ];
 
-/** Cor de destaque de cada categoria (badges/agrupamentos).
- *  Luminância equalizada: nenhuma categoria grita mais alto que as outras,
- *  e todas mantêm contraste >= 4.5:1 sobre o fundo claro do badge. */
 const TYPE_COLORS: Record<string, string> = {
   BURACO_NA_RUA_OU_CALCADA:              '#9c4a1c',
   POSTE_COM_LUZ_QUEIMADA:                '#7d6a12',
@@ -47,7 +38,6 @@ const STATUS_LABELS: Record<string, string> = {
   INDEFERIDA:   'Indeferida',
 };
 
-/** Classe CSS do badge de status (list-occurrence). */
 const STATUS_CLASSES: Record<string, string> = {
   PENDENTE:     'badge-pending',
   EM_ANDAMENTO: 'badge-progress',
@@ -55,9 +45,6 @@ const STATUS_CLASSES: Record<string, string> = {
   INDEFERIDA:   'badge-rejected',
 };
 
-/** Cor do marcador no mapa por status.
- *  Mesma convenção dos badges e da legenda (ver tokens --st-* em styles.css):
- *  pendente = âmbar, em andamento = azul, concluída = verde, indeferida = tijolo. */
 const STATUS_COLORS: Record<string, string> = {
   CONCLUIDA:    '#176242',
   EM_ANDAMENTO: '#14487e',
@@ -77,37 +64,29 @@ const PRIORITY_CLASSES: Record<string, string> = {
   BAIXA: 'priority-low',
 };
 
-/** Label da categoria ("Buraco na Rua ou Calçada"). */
 export function typeLabel(type?: string): string {
   return type ? (TYPE_LABELS[type] || type) : '';
 }
 
-/** Cor da categoria (badges/agrupamentos). */
 export function typeColor(type?: string): string {
   return type ? (TYPE_COLORS[type] || '#5d6a7c') : '#5d6a7c';
 }
 
-/** Label do status ("Em Andamento"). */
 export function statusLabel(status?: string): string {
   return status ? (STATUS_LABELS[status] || status) : '';
 }
 
-/** Classe CSS do badge de status. */
 export function statusClass(status?: string): string {
   return status ? (STATUS_CLASSES[status] || '') : '';
 }
 
-/** Cor do marcador de mapa pelo status. */
 export function statusColor(status?: string): string {
   return status ? (STATUS_COLORS[status] || '#8a5800') : '#8a5800';
 }
-
-/** Classe CSS da prioridade (ALTA/MEDIA/BAIXA). */
 export function priorityClass(priority?: string): string {
   return priority ? (PRIORITY_CLASSES[priority] || '') : '';
 }
 
-/** Label da prioridade ("Média") — o enum cru não vai para a tela. */
 export function priorityLabel(priority?: string): string {
   return priority ? (PRIORITY_LABELS[priority] || priority) : '';
 }

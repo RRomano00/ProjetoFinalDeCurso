@@ -1,24 +1,12 @@
 import { Occurrence } from './model/occurrence';
 import { statusColor, statusLabel } from './occurrence-labels';
 
-/**
- * Cartão que aparece ao clicar num marcador — o mesmo no mapa da tela inicial
- * e no da ficha. Mora aqui, e não num componente Angular, porque o Leaflet
- * recebe uma string de HTML: o estilo está em styles.css (.occ-popup).
- */
 export interface PopupOptions {
-  /** É a ocorrência que a tela já mostra: o protocolo vira texto, não atalho. */
   current?: boolean;
-  /** Total de apoios, quando já carregado. */
   supportCount?: number;
-  /** HTML extra no fim do cartão (o botão de apoiar, no mapa da tela inicial). */
   footer?: string;
 }
 
-/**
- * Título, descrição e endereço vêm do cidadão e entram numa string de HTML:
- * sem escapar, um título com `<img onerror=...>` executaria ao abrir o cartão.
- */
 export function escapeHtml(text?: string | null): string {
   const mapa: Record<string, string> = {
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
