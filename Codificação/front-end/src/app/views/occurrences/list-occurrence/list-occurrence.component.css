@@ -259,12 +259,7 @@
   flex-wrap: wrap;
   margin-top: 0.125rem;
 }
-.card-ref time {
-  font-size: 0.75rem;
-  color: var(--ink-faint);
-  margin-left: auto;
-  white-space: nowrap;
-}
+
 .card-city {
   display: inline-flex;
   align-items: center;
@@ -287,6 +282,14 @@
 /* .btn-support agora é do sistema (styles.css): um controle, quatro telas. */
 
 .support-count { font-size: 0.8125rem; color: var(--ink-mute); }
+
+/* A data fecha o cartão, encostada à direita do rodapé. */
+.card-footer time {
+  font-size: 0.75rem;
+  color: var(--ink-faint);
+  margin-left: auto;
+  white-space: nowrap;
+}
 
 /* ── RF12: agrupamento ── */
 .group-list { display: flex; flex-direction: column; gap: 1.75rem; }
