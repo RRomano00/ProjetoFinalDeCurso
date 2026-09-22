@@ -43,7 +43,7 @@ const TYPE_LABELS: Record<string, string> =
 const STATUS_LABELS: Record<string, string> = {
   PENDENTE:     'Pendente',
   EM_ANDAMENTO: 'Em Andamento',
-  ATENDIDA:     'Atendida',
+  CONCLUIDA:    'Concluída',
   INDEFERIDA:   'Indeferida',
 };
 
@@ -51,15 +51,15 @@ const STATUS_LABELS: Record<string, string> = {
 const STATUS_CLASSES: Record<string, string> = {
   PENDENTE:     'badge-pending',
   EM_ANDAMENTO: 'badge-progress',
-  ATENDIDA:     'badge-done',
+  CONCLUIDA:    'badge-done',
   INDEFERIDA:   'badge-rejected',
 };
 
 /** Cor do marcador no mapa por status.
  *  Mesma convenção dos badges e da legenda (ver tokens --st-* em styles.css):
- *  pendente = âmbar, em andamento = azul, atendida = verde, indeferida = tijolo. */
+ *  pendente = âmbar, em andamento = azul, concluída = verde, indeferida = tijolo. */
 const STATUS_COLORS: Record<string, string> = {
-  ATENDIDA:     '#176242',
+  CONCLUIDA:    '#176242',
   EM_ANDAMENTO: '#14487e',
   INDEFERIDA:   '#8b3a2d',
   PENDENTE:     '#8a5800',

@@ -9,15 +9,21 @@ import { UserUpdateService } from '../../../services/user/user-update.service';
 import { UserReadService } from '../../../services/user/user-read.service';
 import { MfaService } from '../../../services/security/mfa.service';
 import { ToastrService } from 'ngx-toastr';
+import { PasswordRevealDirective } from '../../../shared/password-reveal.directive';
+import { LocalityService, CityOptions } from '../../../services/local/locality.service';
 
 @Component({
   selector: 'app-my-profile',
   standalone: true,
-  imports: [RouterOutlet, RouterModule, CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [RouterOutlet, RouterModule, CommonModule, FormsModule, ReactiveFormsModule, PasswordRevealDirective],
   templateUrl: './my-profile.component.html',
   styleUrl: './my-profile.component.css'
 })
 export class MyProfileComponent {
+  /** Sugestões dos campos de localidade (RF04). */
+  units: { uf: string; name: string }[] = [];
+  cityOptions: CityOptions = { list: [], ready: false };
+
   user: User = { fullname: '', email: '', password: '', role: UserRole.CITIZEN };
   form!: FormGroup;
   /** RF04: formulário de edição dos dados de perfil. */
@@ -58,7 +64,8 @@ export class MyProfileComponent {
 
   /** Admin/Funcionário precisam manter ao menos um método de MFA ativo. */
   get isStaff(): boolean {
-    return this.userRole === 'ADMINISTRATOR' || this.userRole === 'EMPLOYEE';
+    return this.userRole === 'SUPER_ADMIN'
+        || this.userRole === 'ADMINISTRATOR' || this.userRole === 'EMPLOYEE';
   }
   get activeMfaCount(): number {
     return (this.mfaEmailActive ? 1 : 0) + (this.mfaAppActive ? 1 : 0);
@@ -77,7 +84,8 @@ export class MyProfileComponent {
     private userReadService: UserReadService,
     private mfaService: MfaService,
     private toastr: ToastrService,
-    private router: Router
+    private router: Router,
+    private locality: LocalityService
   ) {
     this.initializeForm();
   }
@@ -101,8 +109,10 @@ export class MyProfileComponent {
         street:       data.street       || '',
         number:       data.number       || '',
         neighborhood: data.neighborhood || '',
+        state:        data.state        || '',
         city:         data.city         || ''
       });
+
     } catch {
       this.toastr.error('Não foi possível carregar seus dados.');
     }
@@ -111,7 +121,11 @@ export class MyProfileComponent {
   /** RF04: salva os dados de perfil (PUT /api/user/{id}). */
   saveProfile() {
     if (this.profileForm.invalid || !this.id) return;
-    const dto: UpdateProfileDto = { id: +this.id, ...this.profileForm.value };
+    const dto: UpdateProfileDto = {
+      ...this.profileForm.value,
+      id: +this.id,
+      state: this.locality.normalizeUf(this.profileForm.value.state) ?? undefined
+    };
     this.savingProfile = true;
     this.userUpdateService.updateProfile(dto).subscribe({
       next: () => {
@@ -340,8 +354,13 @@ export class MyProfileComponent {
       street:       [''],
       number:       [''],
       neighborhood: [''],
+      state:        [''],
       city:         ['', [Validators.required]]
     });
+
+    this.units = this.locality.units;
+    // O município só aceita digitação depois da UF (regra igual no cadastro).
+    this.cityOptions = this.locality.bindCityToUf(this.profileForm);
   }
 
   validatePasswords(): boolean {

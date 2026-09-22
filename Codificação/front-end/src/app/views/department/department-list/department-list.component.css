@@ -1,0 +1,182 @@
+/* Departamentos: mesma estrutura de página da gestão de usuários — cabeçalho,
+   ação primária à direita e tabela. O cadastro é um painel que abre na própria
+   lista, porque a regra que ele precisa respeitar (não repetir nome nem e-mail)
+   está justamente ali embaixo. */
+
+.page-container { display: flex; flex-direction: column; gap: 1.25rem; }
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.page-header h1 {
+  font-size: 1.5625rem;
+  font-weight: 600;
+  letter-spacing: -0.012em;
+  color: var(--ink);
+  margin: 0 0 0.125rem 0;
+}
+.page-header p { font-size: 0.9375rem; color: var(--ink-mute); margin: 0; }
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5625rem 1.125rem;
+  background: var(--plate);
+  color: #fff;
+  border: none;
+  border-radius: var(--r-ctl);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+.btn-primary:hover:not(:disabled) { background: var(--plate-deep); }
+.btn-primary:disabled { opacity: 0.6; cursor: progress; }
+
+.btn-secondary {
+  padding: 0.5625rem 1.125rem;
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: var(--r-ctl);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.btn-secondary:hover:not(:disabled) { background: var(--surface-2); border-color: var(--ink-faint); }
+.btn-secondary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ── Painel de cadastro ──
+   Não flutua sobre a tela: é parte da página, então usa o raio de cartão e
+   fio de estrutura, sem elevação. */
+.new-department {
+  background: var(--surface);
+  /* Um só marcador de "formulário ativo": a barra à esquerda. O fio das
+     outras três bordas é o mesmo dos demais cartões da página. */
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--plate);
+  border-radius: var(--r-card);
+  padding: 1.25rem 1.375rem;
+}
+.new-department-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+.field-group { display: flex; flex-direction: column; gap: 0.375rem; }
+.field-group label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--ink-mute);
+}
+.field-group input {
+  padding: 0.5625rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: var(--r-ctl);
+  font-size: 0.9375rem;
+  color: var(--ink);
+  background: var(--surface);
+}
+.field-group input:focus { border-color: var(--plate); outline: none; box-shadow: 0 0 0 3px var(--plate-wash); }
+/* O e-mail é endereço: mesmo tratamento que o sistema dá a protocolo e código. */
+#dep-email { font-family: var(--mono); font-size: 0.875rem; }
+
+.field-error { font-size: 0.75rem; color: var(--st-refused); }
+
+.new-department-hint {
+  font-size: 0.8125rem;
+  color: var(--ink-faint);
+  margin: 0.875rem 0 0;
+}
+.new-department-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+/* ── Lista ── */
+.loading-state,
+.empty-state {
+  background: var(--surface);
+  border: 1px dashed var(--line);
+  border-radius: var(--r-card);
+  padding: 3rem 2rem;
+  text-align: center;
+  color: var(--ink-mute);
+}
+.empty-state { border: none; }
+
+.table-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  overflow-x: auto;
+}
+.department-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+.department-table th {
+  text-align: left;
+  padding: 0.75rem 1rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--ink-mute);
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+.department-table td {
+  padding: 0.8125rem 1rem;
+  border-bottom: 1px solid var(--line-soft);
+  color: var(--ink-mute);
+  vertical-align: middle;
+}
+.department-table tr:last-child td { border-bottom: none; }
+
+.cell-name  { font-weight: 600; color: var(--ink); }
+.cell-email { font-family: var(--mono); font-size: 0.8125rem; overflow-wrap: anywhere; }
+
+@media (max-width: 640px) {
+  .new-department-fields { grid-template-columns: 1fr; }
+  .new-department-actions { flex-direction: column-reverse; }
+  .new-department-actions button { width: 100%; }
+}
+
+/* UF e município do setor, no mesmo padrão das demais telas. */
+.input-uf { text-transform: uppercase; letter-spacing: 0.06em; }
+.field-group input[readonly] { background: var(--surface-2); color: var(--ink-mute); cursor: not-allowed; }
+.field-hint { font-size: 0.75rem; color: var(--ink-faint); line-height: 1.4; }
+
+.cell-city { white-space: nowrap; }
+.cell-uf   { color: var(--ink-faint); }
+
+/* Quatro campos: nome e e-mail em cima, UF e município embaixo. */
+.new-department-fields { grid-template-columns: 1fr 1fr; }
+.new-department-fields > .field-group:nth-child(3) { grid-column: 1; max-width: 6rem; }
+@media (max-width: 640px) {
+  .new-department-fields > .field-group:nth-child(3) { max-width: none; }
+}
+
+/* ── RF22: edição do setor (mesmo formulário do cadastro) ── */
+.cell-actions { text-align: right; white-space: nowrap; }
+.btn-edit {
+  padding: 0.375rem 0.875rem;
+  border: 1px solid var(--line);
+  border-radius: var(--r-ctl);
+  background: var(--surface);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--ink);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.btn-edit:hover:not(:disabled) { background: var(--plate-wash); border-color: var(--plate); color: var(--plate); }
+.btn-edit:disabled { opacity: 0.5; cursor: not-allowed; }
+/* A linha em edição fica marcada: o formulário acima é sobre ela. */
+.editing-row { background: var(--plate-wash); }

@@ -65,7 +65,7 @@ export class AuthenticationService {
       const payload = JSON.parse(atob(part));
       if (payload.exp && payload.exp * 1000 > Date.now()) return true;
     } catch { /* token ilegível: trata como sessão morta */ }
-    localStorage.clear();
+    this.endSession();
     return false;
   }
 
@@ -81,10 +81,19 @@ export class AuthenticationService {
 
   isCitizen(): boolean { return this.role() === 'CITIZEN'; }
 
-  /** Funcionário ou administrador — quem trata ocorrência. */
+  /** Equipe da administração pública — quem trata ocorrência. */
   isStaff(): boolean {
     const r = this.role();
-    return r === 'EMPLOYEE' || r === 'ADMINISTRATOR';
+    return r === 'EMPLOYEE' || r === 'ADMINISTRATOR' || r === 'SUPER_ADMIN';
+  }
+
+  /** Super Administrador: único perfil sem município, administra tudo. */
+  isSuperAdmin(): boolean { return this.role() === 'SUPER_ADMIN'; }
+
+  /** Quem administra contas: o do município e o do sistema. */
+  isAdmin(): boolean {
+    const r = this.role();
+    return r === 'ADMINISTRATOR' || r === 'SUPER_ADMIN';
   }
 
   /** Apoiar é do cidadão; o visitante vê o botão e é convidado a entrar. */
@@ -94,7 +103,7 @@ export class AuthenticationService {
 
   /** Entra como visitante: sem token, apenas leitura + registro anônimo. */
   enterAnonymous() {
-    localStorage.clear();
+    this.endSession();
     localStorage.setItem('anonymous', 'true');
   }
 
@@ -103,6 +112,20 @@ export class AuthenticationService {
   }
 
   logout() {
+    this.endSession();
+  }
+
+  /**
+   * Encerra a sessão preservando as preferências do navegador. O município em
+   * exibição não é credencial: a pessoa escolhe antes de entrar (na tela de
+   * entrada) e a escolha tem que sobreviver ao login, ao logout e ao token
+   * vencido — `localStorage.clear()` apagava justamente isso.
+   */
+  private endSession() {
+    const kept = Object.keys(localStorage)
+      .filter(key => key.startsWith('locality.'))
+      .map(key => [key, localStorage.getItem(key)!] as const);
     localStorage.clear();
+    kept.forEach(([key, value]) => localStorage.setItem(key, value));
   }
 }

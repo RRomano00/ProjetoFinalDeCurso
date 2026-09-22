@@ -1,9 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
-import { filter } from 'rxjs/operators';
-import { ToastrService } from 'ngx-toastr';
 
 @Component({
   selector: 'app-root',
@@ -20,25 +17,11 @@ export class AppComponent implements OnInit {
   readonly defaultFontIndex = 2;
   fontIndex = this.defaultFontIndex;
 
-  constructor(
-    private swUpdate: SwUpdate,
-    private toastr: ToastrService
-  ) {}
-
+  // O service worker continua cuidando do cache offline (ver app.config.ts); o
+  // que saiu foi o aviso de nova versão. A versão nova passa a valer no próximo
+  // carregamento da página, sem interromper quem está no meio de um formulário.
   ngOnInit(): void {
     this.restorePreferences();
-
-    // Avisa o usuário quando o service worker baixou uma nova versão do app (PWA).
-    // Só fica ativo em build de produção (no dev o SW vem desabilitado).
-    if (this.swUpdate.isEnabled) {
-      this.swUpdate.versionUpdates
-        .pipe(filter((e): e is VersionReadyEvent => e.type === 'VERSION_READY'))
-        .subscribe(() => {
-          this.toastr.info('Uma nova versão está disponível. Recarregando...', 'Fala, Cidade!');
-          // Ativa a nova versão e recarrega para aplicá-la.
-          this.swUpdate.activateUpdate().then(() => document.location.reload());
-        });
-    }
   }
 
   // ── Tema ──

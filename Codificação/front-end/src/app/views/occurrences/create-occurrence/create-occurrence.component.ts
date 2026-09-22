@@ -6,10 +6,15 @@ import * as L from 'leaflet';
 import { OccurrenceCreateService } from '../../../services/occurrence-create.service';
 import { OccurrenceSupportService } from '../../../services/occurrence-support.service';
 import { GeocodingService } from '../../../services/local/geocoding.service';
+import { LocalityService, CityOptions } from '../../../services/local/locality.service';
+import { LocalityPreferenceService } from '../../../services/local/locality-preference.service';
+import { OccurrenceCoverageService } from '../../../services/occurrence-coverage.service';
 import { Occurrence } from '../../../domain/model/occurrence';
 import { OCCURRENCE_TYPES } from '../../../domain/occurrence-labels';
 import { ToastrService } from 'ngx-toastr';
 import { AuthenticationService } from '../../../services/security/authentication.service';
+import { merge } from 'rxjs';
+import { debounceTime } from 'rxjs/operators';
 import { SANTA_RITA_DO_SAPUCAI, DEFAULT_MAP_ZOOM } from '../../../domain/map.constants';
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -26,6 +31,16 @@ L.Icon.Default.mergeOptions({
   styleUrl: './create-occurrence.component.css'
 })
 export class CreateOccurrenceComponent implements OnInit, AfterViewInit, OnDestroy {
+  /** UF e municípios do endereço da ocorrência. */
+  units: { uf: string; name: string }[] = [];
+  cityOptions: CityOptions = { list: [], ready: false };
+
+  /**
+   * Cobertura do município informado: null = ainda não se sabe, true = há equipe,
+   * false = município sem adesão. Só muda o aviso; nunca impede o registro.
+   */
+  cityServed: boolean | null = null;
+
   form!: FormGroup;
   loading = false;
   trackingCode: string | null = null;
@@ -60,7 +75,10 @@ export class CreateOccurrenceComponent implements OnInit, AfterViewInit, OnDestr
     private router: Router,
     public  auth: AuthenticationService,
     private toastr: ToastrService,
-    private ngZone: NgZone
+    private ngZone: NgZone,
+    private locality: LocalityService,
+    private localityPreference: LocalityPreferenceService,
+    private coverage: OccurrenceCoverageService
   ) {}
 
   ngOnInit() {
@@ -72,6 +90,10 @@ export class CreateOccurrenceComponent implements OnInit, AfterViewInit, OnDestr
       number:           [''],
       neighborhood:     ['', Validators.required],
       addressReference: [''],
+      // O município é o do ENDEREÇO da ocorrência, não o do cadastro de quem
+      // registra: quem mora em Santa Rita pode relatar um problema em Itajubá.
+      // A UF vem antes porque é ela que define a lista de municípios.
+      state:            ['MG', Validators.required],
       city:             ['Santa Rita do Sapucaí', Validators.required],
       latitude:         [null],
       longitude:        [null],
@@ -83,6 +105,23 @@ export class CreateOccurrenceComponent implements OnInit, AfterViewInit, OnDestr
 
     // RF16: mudou a categoria com local já marcado → verifica duplicatas de novo
     this.form.get('type')!.valueChanges.subscribe(() => this.checkDuplicates());
+
+    this.units = this.locality.units;
+    this.cityOptions = this.locality.bindCityToUf(this.form);
+
+    // Município completo (por digitação ou pelo mapa) → confere a cobertura.
+    this.form.get('city')!.valueChanges.subscribe(() => this.checkCoverage());
+    this.form.get('state')!.valueChanges.subscribe(() => this.checkCoverage());
+    this.checkCoverage();
+
+    // RF09: o endereço digitado leva o mapa até lá. A pausa é porque cada tecla
+    // dispara valueChanges e o Nominatim aceita uma consulta por segundo.
+    merge(this.form.get('street')!.valueChanges,
+          this.form.get('neighborhood')!.valueChanges,
+          this.form.get('city')!.valueChanges,
+          this.form.get('state')!.valueChanges)
+      .pipe(debounceTime(900))
+      .subscribe(() => this.centerOnTypedAddress());
 
     this.loadMySupports();
   }
@@ -110,22 +149,51 @@ export class CreateOccurrenceComponent implements OnInit, AfterViewInit, OnDestr
     });
   }
 
-  /** RF09: solicita autorização para capturar a localização atual via API de Geolocalização. */
-  private requestCurrentLocation() {
-    if (!navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(
-      (pos) => this.ngZone.run(() => {
-        const { latitude, longitude } = pos.coords;
-        this.map.setView([latitude, longitude], 17);
-        this.setLocation(latitude, longitude, true);
-      }),
-      () => {
-        // Negado/indisponível: o usuário clica no mapa ou preenche o endereço manualmente
-        this.toastr.info('Não foi possível obter sua localização. Clique no mapa ou preencha o endereço.');
-      },
-      { enableHighAccuracy: true, timeout: 8000 }
-    );
+  /**
+   * RF09: solicita autorização para capturar a localização atual via API de
+   * Geolocalização. Passa pelo serviço de município para usar as duas
+   * tentativas e o mesmo aviso de GPS desligado das demais telas; sem posição,
+   * a pessoa clica no mapa ou preenche o endereço à mão.
+   */
+  private async requestCurrentLocation() {
+    // Primeiro o município de quem registra, que não depende do aparelho: o
+    // mapa já fica útil enquanto o navegador pergunta pela localização.
+    const center = await this.localityPreference.mapCenter();
+    if (center) this.ngZone.run(() => this.map.setView([center.lat, center.lng], center.zoom));
+
+    const position = await this.localityPreference.position();
+    if (!position) return;
+    this.ngZone.run(() => {
+      const { latitude, longitude } = position.coords;
+      this.map.setView([latitude, longitude], 17);
+      this.setLocation(latitude, longitude, true);
+    });
   }
+
+  /**
+   * Leva o mapa ao endereço digitado — a vista, não o marcador: o geocodificador
+   * acerta a rua, não o número, e o ponto exato continua sendo o do clique (ou
+   * o do GPS), que é o que vai para o cadastro.
+   */
+  private async centerOnTypedAddress() {
+    if (!this.map) return;
+    const { street, neighborhood, city, state } = this.form.value;
+    if (!city) return;   // sem município não há o que procurar
+
+    const local = [city, state].filter(Boolean).join(', ');
+    const busca = [street, neighborhood, local].filter(Boolean).join(' | ');
+    // Nem repete a mesma consulta, nem desfaz o que o próprio mapa preencheu:
+    // depois de um clique, voltar para o centro da rua afastaria do ponto certo.
+    if (busca === this.lastCentered || busca === this.addressFromMap) return;
+    this.lastCentered = busca;
+
+    const coords = await this.geocodingService.geocode(street || '', neighborhood || '', local);
+    if (coords) this.ngZone.run(() => this.map.setView([coords.lat, coords.lng], street ? 16 : 13));
+  }
+
+  /** Última consulta enviada, e o endereço que veio do próprio mapa. */
+  private lastCentered  = '';
+  private addressFromMap = '';
 
   /** Posiciona o marcador, grava lat/lng e (opcionalmente) preenche o endereço via reverse geocoding. */
   private async setLocation(lat: number, lng: number, fillAddress: boolean) {
@@ -142,16 +210,33 @@ export class CreateOccurrenceComponent implements OnInit, AfterViewInit, OnDestr
     this.ngZone.run(() => {
       if (addr) {
         // Preenche logradouro, bairro e município — NÃO o número (item 3, sempre manual)
+        // A UF entra antes do município: é ela que carrega a lista de
+        // sugestões, e o ponto marcado no mapa pode estar em outro estado.
+        const uf = this.locality.normalizeUf(addr.state);
+        if (uf && uf !== this.form.value.state) this.form.patchValue({ state: uf });
         this.form.patchValue({
           street:       addr.street       || this.form.value.street,
           neighborhood: addr.neighborhood || this.form.value.neighborhood,
           city:         addr.city         || this.form.value.city
         });
+        const v = this.form.value;
+        this.addressFromMap =
+          [v.street, v.neighborhood, [v.city, v.state].filter(Boolean).join(', ')]
+            .filter(Boolean).join(' | ');
         this.geocodeStatus = 'success';
       } else {
         this.geocodeStatus = 'idle';
       }
     });
+  }
+
+  /**
+   * Avisa quando o município ainda não tem equipe no sistema. O registro segue
+   * permitido: a ocorrência fica guardada e aparece para o administrador.
+   */
+  private async checkCoverage() {
+    const { city, state } = this.form.value;
+    this.cityServed = await this.coverage.isServed(city, state);
   }
 
   // ── RF16: duplicatas próximas + apoiar ────────────────────────────────────
@@ -310,6 +395,7 @@ export class CreateOccurrenceComponent implements OnInit, AfterViewInit, OnDestr
       description:      v.description,
       type:             v.type,
       city:             v.city,
+      state:            this.locality.normalizeUf(v.state) ?? undefined,
       neighborhood:     v.neighborhood,
       street:           v.street,
       number:           v.number       || null,

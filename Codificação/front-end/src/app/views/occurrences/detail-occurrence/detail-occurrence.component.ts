@@ -13,6 +13,10 @@ import { ToastrService } from 'ngx-toastr';
 import { SANTA_RITA_DO_SAPUCAI, DEFAULT_MAP_ZOOM } from '../../../domain/map.constants';
 import { occurrencePopup } from '../../../domain/occurrence-popup';
 import { AuthenticationService } from '../../../services/security/authentication.service';
+import { LocalityPreferenceService } from '../../../services/local/locality-preference.service';
+import { DepartmentService } from '../../../services/department.service';
+import { OccurrenceForwardService } from '../../../services/occurrence-forward.service';
+import { Department } from '../../../domain/model/department';
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -52,6 +56,13 @@ export class DetailOccurrenceComponent implements OnInit, OnDestroy {
     'Serviço executado e finalizado.'
   ];
 
+  // ── RF22: encaminhamento ao departamento responsável ──
+  departments: Department[] = [];
+  departmentsLoading = false;
+  forwardOpen = false;
+  forwardSelectedId: number | null = null;
+  forwarding = false;
+
   group: Occurrence[] = [];
   applyToGroup = false;
   get groupSize(): number { return this.group.length; }
@@ -62,9 +73,12 @@ export class DetailOccurrenceComponent implements OnInit, OnDestroy {
     private occurrenceReadService: OccurrenceReadService,
     private occurrenceEditService: OccurrenceEditService,
     private occurrenceSupportService: OccurrenceSupportService,
+    private departmentService: DepartmentService,
+    private occurrenceForwardService: OccurrenceForwardService,
     private geocodingService: GeocodingService,
     public  auth: AuthenticationService,
     private toastr: ToastrService,
+    private locality: LocalityPreferenceService,
     private ngZone: NgZone
   ) {}
 
@@ -145,13 +159,18 @@ export class DetailOccurrenceComponent implements OnInit, OnDestroy {
     }
 
     const hasPoint = lat != null && lng != null;
+    // Sem o ponto da ocorrência, o mapa abre no município/GPS de quem está
+    // lendo, e não sempre na mesma cidade.
+    const fallback = hasPoint ? null : await this.locality.mapCenter();
     const center: [number, number] = hasPoint
       ? [lat as number, lng as number]
-      : [SANTA_RITA_DO_SAPUCAI.lat, SANTA_RITA_DO_SAPUCAI.lng];
+      : fallback ? [fallback.lat, fallback.lng]
+                 : [SANTA_RITA_DO_SAPUCAI.lat, SANTA_RITA_DO_SAPUCAI.lng];
+    const zoom = hasPoint ? 17 : (fallback?.zoom ?? DEFAULT_MAP_ZOOM);
 
     this.ngZone.runOutsideAngular(() => {
       this.map = L.map('detail-map', { zoomControl: true })
-        .setView(center, hasPoint ? 17 : DEFAULT_MAP_ZOOM);
+        .setView(center, zoom);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors', maxZoom: 19
       }).addTo(this.map);
@@ -191,6 +210,71 @@ export class DetailOccurrenceComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * RF22: abre e fecha o leque de departamentos. A lista é buscada na primeira
+   * abertura e reaproveitada depois — ela muda pouco e a espera apareceria
+   * justamente no momento em que a pessoa quer escolher.
+   */
+  async toggleForward() {
+    this.forwardOpen = !this.forwardOpen;
+    if (!this.forwardOpen || this.departments.length > 0) return;
+
+    this.departmentsLoading = true;
+    try {
+      // Os setores são os do município do ENDEREÇO da ocorrência, que pode ser
+      // outro que não o de quem está atendendo.
+      this.departments = await this.departmentService.findAll(
+        this.occurrence?.city, this.occurrence?.state);
+    } catch {
+      this.toastr.error('Não foi possível carregar os departamentos.');
+      this.forwardOpen = false;
+    } finally {
+      this.departmentsLoading = false;
+    }
+  }
+
+  closeForward() {
+    this.forwardOpen = false;
+    this.forwardSelectedId = null;
+  }
+
+  selectDepartment(id: number) { this.forwardSelectedId = id; }
+
+  get selectedDepartment(): Department | undefined {
+    return this.departments.find(d => d.id === this.forwardSelectedId);
+  }
+
+  /**
+   * Encaminha ao departamento escolhido. O servidor envia o e-mail — sem dados
+   * pessoais do autor e com as fotos anexadas — e só então move a ocorrência
+   * para Em andamento e registra o trâmite. Se o e-mail não sair, nada muda.
+   */
+  async confirmForward() {
+    if (!this.occurrence?.id || this.forwardSelectedId == null || this.forwarding) return;
+
+    const department = this.selectedDepartment;
+    this.forwarding = true;
+    try {
+      const result = await this.occurrenceForwardService.forward(
+        String(this.occurrence.id), this.forwardSelectedId);
+      this.occurrence!.status = 'EM_ANDAMENTO';
+      this.toastr.success(`Ocorrência encaminhada para ${result.department}.`);
+      this.closeForward();
+      this.afterStatusChange();
+    } catch (err: any) {
+      if (err?.status === 502) {
+        this.toastr.error(err.error?.error
+          || `Não foi possível enviar o e-mail para ${department?.name}. A ocorrência não foi alterada.`);
+      } else if (err?.status === 404) {
+        this.toastr.error(err.error?.error || 'Departamento não encontrado.');
+      } else {
+        this.toastr.error('Não foi possível encaminhar a ocorrência.');
+      }
+    } finally {
+      this.forwarding = false;
+    }
+  }
+
   async updateToInProgress() {
     if (!this.occurrence?.id) return;
     this.updating = true;
@@ -212,10 +296,10 @@ export class DetailOccurrenceComponent implements OnInit, OnDestroy {
     try {
       await this.occurrenceEditService.updateToConclude(
         String(this.occurrence.id), this.staffMessage.trim() || undefined, this.applyToGroup);
-      this.occurrence!.status = 'ATENDIDA';
+      this.occurrence!.status = 'CONCLUIDA';
       this.toastr.success(this.applyToGroup
-        ? `Grupo de ${this.groupSize} ocorrências marcado como Atendida.`
-        : 'Ocorrência marcada como Atendida.');
+        ? `Grupo de ${this.groupSize} ocorrências marcado como Concluída.`
+        : 'Ocorrência marcada como Concluída.');
       this.afterStatusChange();
     } catch { this.toastr.error('Erro ao atualizar status.'); }
     finally { this.updating = false; }
@@ -247,7 +331,7 @@ export class DetailOccurrenceComponent implements OnInit, OnDestroy {
 
   get canReopen(): boolean {
     return this.auth.isStaff()
-        && (this.occurrence?.status === 'ATENDIDA' || this.occurrence?.status === 'INDEFERIDA');
+        && (this.occurrence?.status === 'CONCLUIDA' || this.occurrence?.status === 'INDEFERIDA');
   }
 
   async reopen() {
@@ -287,6 +371,14 @@ export class DetailOccurrenceComponent implements OnInit, OnDestroy {
   }
 
   statusLabel = statusLabel;
+
+  /** Voltar de Concluída/Indeferida para Em Andamento é reabertura — o histórico diz isso. */
+  historyLabel(h: OccurrenceHistory): string {
+    const reaberta = h.newStatus === 'EM_ANDAMENTO'
+      && (h.oldStatus === 'CONCLUIDA' || h.oldStatus === 'INDEFERIDA');
+    return statusLabel(h.newStatus) + (reaberta ? ' (Reaberta)' : '');
+  }
+
   typeLabel   = typeLabel;
   typeColor   = typeColor;
   priorityLabel = priorityLabel;

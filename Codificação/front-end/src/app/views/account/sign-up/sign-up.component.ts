@@ -3,11 +3,13 @@ import { Router, RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { UserCreateService } from '../../../services/user/user-create.service';
+import { LocalityService, CityOptions } from '../../../services/local/locality.service';
 import { ToastrService } from 'ngx-toastr';
+import { PasswordRevealDirective } from '../../../shared/password-reveal.directive';
 
 @Component({
   selector: 'app-sign-up',
-  imports: [RouterModule, CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [RouterModule, CommonModule, FormsModule, ReactiveFormsModule, PasswordRevealDirective],
   templateUrl: './sign-up.component.html',
   styleUrls: ['../auth-shell.css', './sign-up.component.css']
 })
@@ -16,9 +18,14 @@ export class SignUpComponent {
   loading = false;
   showTerms = false;
 
+  /** Sugestões dos campos de localidade: UF fixa, município conforme a UF. */
+  units: { uf: string; name: string }[] = [];
+  cityOptions: CityOptions = { list: [], ready: false };
+
   constructor(
     private fb: FormBuilder,
     private userCreateService: UserCreateService,
+    private locality: LocalityService,
     private toastr: ToastrService,
     private router: Router
   ) {
@@ -26,6 +33,8 @@ export class SignUpComponent {
       fullname:       ['', [Validators.required, Validators.minLength(2)]],
       email:          ['', [Validators.required, Validators.email]],
       dateOfBirth:    ['', [Validators.required]],
+      phoneNumber:    [''],
+      state:          ['', [Validators.required]],
       city:           ['', [Validators.required]],
       password:       ['', [Validators.required, Validators.minLength(8),
                             Validators.pattern(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])/)]],
@@ -33,6 +42,11 @@ export class SignUpComponent {
       acceptsTerms:   [false, Validators.requiredTrue],
       mfaEmailEnabled: [false]
     });
+
+    this.units = this.locality.units;
+    // O município só aceita digitação depois da UF, e a lista acompanha a UF
+    // escolhida (regra igual na ficha da ocorrência).
+    this.cityOptions = this.locality.bindCityToUf(this.form);
   }
 
   passwordsMatch(): boolean {
@@ -64,7 +78,9 @@ export class SignUpComponent {
       fullname:     this.form.value.fullname,
       email:        this.form.value.email,
       dateOfBirth:  this.form.value.dateOfBirth,
-      city:         this.form.value.city,
+      phoneNumber:  this.form.value.phoneNumber?.trim() || undefined,
+      state:        this.locality.normalizeUf(this.form.value.state) ?? undefined,
+      city:         this.form.value.city?.trim(),
       password:     this.form.value.password,
       acceptsTerms: true,
       mfaEmailEnabled: !!this.form.value.mfaEmailEnabled

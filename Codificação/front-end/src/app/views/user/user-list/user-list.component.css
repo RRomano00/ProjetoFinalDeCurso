@@ -99,6 +99,7 @@
 .status-pill.on { background: var(--st-done-bg); color: var(--st-done); }
 
 .cell-actions { text-align: right; white-space: nowrap; }
+.cell-actions button + button { margin-left: 0.375rem; }
 .btn-toggle {
   padding: 0.375rem 0.875rem;
   border: 1px solid var(--line);
@@ -115,3 +116,24 @@
 .btn-toggle:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .self-label { font-size: 0.75rem; color: var(--ink-faint); }
+
+/* Confirmar a exclusão é a ação destrutiva: veste a cor do recusado desde já,
+   e não só no hover como o "Desativar" da linha. */
+.btn-danger {
+  padding: 0.375rem 0.875rem;
+  border: 1px solid var(--st-refused);
+  border-radius: var(--r-ctl);
+  background: var(--st-refused);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+}
+.btn-danger:hover:not(:disabled) { filter: brightness(0.92); }
+.btn-danger:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* Perfil editável na linha: o Salvar só aparece quando a escolha muda. */
+.cell-role { white-space: nowrap; }
+.role-select { font-size: 0.8125rem; padding: 0.3125rem 0.5rem; }
+.cell-role select + button { margin-left: 0.375rem; }
+.role-super_admin { background: var(--plate-deep); color: #fff; }

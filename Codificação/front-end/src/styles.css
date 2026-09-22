@@ -27,7 +27,7 @@
 
   /* ── Status: uma cor, um significado, em TODAS as telas ──
         pendente = aguarda triagem · em andamento = equipe atuando
-        atendida = concluída      · indeferida  = recusa administrativa   */
+        concluída = serviço feito · indeferida  = recusa administrativa   */
   --st-pending:  #8a5800;  --st-pending-bg:  #fbf1dd;  --st-pending-line:  #ecd9ae;
   --st-progress: #14487e;  --st-progress-bg: #e4edf7;  --st-progress-line: #b7cce4;
   --st-done:     #176242;   --st-done-bg:    #e2f0e8;  --st-done-line:     #b2d7c4;
@@ -300,3 +300,58 @@ html.dark-theme .a11y-controls {
   padding: 0.3125rem 0.6875rem;
   font-size: 0.75rem;
 }
+
+/* ── Barra de filtros de listagem ──
+   Mesmo desenho em todas as telas com lista (ocorrências, usuários,
+   departamentos): o recorte se aprende uma vez e vale em qualquer uma. */
+.filters { display: flex; gap: 0.625rem; flex-wrap: wrap; align-items: center; }
+.filter-input,
+.filter-select {
+  padding: 0.5625rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: var(--r-ctl);
+  font-size: 0.875rem;
+  background: var(--surface);
+  color: var(--ink);
+}
+.filter-input { flex: 1; min-width: 220px; }
+.filter-input:focus,
+.filter-select:focus { outline: none; border-color: var(--plate); box-shadow: 0 0 0 3px var(--plate-wash); }
+.filter-input:focus-visible,
+.filter-select:focus-visible { outline: var(--focus); outline-offset: 1px; }
+
+@media (max-width: 640px) {
+  .filters { flex-direction: column; align-items: stretch; }
+  .filter-input,
+  .filter-select { width: 100%; min-width: 0; flex: none; }
+}
+
+/* ── Modal de confirmação ──
+   O confirm() do navegador carimba o domínio no título ("x.com says") e não
+   aceita texto próprio; quando a pergunta precisa dizer de quem é a conta, a
+   caixa é da aplicação. Telas com modal próprio (nova ocorrência, listagem de
+   ocorrências) mantêm as medidas delas por herdarem o estilo do componente. */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgb(18 32 51 / 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 2000;   /* acima da navbar (1100) e da sidebar/drawer (1050-1300) */
+}
+.modal-card {
+  background: var(--surface);
+  border-radius: var(--r-modal);
+  padding: 1.75rem;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: var(--lift-high);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.modal-card h2 { font-size: 1.1875rem; font-weight: 600; color: var(--ink); margin: 0; }
+.modal-card p { font-size: 0.875rem; color: var(--ink-mute); line-height: 1.55; margin: 0; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.25rem; }

@@ -96,6 +96,8 @@
   background: var(--surface);
   color: var(--ink);
 }
+/* Município é o recorte de onde, não mais um filtro entre os outros. */
+.filter-select--city { font-weight: 600; color: var(--plate); border-color: var(--plate); background: var(--plate-wash); }
 .filter-input { flex: 1; min-width: 220px; }
 .filter-input:focus,
 .filter-select:focus { outline: none; border-color: var(--plate); box-shadow: 0 0 0 3px var(--plate-wash); }

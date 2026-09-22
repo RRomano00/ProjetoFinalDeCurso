@@ -74,7 +74,7 @@ export class StatisticsComponent implements OnInit {
   get total()       { return this.filtered.length; }
   get pending()     { return this.filtered.filter(o => o.status === 'PENDENTE').length; }
   get inProgress()  { return this.filtered.filter(o => o.status === 'EM_ANDAMENTO').length; }
-  get resolved()    { return this.filtered.filter(o => o.status === 'ATENDIDA').length; }
+  get resolved()    { return this.filtered.filter(o => o.status === 'CONCLUIDA').length; }
   get rejected()    { return this.filtered.filter(o => o.status === 'INDEFERIDA').length; }
   get resolutionRate() {
     return this.total > 0 ? Math.round((this.resolved / this.total) * 100) : 0;
@@ -82,7 +82,7 @@ export class StatisticsComponent implements OnInit {
 
   get avgResolutionDays(): string {
     const done = this.filtered.filter(o =>
-      o.status === 'ATENDIDA' && o.createdAt && o.updatedAt);
+      o.status === 'CONCLUIDA' && o.createdAt && o.updatedAt);
     if (done.length === 0) return '—';
     const totalMs = done.reduce((sum, o) =>
       sum + (new Date(o.updatedAt!).getTime() - new Date(o.createdAt!).getTime()), 0);
@@ -110,7 +110,7 @@ export class StatisticsComponent implements OnInit {
     const data = [
       { label: 'Pendente',     value: this.pending,    color: '#8a5800' },
       { label: 'Em Andamento', value: this.inProgress, color: '#14487e' },
-      { label: 'Atendida',     value: this.resolved,   color: '#176242' },
+      { label: 'Concluída',    value: this.resolved,   color: '#176242' },
       { label: 'Indeferida',   value: this.rejected,   color: '#8b3a2d' },
     ].filter(d => d.value > 0);
     let accumulated = 0;

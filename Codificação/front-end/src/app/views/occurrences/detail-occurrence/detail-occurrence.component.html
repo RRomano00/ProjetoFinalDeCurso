@@ -106,7 +106,7 @@
       <div *ngIf="history.length > 0" class="detail-section">
         <h3>Histórico</h3>
         <div class="history-item" *ngFor="let h of history">
-          <span class="history-status badge badge-{{ h.newStatus.toLowerCase() }}">{{ statusLabel(h.newStatus) }}</span>
+          <span class="history-status badge badge-{{ h.newStatus.toLowerCase() }}">{{ historyLabel(h) }}</span>
           <div class="history-info">
             <span class="history-date">{{ h.changedAt | date:'dd/MM/yyyy HH:mm' }}
               <ng-container *ngIf="h.changedByName"> — por {{ h.changedByName }}</ng-container>
@@ -161,6 +161,63 @@
           </label>
         </div>
 
+        <!-- RF22: encaminhar ao departamento responsável.
+             O botão declara as duas consequências no rótulo de confirmação: a
+             mensagem sai e a ocorrência passa a Em andamento. -->
+        <div class="forward" *ngIf="occurrence.status !== 'CONCLUIDA'">
+          <button type="button" class="btn-action btn-forward" (click)="toggleForward()"
+                  [attr.aria-expanded]="forwardOpen" aria-controls="forward-panel">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="15 17 20 12 15 7"/><path d="M4 18v-2a4 4 0 0 1 4-4h12"/>
+            </svg>
+            Encaminhar a departamento
+          </button>
+
+          <div class="forward-panel" id="forward-panel" *ngIf="forwardOpen">
+            <div class="forward-head">
+              <h4>Para qual departamento?</h4>
+              <button type="button" class="forward-close" (click)="closeForward()"
+                      aria-label="Fechar">✕</button>
+            </div>
+
+            <p *ngIf="departmentsLoading" class="forward-loading">Carregando departamentos...</p>
+
+            <p *ngIf="!departmentsLoading && departments.length === 0" class="forward-empty">
+              Nenhum departamento cadastrado. Cadastre em Administração &rsaquo; Departamentos.
+            </p>
+
+            <!-- A lista rola dentro do painel: a escolha não empurra as ações da tela -->
+            <ul class="forward-list" *ngIf="!departmentsLoading && departments.length > 0">
+              <li *ngFor="let d of departments">
+                <label class="forward-option" [class.selected]="forwardSelectedId === d.id">
+                  <input type="radio" name="department" [value]="d.id"
+                         [checked]="forwardSelectedId === d.id" (change)="selectDepartment(d.id)">
+                  <span class="forward-option-text">
+                    <span class="forward-option-name">{{ d.name }}</span>
+                    <span class="forward-option-mail">{{ d.email }}</span>
+                  </span>
+                </label>
+              </li>
+            </ul>
+
+            <div class="forward-foot" *ngIf="departments.length > 0">
+              <p class="forward-note">
+                Seguem o protocolo, a categoria, o endereço, o relato e as fotos.
+                Nenhum dado pessoal do autor é enviado.
+              </p>
+              <button type="button" class="btn-action btn-forward-confirm"
+                      [disabled]="forwardSelectedId == null || forwarding" (click)="confirmForward()">
+                {{ forwarding ? 'Encaminhando...' : 'Encaminhar e iniciar atendimento' }}
+              </button>
+              <p class="forward-effect">
+                A ocorrência passa a <span class="badge badge-em_andamento">Em Andamento</span>
+                e o trâmite entra no histórico.
+              </p>
+            </div>
+          </div>
+        </div>
+
         <!-- Mudanças de status numa linha: avançar à esquerda, recusar à direita -->
         <div class="status-actions">
           <button *ngIf="occurrence.status === 'PENDENTE'"
@@ -169,9 +226,9 @@
           </button>
           <button *ngIf="occurrence.status === 'EM_ANDAMENTO'"
                   (click)="updateToConclude()" [disabled]="updating" class="btn-action btn-success">
-            {{ updating ? 'Atualizando...' : '✓ Marcar como Atendida' }}
+            {{ updating ? 'Atualizando...' : '✓ Marcar como Concluída' }}
           </button>
-          <span *ngIf="occurrence.status === 'ATENDIDA'" class="concluded-label">✓ Ocorrência concluída</span>
+          <span *ngIf="occurrence.status === 'CONCLUIDA'" class="concluded-label">✓ Ocorrência concluída</span>
           <span *ngIf="occurrence.status === 'INDEFERIDA'" class="rejected-label">✕ Ocorrência Indeferida</span>
 
           <!-- Concluída ou indeferida por engano: volta para Em Andamento -->

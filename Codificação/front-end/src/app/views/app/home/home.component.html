@@ -22,8 +22,13 @@
     <div class="map-col">
       <h2 class="col-title">Mapa de Ocorrências</h2>
 
-      <!-- RF21: filtros do mapa por bairro, categoria e status -->
+      <!-- Município: recorta a tela toda (e leva o mapa até ele).
+           RF21: bairro, categoria e status recortam o mapa. -->
       <div class="map-filters">
+        <select class="select-city" [(ngModel)]="filterCity" (ngModelChange)="onCityChange()">
+          <option value="">Todos os municípios</option>
+          <option *ngFor="let m of municipalityOptions" [value]="cityKey(m.city)">{{ municipalityLabel(m) }}</option>
+        </select>
         <select [(ngModel)]="mapFilterNeighborhood" (ngModelChange)="refreshMarkers()">
           <option value="">Todos os bairros</option>
           <option *ngFor="let b of mapNeighborhoodOptions" [value]="b">{{ b }}</option>
@@ -50,7 +55,7 @@
         <div class="map-legend">
           <span class="legend-item"><span class="dot pending"></span> Pendente</span>
           <span class="legend-item"><span class="dot em-andamento"></span> Em Andamento</span>
-          <span class="legend-item"><span class="dot done"></span> Atendida</span>
+          <span class="legend-item"><span class="dot done"></span> Concluída</span>
           <span class="legend-item"><span class="dot refused"></span> Indeferida</span>
         </div>
       </div>
@@ -77,7 +82,7 @@
     <div class="incidents-col">
       <h2 class="col-title">Ocorrências Recentes</h2>
       <div class="incident-list">
-        <a *ngFor="let o of occurrences.slice(0,5)"
+        <a *ngFor="let o of recent"
            [routerLink]="['/occurrence/detail', o.id]"
            class="incident-card">
           <div class="incident-top">
@@ -85,7 +90,7 @@
             <span class="status-badge" [ngClass]="{
                 'badge-open':     o.status === 'PENDENTE',
                 'badge-progress': o.status === 'EM_ANDAMENTO',
-                'badge-done':     o.status === 'ATENDIDA',
+                'badge-done':     o.status === 'CONCLUIDA',
                 'badge-rejected': o.status === 'INDEFERIDA'
               }">
               <span class="badge-dot"></span>
@@ -118,7 +123,7 @@
           </div>
         </a>
 
-        <div class="empty-incidents" *ngIf="occurrences.length === 0 && !loadingMap">
+        <div class="empty-incidents" *ngIf="recent.length === 0 && !loadingMap">
           Nenhuma ocorrência encontrada.
         </div>
       </div>

@@ -142,7 +142,7 @@
 }
 .badge-pendente     { background: var(--st-pending-bg);  color: var(--st-pending); }
 .badge-em_andamento { background: var(--st-progress-bg); color: var(--st-progress); }
-.badge-atendida     { background: var(--st-done-bg);     color: var(--st-done); }
+.badge-concluida    { background: var(--st-done-bg);     color: var(--st-done); }
 .badge-indeferida   { background: var(--st-refused-bg);  color: var(--st-refused); }
 
 .badge-anonymous {
@@ -479,4 +479,136 @@
   .message-row { flex-direction: column; align-items: stretch; }
   .status-actions { flex-direction: column; align-items: stretch; }
   .status-actions .btn-end { margin-left: 0; }
+}
+
+/* ── RF22: encaminhar ao departamento responsável ──
+   O painel flutua sobre a tela (é uma escolha que interrompe o trabalho), por
+   isso usa o raio de modal e elevação — os dois reservados, no sistema, ao que
+   não é parte da página. A lista rola dentro dele: escolher o setor não empurra
+   as demais ações da ficha para fora da vista. */
+/* Em fluxo, a coluna inteira é do painel; o botão continua do tamanho do rótulo. */
+.btn-forward { justify-content: flex-start; }
+
+.forward-panel {
+  /* Flutuava sobre a tela, mas a ficha recorta o que passa da borda
+     (.detail-card { overflow: hidden }) e o botão de confirmar sumia. Em fluxo,
+     o painel abre inteiro; a lista rola dentro dele e o empurrão é curto. */
+  margin-top: 0.5rem;
+  width: min(26rem, 100%);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-modal);
+  box-shadow: var(--lift-high);
+  overflow: hidden;
+}
+
+.forward-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.875rem 1rem;
+  border-bottom: 1px solid var(--line-soft);
+}
+.forward-head h4 {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+.forward-close {
+  border: none;
+  background: none;
+  color: var(--ink-faint);
+  font-size: 0.9375rem;
+  line-height: 1;
+  padding: 0.25rem;
+  cursor: pointer;
+  border-radius: var(--r-ctl);
+}
+.forward-close:hover { color: var(--ink); background: var(--surface-2); }
+
+.forward-loading,
+.forward-empty {
+  margin: 0;
+  padding: 1.25rem 1rem;
+  font-size: 0.875rem;
+  color: var(--ink-mute);
+}
+
+.forward-list {
+  margin: 0;
+  padding: 0.25rem;
+  list-style: none;
+  /* Altura que deixa a quarta linha pela metade: o corte é o que avisa que a
+     lista continua. Fechada num número redondo de linhas, ela pareceria completa. */
+  max-height: 13.25rem;
+  overflow-y: auto;
+}
+
+.forward-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  padding: 0.625rem 0.75rem;
+  border-radius: var(--r-ctl);
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.forward-option:hover { background: var(--surface-2); }
+.forward-option.selected { background: var(--plate-wash); }
+.forward-option input { margin-top: 0.1875rem; accent-color: var(--plate); flex: 0 0 auto; }
+
+.forward-option-text { display: flex; flex-direction: column; gap: 0.0625rem; min-width: 0; }
+.forward-option-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.3;
+}
+/* O e-mail é o endereço de destino: mesmo tratamento de identificador que o
+   sistema dá ao protocolo. */
+.forward-option-mail {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--ink-mute);
+  overflow-wrap: anywhere;
+}
+
+.forward-foot {
+  padding: 0.875rem 1rem 1rem;
+  border-top: 1px solid var(--line-soft);
+  background: var(--surface-2);
+}
+.forward-note {
+  margin: 0 0 0.75rem;
+  font-size: 0.75rem;
+  color: var(--ink-mute);
+  line-height: 1.45;
+}
+.btn-forward-confirm {
+  width: 100%;
+  /* É a ação pela qual o painel existe: cheia, não a variante clara das demais. */
+  background: var(--plate);
+  border-color: var(--plate);
+  color: #fff;
+}
+.btn-forward-confirm:hover:not(:disabled) { background: var(--plate-deep); border-color: var(--plate-deep); }
+.btn-forward-confirm:disabled { background: var(--surface); border-color: var(--line); color: var(--ink-faint); }
+/* O efeito da confirmação vem escrito com a própria pílula do estado que ela
+   produz: a cor já é o significado em todas as telas. */
+.forward-effect {
+  display: flex;
+  align-items: center;
+  gap: 0.3125rem;
+  flex-wrap: wrap;
+  margin: 0.625rem 0 0;
+  font-size: 0.75rem;
+  color: var(--ink-faint);
+}
+.forward-effect .badge { font-size: 0.6875rem; }
+
+@media (max-width: 640px) {
+  .forward-panel { width: 100%; }
+  .forward-list { max-height: 12rem; }
 }

@@ -389,3 +389,41 @@
   .duplicate-actions { justify-content: flex-end; }
   .tracking-code { font-size: 1.375rem; letter-spacing: 0.2em; text-indent: 0.2em; }
 }
+
+/* ── Endereço: bairro · UF · município ──
+   A UF só precisa de duas letras e vem antes do município porque é ela que
+   carrega a lista de sugestões. */
+.form-row:has(.form-group--uf) { grid-template-columns: 1fr 5.5rem 1.4fr; }
+.input-uf { text-transform: uppercase; letter-spacing: 0.06em; }
+
+/* Município antes da UF: aceita o valor vindo do mapa, mas não digitação. */
+input[readonly] { background: var(--surface-2); color: var(--ink-mute); cursor: not-allowed; }
+
+.field-hint { font-size: 0.75rem; color: var(--ink-faint); line-height: 1.4; }
+
+@media (max-width: 640px) {
+  .form-row:has(.form-group--uf) { grid-template-columns: 1fr; }
+}
+
+/* ── Município sem equipe cadastrada ──
+   Âmbar de sinalização de obra: é aviso, não erro. O registro continua valendo,
+   então o tom de recusa (tijolo) seria mentira. */
+.coverage-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  margin-top: 1rem;
+  padding: 0.875rem 1rem;
+  background: var(--st-pending-bg);
+  border: 1px solid var(--st-pending-line);
+  border-radius: var(--r-card);
+  color: var(--st-pending);
+}
+.coverage-notice svg { flex: 0 0 auto; margin-top: 0.125rem; }
+.coverage-notice strong { font-size: 0.875rem; font-weight: 600; }
+.coverage-notice p {
+  margin: 0.25rem 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--ink-mute);
+}

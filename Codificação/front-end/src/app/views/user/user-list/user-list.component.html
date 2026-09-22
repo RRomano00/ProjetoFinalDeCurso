@@ -7,6 +7,26 @@
     <a routerLink="/user/add" class="btn-primary">+ Criar Usuário</a>
   </div>
 
+  <div class="filters" *ngIf="!loading">
+    <input type="search" [(ngModel)]="search" class="filter-input"
+           aria-label="Pesquisar usuário por nome ou e-mail"
+           placeholder="Pesquisar por nome ou e-mail" />
+    <select [(ngModel)]="filterRole" class="filter-select" aria-label="Perfil">
+      <option value="">Todos os perfis</option>
+      <option *ngFor="let r of roleOptions" [value]="r">{{ roleLabel(r) }}</option>
+    </select>
+    <select [(ngModel)]="filterCity" class="filter-select" aria-label="Município">
+      <option value="">Todos os municípios</option>
+      <option *ngFor="let c of cityOptions" [value]="c">{{ c }}</option>
+    </select>
+    <select [(ngModel)]="filterActive" class="filter-select" aria-label="Situação da conta">
+      <option value="">Ativas e inativas</option>
+      <option value="true">Somente ativas</option>
+      <option value="false">Somente inativas</option>
+    </select>
+    <button type="button" class="btn-toggle" (click)="clearFilters()" [disabled]="!hasFilters">Limpar</button>
+  </div>
+
   <div *ngIf="loading" class="loading-state">Carregando...</div>
 
   <div class="table-card" *ngIf="!loading">
@@ -22,10 +42,26 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let u of users" [class.inactive-row]="!u.active">
+        <tr *ngFor="let u of filtered" [class.inactive-row]="!u.active">
           <td class="cell-name">{{ u.fullname }}</td>
           <td class="cell-email">{{ u.email }}</td>
-          <td><span class="role-pill role-{{ u.role?.toLowerCase() }}">{{ roleLabel(u.role) }}</span></td>
+          <!-- RF25: o perfil é editável na própria linha; o próprio usuário não muda o seu -->
+          <td class="cell-role">
+            <span *ngIf="u.id === myId" class="role-pill role-{{ u.role?.toLowerCase() }}">
+              {{ roleLabel(u.role) }}
+            </span>
+            <ng-container *ngIf="u.id !== myId">
+              <select class="filter-select role-select" [ngModel]="roleOf(u)"
+                      (ngModelChange)="roleDraft[u.id] = $event"
+                      [disabled]="savingRoleId === u.id" aria-label="Perfil da conta">
+                <option *ngFor="let r of assignableRoles" [value]="r">{{ roleLabel(r) }}</option>
+              </select>
+              <button *ngIf="roleChanged(u)" type="button" class="btn-toggle"
+                      [disabled]="savingRoleId === u.id" (click)="saveRole(u)">
+                {{ savingRoleId === u.id ? '...' : 'Salvar' }}
+              </button>
+            </ng-container>
+          </td>
           <td>{{ u.city || '—' }}</td>
           <td>
             <span class="status-pill" [class.on]="u.active">{{ u.active ? 'Ativo' : 'Inativo' }}</span>
@@ -36,12 +72,37 @@
                     [disabled]="togglingId === u.id" (click)="toggleActive(u)">
               {{ togglingId === u.id ? '...' : (u.active ? 'Desativar' : 'Ativar') }}
             </button>
+            <!-- Excluir só aparece depois de inativada -->
+            <button *ngIf="u.id !== myId && !u.active" class="btn-toggle danger"
+                    [disabled]="deletingId === u.id" (click)="askRemove(u)">
+              {{ deletingId === u.id ? '...' : 'Excluir' }}
+            </button>
             <span *ngIf="u.id === myId" class="self-label">você</span>
           </td>
         </tr>
       </tbody>
     </table>
 
-    <div *ngIf="users.length === 0" class="empty-state">Nenhum usuário encontrado.</div>
+    <div *ngIf="filtered.length === 0" class="empty-state">
+      {{ users.length === 0 ? 'Nenhum usuário cadastrado.' : 'Nenhum usuário para este filtro.' }}
+    </div>
+  </div>
+
+  <!-- Confirmação da exclusão: a pergunta nomeia a conta e o efeito -->
+  <div class="modal-overlay" *ngIf="pendingDelete" (click)="pendingDelete = null">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <h2>Excluir conta</h2>
+      <p>
+        A conta de <strong>{{ pendingDelete.fullname }}</strong> ({{ pendingDelete.email }})
+        será apagada do sistema. Esta ação não pode ser desfeita.
+      </p>
+      <div class="modal-actions">
+        <button type="button" class="btn-toggle" (click)="pendingDelete = null"
+                [disabled]="deletingId">Cancelar</button>
+        <button type="button" class="btn-danger" (click)="confirmRemove()" [disabled]="deletingId">
+          {{ deletingId ? 'Excluindo...' : 'Excluir conta' }}
+        </button>
+      </div>
+    </div>
   </div>
 </div>

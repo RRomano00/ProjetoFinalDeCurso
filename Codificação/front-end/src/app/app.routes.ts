@@ -60,6 +60,15 @@ export const routes: Routes = [
             .then(m => m.StatisticsComponent)
       },
 
+      // RF22: departamentos — destinos do encaminhamento (Funcionário/Administrador)
+      {
+        path: 'department/list',
+        canActivate: [staffGuard],
+        loadComponent: () =>
+          import('./views/department/department-list/department-list.component')
+            .then(m => m.DepartmentListComponent)
+      },
+
       // Usuários
       {
         path: 'user/add',

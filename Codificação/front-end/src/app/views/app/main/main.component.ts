@@ -15,7 +15,8 @@ export class MainComponent implements OnInit {
   sidebarCollapsed = false;   // recolhe a sidebar mostrando só ícones
   userMenuOpen = false;
 
-  get isAdmin()   { return this.role === 'ADMINISTRATOR'; }
+  get isAdmin()      { return this.auth.isAdmin(); }
+  get isSuperAdmin() { return this.auth.isSuperAdmin(); }
   get isStaff()   { return this.auth.isStaff(); }
   get isCitizen() { return this.auth.isCitizen(); }
   /** RF08/RF11: visitante sem conta (só leitura + ocorrência anônima). */

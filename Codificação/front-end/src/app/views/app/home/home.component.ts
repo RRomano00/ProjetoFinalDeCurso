@@ -6,6 +6,7 @@ import * as L from 'leaflet';
 import { OccurrenceReadService } from '../../../services/occurrence-read.service';
 import { OccurrenceSupportService, SupportInfo } from '../../../services/occurrence-support.service';
 import { GeocodingService } from '../../../services/local/geocoding.service';
+import { LocalityPreferenceService, Municipality } from '../../../services/local/locality-preference.service';
 import { Occurrence } from '../../../domain/model/occurrence';
 import { statusLabel, statusColor, typeLabel, typeColor, OCCURRENCE_TYPES } from '../../../domain/occurrence-labels';
 import { SANTA_RITA_DO_SAPUCAI, DEFAULT_MAP_ZOOM } from '../../../domain/map.constants';
@@ -46,19 +47,43 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   /** Coordenadas já resolvidas por ocorrência (evita re-geocodificar ao filtrar). */
   private coordsCache = new Map<number, { lat: number; lng: number }>();
 
+  /**
+   * Município em exibição (vazio = todos). Recorta a tela inteira — mapa,
+   * números e recentes —, enquanto bairro/categoria/status recortam o mapa.
+   */
+  filterCity = '';
+  municipalityOptions: Municipality[] = [];
+  municipalityLabel = LocalityPreferenceService.label;
+  cityKey           = LocalityPreferenceService.fold;
+
   // RF21: filtros do mapa por bairro, categoria e status
   mapFilterNeighborhood = '';
   mapFilterType         = '';
   mapFilterStatus       = '';
-  readonly mapStatusOptions = ['PENDENTE', 'EM_ANDAMENTO', 'ATENDIDA', 'INDEFERIDA'];
+  readonly mapStatusOptions = ['PENDENTE', 'EM_ANDAMENTO', 'CONCLUIDA', 'INDEFERIDA'];
 
-  get totalOccurrences() { return this.occurrences.length; }
+  get totalOccurrences() { return this.inCity.length; }
+
+  /** Município escolhido no filtro, ou null quando a tela está global. */
+  get selectedMunicipality(): Municipality | null {
+    return this.municipalityOptions.find(
+      m => LocalityPreferenceService.fold(m.city) === this.filterCity) || null;
+  }
+
+  /** Ocorrências do município em exibição — base de tudo o que a tela mostra. */
+  get inCity(): Occurrence[] {
+    const chosen = this.selectedMunicipality;
+    return this.occurrences.filter(o => LocalityPreferenceService.matches(chosen, o.city, o.state));
+  }
+
+  /** Coluna "Ocorrências Recentes": segue o município, como o resto da tela. */
+  get recent(): Occurrence[] { return this.inCity.slice(0, 5); }
 
   /** Plural do status para a legenda da barra — "15 pendentes", não "15 Pendente". */
   private static readonly PLURAL: Record<string, string> = {
     PENDENTE:     'pendentes',
     EM_ANDAMENTO: 'em andamento',
-    ATENDIDA:     'atendidas',
+    CONCLUIDA:    'concluídas',
     INDEFERIDA:   'indeferidas',
   };
 
@@ -68,10 +93,10 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
    * Em proporção, o que falta aparece sozinho.
    */
   get statusBreakdown() {
-    return ['PENDENTE', 'EM_ANDAMENTO', 'ATENDIDA', 'INDEFERIDA']
+    return ['PENDENTE', 'EM_ANDAMENTO', 'CONCLUIDA', 'INDEFERIDA']
       .map(status => ({
         status,
-        count: this.occurrences.filter(o => o.status === status).length,
+        count: this.inCity.filter(o => o.status === status).length,
         color: statusColor(status),
         one:   statusLabel(status).toLowerCase(),
         many:  HomeComponent.PLURAL[status],
@@ -87,23 +112,23 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   /** Bairros presentes nas ocorrências carregadas. */
   get mapNeighborhoodOptions(): string[] {
     const set = new Set<string>();
-    this.occurrences.forEach(o => { if (o.neighborhood?.trim()) set.add(o.neighborhood.trim()); });
+    this.inCity.forEach(o => { if (o.neighborhood?.trim()) set.add(o.neighborhood.trim()); });
     return Array.from(set).sort();
   }
 
   /** Categorias presentes nas ocorrências carregadas. */
   get mapTypeOptions(): { value: string; label: string }[] {
-    const present = new Set(this.occurrences.map(o => o.type).filter(Boolean));
+    const present = new Set(this.inCity.map(o => o.type).filter(Boolean));
     return OCCURRENCE_TYPES.filter(t => present.has(t.value));
   }
 
   get hasMapFilters(): boolean {
-    return !!(this.mapFilterNeighborhood || this.mapFilterType || this.mapFilterStatus);
+    return !!(this.filterCity || this.mapFilterNeighborhood || this.mapFilterType || this.mapFilterStatus);
   }
 
   /** Ocorrências que passam nos filtros do mapa (RF21). */
   private get filteredForMap(): Occurrence[] {
-    return this.occurrences.filter(o =>
+    return this.inCity.filter(o =>
       (!this.mapFilterNeighborhood || o.neighborhood?.trim() === this.mapFilterNeighborhood) &&
       (!this.mapFilterType         || o.type === this.mapFilterType) &&
       (!this.mapFilterStatus       || o.status === this.mapFilterStatus)
@@ -111,16 +136,25 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   clearMapFilters() {
+    this.filterCity = '';
     this.mapFilterNeighborhood = '';
     this.mapFilterType = '';
     this.mapFilterStatus = '';
-    this.refreshMarkers();
+    this.onCityChange();
+  }
+
+  /** Trocou de município: o recorte vira preferência e o mapa vai até lá. */
+  async onCityChange() {
+    this.locality.choice = this.selectedMunicipality;
+    await this.refreshMarkers();
+    await this.frameSelection();
   }
 
   constructor(
     private occurrenceReadService: OccurrenceReadService,
     private occurrenceSupportService: OccurrenceSupportService,
     private geocodingService: GeocodingService,
+    private locality: LocalityPreferenceService,
     public  auth: AuthenticationService,
     private router: Router,
     private toastr: ToastrService,
@@ -169,7 +203,56 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
     } catch {
       this.occurrences = [];
     }
+
+    // A tela abre no município que já se conhece — o escolhido antes ou o do
+    // cadastro — sem perguntar nada ao aparelho: era essa pergunta que deixava
+    // o mapa parado antes de desenhar qualquer coisa.
+    const conhecido = this.locality.choice ?? await this.locality.ofCurrentUser();
+
+    // Além dos municípios que têm ocorrência, entram o escolhido e o do
+    // cadastro: ver "nenhuma ocorrência em Cachoeira de Minas" é uma resposta,
+    // não encontrar o próprio município na lista não é.
+    this.municipalityOptions = LocalityPreferenceService.options(this.occurrences, [conhecido]);
+    if (conhecido) this.filterCity = LocalityPreferenceService.fold(conhecido.city);
+
     await this.refreshMarkers();
+    await this.frameSelection();
+
+    void this.seguirGps(conhecido);
+  }
+
+  /**
+   * O GPS chega depois e corrige: com ele ligado, a tela passa a mostrar o
+   * município onde a pessoa está. Se apontar o mesmo que já estava, ou se não
+   * vier posição nenhuma, nada se mexe — e nada disso segurou o desenho.
+   */
+  private async seguirGps(conhecido: Municipality | null) {
+    const detectado = await this.locality.ensure();
+    if (!detectado) return;
+    const mesmo = conhecido && LocalityPreferenceService.fold(conhecido.city)
+                            === LocalityPreferenceService.fold(detectado.city);
+    if (mesmo) return;
+
+    this.municipalityOptions = LocalityPreferenceService.options(
+      this.occurrences, [detectado, conhecido]);
+    this.filterCity = LocalityPreferenceService.fold(detectado.city);
+    await this.refreshMarkers();
+    await this.frameSelection();
+  }
+
+  /**
+   * Leva o mapa até o que está em exibição: o enquadramento dos marcadores
+   * plotados; sem marcador, o nome do município resolve as coordenadas.
+   */
+  private async frameSelection() {
+    if (!this.map) return;
+    if (this.markers.length) {
+      this.map.fitBounds(L.latLngBounds(this.markers.map(m => m.getLatLng())),
+                         { padding: [40, 40], maxZoom: DEFAULT_MAP_ZOOM });
+      return;
+    }
+    const center = await this.locality.mapCenter();
+    if (center) this.map.setView([center.lat, center.lng], center.zoom);
   }
 
   /** RF21: redesenha os marcadores conforme os filtros (coordenadas ficam em cache). */
@@ -179,24 +262,36 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
     this.markers = [];
     this.markerById.clear();
 
+    // Quem já tem coordenada — gravada no cadastro ou em cache — vai para o mapa
+    // de uma vez. Antes cada uma esperava a fila inteira: bastava uma ocorrência
+    // sem coordenada no começo para atrasar todas as seguintes em 1,1 s cada.
+    const pendentes: Occurrence[] = [];
     for (const o of this.filteredForMap.slice(0, 20)) {
-      let coords = o.id != null ? this.coordsCache.get(o.id) : undefined;
+      const coords = this.knownCoords(o);
+      if (coords) this.plot(o, coords);
+      else pendentes.push(o);
+    }
 
-      if (!coords && o.latitude && o.longitude) {
-        coords = { lat: o.latitude, lng: o.longitude };
-      } else if (!coords) {
-        const geo = await this.geocodingService.geocode(o.street!, o.neighborhood!, o.city!);
-        if (geo) coords = geo;
-        await this.delay(1100);   // respeita o rate limit do Nominatim
-      }
-
-      if (coords) {
-        if (o.id != null) this.coordsCache.set(o.id, coords);
-        const c = coords;
-        this.ngZone.run(() => this.addMarker(o, c.lat, c.lng));
-      }
+    // O Nominatim aceita no máximo uma consulta por segundo, então estas seguem
+    // em fila — mas agora só elas, e o resto do mapa já está desenhado.
+    for (const o of pendentes) {
+      const geo = await this.geocodingService.geocode(o.street!, o.neighborhood!, o.city!);
+      if (geo) this.plot(o, geo);
+      await this.delay(1100);
     }
     this.loadingMap = false;
+  }
+
+  /** Coordenada que já temos, sem ir à rede: o cache da sessão ou o cadastro. */
+  private knownCoords(o: Occurrence): { lat: number; lng: number } | null {
+    const cached = o.id != null ? this.coordsCache.get(o.id) : undefined;
+    if (cached) return cached;
+    return o.latitude && o.longitude ? { lat: o.latitude, lng: o.longitude } : null;
+  }
+
+  private plot(o: Occurrence, coords: { lat: number; lng: number }) {
+    if (o.id != null) this.coordsCache.set(o.id, coords);
+    this.ngZone.run(() => this.addMarker(o, coords.lat, coords.lng));
   }
 
   /** Adiciona o marcador da ocorrência no mapa, com cor por status e popup resumido. */
