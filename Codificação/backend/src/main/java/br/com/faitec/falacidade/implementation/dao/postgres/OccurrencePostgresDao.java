@@ -8,8 +8,8 @@ import br.com.faitec.falacidade.port.dao.occurrence.OccurrenceDao;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.security.SecureRandom;
 import java.util.List;
-import java.util.UUID;
 
 public class OccurrencePostgresDao implements OccurrenceDao {
 
@@ -22,10 +22,47 @@ public class OccurrencePostgresDao implements OccurrenceDao {
         "(SELECT COUNT(*) FROM occurrence_support s WHERE s.occurrence_id = o.id) AS support_count " +
         "FROM occurrence o ";
 
+    /** Os mesmos descartes do código de acompanhamento anônimo, pelo mesmo
+     *  motivo: O, 0, I e 1 são ambíguos em fonte sem serifa. */
+    private static final String ALFABETO = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    private static final int    SORTEADOS = 5;
+    private static final SecureRandom SORTE = new SecureRandom();
+
+    /**
+     * Protocolo no formato FC-26-K8RQ3: a marca, o ano e cinco símbolos
+     * sorteados — onze caracteres, lidos em três blocos.
+     *
+     * A data completa saiu porque o registro já mostra data e hora ao lado do
+     * protocolo: os oito dígitos não acrescentavam nada e faziam o código ser
+     * lido e digitado errado. Os cinco símbolos vinham de um UUID, em
+     * hexadecimal, e traziam justamente o 0 e o 1 que o resto do sistema
+     * descarta.
+     *
+     * Sem a data, o sorteio deixa de ser disputado entre as ocorrências do mesmo
+     * dia e passa a valer para o ano inteiro, então o código é conferido no
+     * banco antes de ser usado. A coluna é UNIQUE: a conferência evita a
+     * exceção, e a exceção segue como garantia final.
+     */
     private String generateProtocol() {
-        String date = java.time.LocalDate.now().toString().replace("-", "");
-        String rand = UUID.randomUUID().toString().replace("-", "").substring(0, 5).toUpperCase();
-        return "FC-" + date + "-" + rand;
+        String ano = String.format("%02d", java.time.Year.now().getValue() % 100);
+        for (int tentativa = 0; tentativa < 10; tentativa++) {
+            StringBuilder sorteio = new StringBuilder(SORTEADOS);
+            for (int i = 0; i < SORTEADOS; i++)
+                sorteio.append(ALFABETO.charAt(SORTE.nextInt(ALFABETO.length())));
+            String protocolo = "FC-" + ano + "-" + sorteio;
+            if (!protocoloEmUso(protocolo)) return protocolo;
+        }
+        throw new IllegalStateException("Não foi possível sortear um protocolo livre");
+    }
+
+    private boolean protocoloEmUso(String protocolo) {
+        try (PreparedStatement ps = connection.prepareStatement(
+                 "SELECT 1 FROM occurrence WHERE protocol_number = ?")) {
+            ps.setString(1, protocolo);
+            try (ResultSet rs = ps.executeQuery()) { return rs.next(); }
+        } catch (SQLException e) {
+            throw new RuntimeException("Falha ao conferir o protocolo", e);
+        }
     }
 
     @Override
@@ -171,9 +208,20 @@ public class OccurrencePostgresDao implements OccurrenceDao {
                          "LEFT JOIN \"user\" u ON o.user_id=u.id ORDER BY o.created_at DESC");
     }
 
+    /**
+     * Busca pelo protocolo exatamente como foi gravado e, se não achar, de novo
+     * ignorando caixa e traços — quem copia de um e-mail ou anota no papel erra
+     * nesses dois. A primeira consulta usa o índice da coluna; a segunda, que
+     * aplica função sobre ela e não usa, só roda quando a primeira falha.
+     */
     @Override public GetOccurrenceDto readByProtocolNumber(String protocol) {
-        return queryOne(SELECT_FIELDS +
+        GetOccurrenceDto achado = queryOne(SELECT_FIELDS +
                         "LEFT JOIN \"user\" u ON o.user_id=u.id WHERE o.protocol_number=?", protocol);
+        if (achado != null || protocol == null) return achado;
+        String solto = protocol.replaceAll("[^A-Za-z0-9]", "").toUpperCase();
+        return queryOne(SELECT_FIELDS +
+                        "LEFT JOIN \"user\" u ON o.user_id=u.id " +
+                        "WHERE UPPER(REPLACE(o.protocol_number, '-', '')) = ?", solto);
     }
 
     @Override public GetOccurrenceDto findByAnonymousTrackingCodeHash(String hash) {
