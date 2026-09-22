@@ -46,7 +46,9 @@ export class CreateOccurrenceComponent implements OnInit, AfterViewInit, OnDestr
   trackingCode: string | null = null;
 
   // Estado do mapa / geocodificação (RF09)
-  geocodeStatus: 'idle' | 'loading' | 'success' = 'idle';
+  geocodeStatus: 'idle' | 'loading' | 'success' | 'partial' | 'error' = 'idle';
+  /** Bússola em espera: as duas tentativas de leitura levam até 20 s. */
+  locating = false;
   private map!: L.Map;
   private marker?: L.Marker;
 
@@ -129,7 +131,7 @@ export class CreateOccurrenceComponent implements OnInit, AfterViewInit, OnDestr
   ngAfterViewInit() {
     setTimeout(() => {
       this.initMap();
-      this.requestCurrentLocation();
+      this.requestCurrentLocation(true);
     }, 0);
   }
 
@@ -155,19 +157,30 @@ export class CreateOccurrenceComponent implements OnInit, AfterViewInit, OnDestr
    * tentativas e o mesmo aviso de GPS desligado das demais telas; sem posição,
    * a pessoa clica no mapa ou preenche o endereço à mão.
    */
-  private async requestCurrentLocation() {
-    // Primeiro o município de quem registra, que não depende do aparelho: o
-    // mapa já fica útil enquanto o navegador pergunta pela localização.
-    const center = await this.localityPreference.mapCenter();
-    if (center) this.ngZone.run(() => this.map.setView([center.lat, center.lng], center.zoom));
+  async requestCurrentLocation(centrarNoMunicipio = false) {
+    // Na abertura da tela, primeiro o município de quem registra, que não
+    // depende do aparelho: o mapa já fica útil enquanto o navegador pergunta
+    // pela localização. No clique da bússola isso não vale — pular para o
+    // centro da cidade e só depois para a pessoa seria um solavanco à toa.
+    if (centrarNoMunicipio) {
+      const center = await this.localityPreference.mapCenter();
+      if (center) this.ngZone.run(() => this.map.setView([center.lat, center.lng], center.zoom));
+    }
 
-    const position = await this.localityPreference.position();
-    if (!position) return;
-    this.ngZone.run(() => {
-      const { latitude, longitude } = position.coords;
-      this.map.setView([latitude, longitude], 17);
-      this.setLocation(latitude, longitude, true);
-    });
+    this.locating = true;
+    try {
+      // O serviço já avisa o que fazer quando não vem posição: liberar a
+      // permissão no navegador, ou ligar o GPS do aparelho.
+      const position = await this.localityPreference.position();
+      if (!position) return;
+      this.ngZone.run(() => {
+        const { latitude, longitude } = position.coords;
+        this.map.setView([latitude, longitude], 17);
+        this.setLocation(latitude, longitude, true);
+      });
+    } finally {
+      this.ngZone.run(() => this.locating = false);
+    }
   }
 
   /**
@@ -223,9 +236,16 @@ export class CreateOccurrenceComponent implements OnInit, AfterViewInit, OnDestr
         this.addressFromMap =
           [v.street, v.neighborhood, [v.city, v.state].filter(Boolean).join(', ')]
             .filter(Boolean).join(' | ');
-        this.geocodeStatus = 'success';
+        // Ponto sem logradouro (meio de quadra, praça, estrada) mantém a rua que
+        // já estava no formulário — apagar o que a pessoa digitou seria pior. Só
+        // que aí o endereço fica meio novo e meio velho, e antes isso passava
+        // como "endereço preenchido": agora o aviso pede a conferência da rua.
+        this.geocodeStatus = addr.street ? 'success' : 'partial';
       } else {
-        this.geocodeStatus = 'idle';
+        // Sem resposta do Nominatim o formulário fica com o endereço anterior.
+        // Voltar para 'idle' escondia isso, e o endereço velho seguia para o
+        // cadastro como se fosse o do ponto marcado.
+        this.geocodeStatus = 'error';
       }
     });
   }

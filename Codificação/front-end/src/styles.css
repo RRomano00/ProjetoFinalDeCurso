@@ -355,3 +355,21 @@ html.dark-theme .a11y-controls {
 .modal-card h2 { font-size: 1.1875rem; font-weight: 600; color: var(--ink); margin: 0; }
 .modal-card p { font-size: 0.875rem; color: var(--ink-mute); line-height: 1.55; margin: 0; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.25rem; }
+
+/* ── Bússola do mapa: leva a vista até onde a pessoa está ──
+      Fica sobre o mapa, na faixa 1000 dos controles do Leaflet. O container
+      que a recebe precisa ser position: relative. */
+.map-locate {
+  position: absolute; top: 10px; right: 10px; z-index: 1000;
+  display: flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; padding: 0;
+  border: 1px solid var(--line); border-radius: var(--r-ctl);
+  background: var(--surface); color: var(--ink); cursor: pointer;
+}
+.map-locate:hover:not(:disabled) { background: var(--surface-2); }
+/* Procurando: a agulha gira, mas a bússola continua na tela. Trocá-la por um
+   spinner fazia o botão parecer que tinha sumido durante a busca — que leva
+   até 20 s, somadas as duas tentativas de leitura do aparelho. */
+.map-locate.locating { cursor: progress; color: var(--ink-faint); }
+.map-locate.locating svg { animation: spin 1.4s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }

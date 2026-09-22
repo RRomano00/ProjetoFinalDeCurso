@@ -281,6 +281,9 @@
 }
 #create-map { width: 100%; height: 300px; cursor: crosshair; }
 
+/* O mapa hospeda a bússola, que é compartilhada (styles.css). */
+.map-holder { position: relative; }
+
 .map-hint {
   display: flex;
   align-items: center;
@@ -292,10 +295,16 @@
   border-bottom: 1px solid var(--line);
   color: var(--ink-mute);
 }
-.map-hint.loading {
+.map-hint.loading,
+.map-hint.partial {
   background: var(--st-pending-bg);
   color: var(--st-pending);
   border-color: var(--st-pending-line);
+}
+.map-hint.error {
+  background: var(--st-refused-bg);
+  color: var(--st-refused);
+  border-color: var(--st-refused-line);
 }
 .map-hint.success {
   background: var(--st-done-bg);

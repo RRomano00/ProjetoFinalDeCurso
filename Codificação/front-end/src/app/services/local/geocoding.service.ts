@@ -26,7 +26,11 @@ export class GeocodingService {
       if (results && results.length > 0) {
         return { lat: parseFloat(results[0].lat), lng: parseFloat(results[0].lon) };
       }
-    } catch { }
+    } catch (erro) {
+      // Cota do Nominatim (1 req/s) e indisponibilidade caem aqui: quem chamou
+      // trata o null, mas sem o registro não dá para saber qual dos dois foi.
+      console.warn('[geocoding] consulta ao Nominatim falhou', erro);
+    }
     return null;
   }
 
@@ -48,7 +52,11 @@ export class GeocodingService {
         city:         a.city || a.town || a.village || a.municipality || '',
         state:        iso.includes('-') ? iso.split('-')[1] : (a.state || '')
       };
-    } catch { }
+    } catch (erro) {
+      // Cota do Nominatim (1 req/s) e indisponibilidade caem aqui: quem chamou
+      // trata o null, mas sem o registro não dá para saber qual dos dois foi.
+      console.warn('[geocoding] consulta ao Nominatim falhou', erro);
+    }
     return null;
   }
 }
