@@ -39,6 +39,26 @@
   margin-bottom: 0.875rem;
 }
 
+/* A arte da marca já traz o nome e a linha de apoio: entra no lugar da placa e
+   do título, e é o que identifica a tela de entrada e a de cadastro.
+   O fundo branco some contra o cartão no tema claro; existe para o tema escuro,
+   onde a arte é azul-marinho e ficaria escura sobre escuro. */
+.logo-full {
+  display: block;
+  width: min(230px, 75%);
+  height: auto;
+  margin: 0 auto 0.5rem;
+  background: #fff;
+  border-radius: 12px;
+  padding: 0.5rem 0.75rem;
+  box-sizing: border-box;
+}
+
+/* RF18: o tema escuro inverte a página inteira e re-inverte as imagens, para a
+   arte manter as cores reais. A placa é CSS, então inverte junto — preto aqui é
+   o branco que chega à tela. */
+html.dark-theme .logo-full { background: #000; }
+
 .auth-logo h1 {
   font-size: 1.625rem;
   font-weight: 600;
