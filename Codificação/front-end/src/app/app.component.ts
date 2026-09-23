@@ -1,6 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { SwUpdate } from '@angular/service-worker';
+import { filter } from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -15,8 +17,18 @@ export class AppComponent implements OnInit {
   readonly defaultFontIndex = 2;
   fontIndex = this.defaultFontIndex;
 
+  private readonly swUpdate = inject(SwUpdate);
+
   ngOnInit(): void {
     this.restorePreferences();
+    this.applyNewVersion();
+  }
+  
+  private applyNewVersion(): void {
+    if (!this.swUpdate.isEnabled) return;
+    this.swUpdate.versionUpdates
+      .pipe(filter(e => e.type === 'VERSION_READY'))
+      .subscribe(() => document.location.reload());
   }
 
   toggleTheme(): void {
