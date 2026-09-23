@@ -1,6 +1,5 @@
 package br.com.faitec.falacidade.domain;
 
-/** RF07: uma foto anexada à ocorrência (URL de entrega já com blur de privacidade). */
 public class OccurrenceMedia {
 
     private String url;

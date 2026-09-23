@@ -43,10 +43,9 @@ public class OccurrenceRestController {
         this.emailService       = emailService;
     }
 
-    /** Envios de foto por IP por dia — o endpoint é público (visitante anexa foto sem conta). */
-    private static final int MAX_UPLOADS_PER_DAY_PER_IP = 20;
-    // ponytail: contador em memória com lock global; se rodar em mais de uma instância,
+    // Contador em memória com trava global; rodando em mais de uma instância,
     // mover para o banco como em OccurrenceDao.countTodayAnonymousByIp.
+    private static final int MAX_UPLOADS_PER_DAY_PER_IP = 20;
     private final Map<String, Integer> uploadsByIp = new HashMap<>();
     private int uploadCounterDay = LocalDate.now().getDayOfYear();
 
@@ -96,10 +95,6 @@ public class OccurrenceRestController {
     public ResponseEntity<?> create(
             @Valid @RequestBody CreateOccurrenceDto dto, HttpServletRequest request,
             Authentication auth) {
-        // O autor vem sempre do token: o e-mail do corpo só sinaliza "quero me identificar"
-        // (em branco = anônima) — impede registrar ocorrência (e disparar e-mail) em nome
-        // de terceiros. Pedir identificação sem token é sessão vencida: recusa em vez de
-        // rebaixar para anônima em silêncio e perder o autor.
         boolean identified = dto.getEmail() != null && !dto.getEmail().isBlank();
         if (identified && auth == null)
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
@@ -108,7 +103,6 @@ public class OccurrenceRestController {
         try {
             String clientIp = extractClientIp(request);
             CreateOccurrenceResponseDto response = occurrenceService.createOccurrence(dto.toOccurrence(), clientIp);
-            // Confirma o registro por e-mail (só identificados; falha não interrompe o fluxo)
             if (dto.getEmail() != null && !dto.getEmail().isBlank()) {
                 try {
                     UserModel author = userService.findByEmail(dto.getEmail());
@@ -119,8 +113,6 @@ public class OccurrenceRestController {
             }
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (IllegalStateException e) {
-            // RF07/RF08: diz qual limite diário estourou e quando ele é renovado — a contagem
-            // é por dia do servidor (DATE(created_at) = CURRENT_DATE), logo zera à meia-noite.
             return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(Map.of(
                 "error", e.getMessage() + ". Você poderá registrar novamente à meia-noite (00:00)."));
         } catch (IllegalArgumentException e) {
@@ -138,7 +130,6 @@ public class OccurrenceRestController {
 
     @GetMapping
     public ResponseEntity<List<GetOccurrenceDto>> getAll(Authentication auth) {
-        // Só o Super Administrador enxerga o país inteiro (RF25).
         if (hasRole(auth, UserModel.UserRole.SUPER_ADMIN))
             return ResponseEntity.ok(occurrenceService.findAll());
 
@@ -148,8 +139,6 @@ public class OccurrenceRestController {
             return ResponseEntity.ok(occurrenceService.findAllByCity(user != null ? user.getCity() : null));
         }
 
-        // Cidadão e visitante não veem ocorrências anônimas na listagem: elas só são
-        // acessíveis pelo código de acompanhamento (GET /anonymous-status) ou pelo link direto.
         List<GetOccurrenceDto> all = occurrenceService.findAll().stream()
             .filter(o -> !o.isAnonymous())
             .toList();
@@ -157,26 +146,12 @@ public class OccurrenceRestController {
         return ResponseEntity.ok(all);
     }
 
-    /**
-     * Ocorrências de quem está autenticado, por AUTORIA — independentemente do
-     * município. Quem mora em Santa Rita e registrou um problema em Itajubá
-     * continua vendo o próprio registro, mesmo que a listagem geral um dia
-     * passe a ser filtrada por município.
-     */
     @GetMapping("/mine")
     public ResponseEntity<List<GetOccurrenceDto>> mine(Authentication auth) {
         if (auth == null || auth.getName() == null) return ResponseEntity.ok(List.of());
         return ResponseEntity.ok(occurrenceService.findAllByUserEmail(auth.getName()));
     }
 
-    /**
-     * Cobertura do município: diz se há equipe cadastrada para atender ali. A
-     * tela de registro usa isso para avisar quem relata um problema em município
-     * ainda sem adesão — o registro é aceito do mesmo jeito, mas a pessoa fica
-     * sabendo que não há equipe para recebê-lo agora.
-     *
-     * Público, porque quem registra pode ser visitante sem conta.
-     */
     @GetMapping("/coverage")
     public ResponseEntity<Map<String, Object>> coverage(@RequestParam String city,
                                                         @RequestParam(required = false) String state) {
@@ -184,7 +159,6 @@ public class OccurrenceRestController {
         return ResponseEntity.ok(Map.of("city", city, "state", state == null ? "" : state, "served", served));
     }
 
-    /** RF16: ids das ocorrências que o usuário logado já apoia. */
     @GetMapping("/support/mine")
     public ResponseEntity<List<Integer>> mySupports(Authentication auth) {
         UserModel user = safeFindUser(auth);
@@ -210,7 +184,6 @@ public class OccurrenceRestController {
         return ResponseEntity.ok(nearby);
     }
 
-    /** RF16: registra o apoio do usuário logado à ocorrência. */
     @PostMapping("/{id}/support")
     public ResponseEntity<Map<String, Object>> support(@PathVariable int id, Authentication auth) {
         UserModel user = safeFindUser(auth);
@@ -226,7 +199,6 @@ public class OccurrenceRestController {
         ));
     }
 
-    /** RF16: o cidadão desfaz o próprio apoio (só o dele — o id vem do token). */
     @DeleteMapping("/{id}/support")
     public ResponseEntity<Map<String, Object>> unsupport(@PathVariable int id, Authentication auth) {
         UserModel user = safeFindUser(auth);
@@ -242,7 +214,6 @@ public class OccurrenceRestController {
         ));
     }
 
-    /** RF16: total de apoios + se o usuário logado já apoiou. */
     @GetMapping("/{id}/support")
     public ResponseEntity<Map<String, Object>> supportInfo(@PathVariable int id, Authentication auth) {
         UserModel user = safeFindUser(auth);
@@ -261,7 +232,6 @@ public class OccurrenceRestController {
         return ResponseEntity.ok(result);
     }
 
-    /** Muda o status; mensagem opcional vai ao histórico e ao e-mail do autor (RF12: coletivo). */
     @PutMapping("/{id}/status")
     public ResponseEntity<?> updateStatus(@PathVariable int id,
             @Valid @RequestBody UpdateOccurrenceStatusDto dto, Authentication auth) {
@@ -272,7 +242,6 @@ public class OccurrenceRestController {
         return ResponseEntity.noContent().build();
     }
 
-    /** RN03: registra quem iniciou; RF12: opcionalmente aplica ao grupo todo e notifica autores. */
     @PutMapping("/progress/{id}")
     public ResponseEntity<?> toInProgress(@PathVariable int id,
             @RequestBody(required = false) UpdateOccurrenceStatusDto body, Authentication auth) {
@@ -283,7 +252,6 @@ public class OccurrenceRestController {
         return ResponseEntity.noContent().build();
     }
 
-    /** RN03: registra quem concluiu; RF12: opcionalmente aplica ao grupo todo e notifica autores. */
     @PutMapping("/conclude/{id}")
     public ResponseEntity<?> toConclude(@PathVariable int id,
             @RequestBody(required = false) UpdateOccurrenceStatusDto body, Authentication auth) {
@@ -294,11 +262,6 @@ public class OccurrenceRestController {
         return ResponseEntity.noContent().build();
     }
 
-    /**
-     * RF22: encaminha a ocorrência a um ou mais departamentos responsáveis.
-     * O e-mail sai sem dados pessoais do autor, com as fotografias anexadas; em
-     * seguida a ocorrência passa a Em andamento e o trâmite entra no histórico.
-     */
     @PostMapping("/{id}/forward")
     public ResponseEntity<?> forward(@PathVariable int id,
             @Valid @RequestBody ForwardOccurrenceDto dto, Authentication auth) {
@@ -307,7 +270,6 @@ public class OccurrenceRestController {
         try {
             var resultado = occurrenceService.forwardToDepartment(
                     id, dto.getDepartmentIds(), getUserId(auth));
-            // Nenhum e-mail saiu: a ocorrência continua como estava.
             if (resultado.nenhumEnviado()) {
                 return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(Map.of(
                     "error", "Não foi possível enviar o e-mail aos departamentos. "
@@ -322,7 +284,6 @@ public class OccurrenceRestController {
         }
     }
 
-    /** RF12: ocorrências do mesmo grupo de duplicatas (autores mascarados p/ não-staff). */
     @GetMapping("/{id}/group")
     public ResponseEntity<List<GetOccurrenceDto>> getGroup(@PathVariable int id, Authentication auth) {
         List<GetOccurrenceDto> group = occurrenceService.getGroup(id);
@@ -330,7 +291,6 @@ public class OccurrenceRestController {
         return ResponseEntity.ok(group);
     }
 
-    /** RN03/RF11: histórico de status; nome do responsável só para Funcionário/Administrador. */
     @GetMapping("/{id}/history")
     public ResponseEntity<List<OccurrenceHistoryDto>> getHistory(@PathVariable int id, Authentication auth) {
         List<OccurrenceHistoryDto> history = occurrenceService.getHistory(id);
@@ -338,7 +298,6 @@ public class OccurrenceRestController {
         return ResponseEntity.ok(history);
     }
 
-    /** RF12: oculta dados do autor para usuários sem privilégio, exceto o próprio denunciante. */
     private void maskIfNotPrivileged(GetOccurrenceDto e, Authentication auth) {
         if (isPrivileged(auth)) return;
         if (auth != null && e.getEmail() != null && e.getEmail().equals(auth.getName())) return;
@@ -350,7 +309,6 @@ public class OccurrenceRestController {
         e.setFullname(null);
     }
 
-    /** RF12: a equipe da administração pública tem acesso a dados sensíveis. */
     private boolean isPrivileged(Authentication auth) {
         return hasRole(auth, UserModel.UserRole.SUPER_ADMIN)
             || hasRole(auth, UserModel.UserRole.ADMINISTRATOR)
@@ -363,14 +321,6 @@ public class OccurrenceRestController {
                 .anyMatch(a -> a.contains(role.name()));
     }
 
-    /**
-     * RF24: a equipe só age sobre as ocorrências do próprio município — o do
-     * ENDEREÇO da ocorrência, não o do cadastro de quem a registrou. Vale
-     * também para o administrador municipal; só o Super Administrador, que não
-     * tem município, atravessa essa fronteira (RF25).
-     *
-     * Devolve null quando pode seguir; caso contrário, a resposta de recusa.
-     */
     private ResponseEntity<Map<String, String>> outOfJurisdiction(Authentication auth, int occurrenceId) {
         if (hasRole(auth, UserModel.UserRole.SUPER_ADMIN)) return null;
 
@@ -397,14 +347,12 @@ public class OccurrenceRestController {
         return user != null ? user.getId() : 0;
     }
 
-    /** Busca o usuário autenticado pelo e-mail (subject do JWT), tolerante a falhas. */
     private UserModel safeFindUser(Authentication auth) {
         if (auth == null) return null;
         try { return userService.findByEmail(auth.getName()); }
         catch (Exception e) { return null; }
     }
 
-    /** Conta os envios do dia por IP; reinicia a contagem na virada do dia. */
     private synchronized boolean uploadLimitReached(String ip) {
         int today = LocalDate.now().getDayOfYear();
         if (today != uploadCounterDay) {

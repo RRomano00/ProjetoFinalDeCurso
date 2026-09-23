@@ -6,36 +6,34 @@ import { AuthenticationService } from '../../../services/security/authentication
 import { LocalityPreferenceService } from '../../../services/local/locality-preference.service';
 import { ToastrService } from 'ngx-toastr';
 import { PasswordRevealDirective } from '../../../shared/password-reveal.directive';
+import { InstallInviteComponent } from '../../../shared/install-invite.component';
 
 type LoginStep = 'credentials' | 'mfa-select' | 'mfa-verify';
 type MfaMethod = 'APP' | 'EMAIL';
 
 @Component({
   selector: 'app-sign-in',
-  imports: [RouterModule, CommonModule, FormsModule, ReactiveFormsModule, PasswordRevealDirective],
+  imports: [RouterModule, CommonModule, FormsModule, ReactiveFormsModule, PasswordRevealDirective,
+            InstallInviteComponent],
   templateUrl: './sign-in.component.html',
   styleUrls: ['../auth-shell.css', './sign-in.component.css']
 })
 export class SignInComponent implements OnInit, OnDestroy {
   step: LoginStep = 'credentials';
 
-  // Step 1 — credenciais
   email    = new FormControl('', [Validators.required, Validators.email]);
   password = new FormControl('', [Validators.required]);
   isLoginIncorrect = false;
   loading = false;
 
-  // Step 2/3 — MFA
   totpCode  = new FormControl('', [Validators.required, Validators.pattern(/^\d{6}$/)]);
   mfaToken  = '';
   mfaError  = false;
 
-  // Métodos de MFA disponíveis e escolhido
   mfaAppAvailable   = false;
   mfaEmailAvailable = false;
   mfaMethod: MfaMethod = 'APP';
 
-  // Reenvio de código por e-mail (habilita após 15s)
   resendCountdown = 0;
   private resendTimer?: any;
 
@@ -51,25 +49,17 @@ export class SignInComponent implements OnInit, OnDestroy {
     this.askLocation();
   }
 
-  /**
-   * Ao abrir a tela de entrada, o próprio navegador pede a localização — no
-   * celular e no computador. Concedida, o município encontrado passa a reger as
-   * telas; recusada, a navegação segue global, sem travar nada.
-   */
   private async askLocation() {
-    if (await this.locality.deniedBefore()) return;   // já recusada: não insiste
+    if (await this.locality.deniedBefore()) return;
     this.locality.detect();
   }
 
-  /** RF08/RF11: entra sem conta (leitura + registro de ocorrência anônima). */
   enterAnonymous() {
     this.auth.enterAnonymous();
     this.router.navigate(['']);
   }
 
   ngOnDestroy() { this.clearResendTimer(); }
-
-  // ── STEP 1: Credenciais ──────────────────────────────────────────────────
 
   login() {
     if (this.email.invalid || this.password.invalid) return;
@@ -87,11 +77,9 @@ export class SignInComponent implements OnInit, OnDestroy {
           this.mfaAppAvailable   = !!res.mfaAppAvailable;
           this.mfaEmailAvailable = !!res.mfaEmailAvailable;
 
-          // Dois métodos: o usuário escolhe; um só: vai direto
           if (this.mfaAppAvailable && this.mfaEmailAvailable) {
             this.step = 'mfa-select';
           } else if (this.mfaEmailAvailable) {
-            // Único método é e-mail: o back-end já enviou o código
             this.mfaMethod = 'EMAIL';
             this.totpCode.reset();
             this.step = 'mfa-verify';
@@ -111,10 +99,8 @@ export class SignInComponent implements OnInit, OnDestroy {
     });
   }
 
-  // ── Seleção de método (quando há app E e-mail) ───────────────────────────
-
   chooseMethod(method: MfaMethod) {
-    if (this.loading) return;   // o envio já está em curso: um 2º clique invalidaria o código
+    if (this.loading) return;
     this.mfaMethod = method;
     this.mfaError = false;
     this.totpCode.reset();
@@ -138,8 +124,6 @@ export class SignInComponent implements OnInit, OnDestroy {
     }
   }
 
-  // ── STEP 2: Verificar código (app ou e-mail) ─────────────────────────────
-
   verifyMfa() {
     if (this.totpCode.invalid) return;
     this.mfaError = false;
@@ -153,8 +137,6 @@ export class SignInComponent implements OnInit, OnDestroy {
       }
     });
   }
-
-  // ── Reenvio do código por e-mail ─────────────────────────────────────────
 
   resendCode() {
     if (this.resendCountdown > 0) return;
@@ -180,8 +162,6 @@ export class SignInComponent implements OnInit, OnDestroy {
     if (this.resendTimer) { clearInterval(this.resendTimer); this.resendTimer = undefined; }
   }
 
-  // ── Voltar para a tela de login ──────────────────────────────────────────
-
   backToLogin() {
     this.clearResendTimer();
     this.step = 'credentials';
@@ -191,12 +171,9 @@ export class SignInComponent implements OnInit, OnDestroy {
     this.resendCountdown = 0;
   }
 
-  // ── Finalizar login ──────────────────────────────────────────────────────
-
   private finishLogin(token: string) {
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
-      // O id vem do token: sem ele a tela Meu Perfil não carrega nem salva nada.
       this.auth.saveSession(token, payload.email, payload.fullname, payload.role,
                             payload.id != null ? String(payload.id) : undefined);
       this.toastr.success('Login efetuado com sucesso!');

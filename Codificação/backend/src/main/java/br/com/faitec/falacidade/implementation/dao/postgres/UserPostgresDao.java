@@ -55,7 +55,6 @@ public class UserPostgresDao implements UserDao {
             }
         } catch (SQLException e) {
             rollback();
-            // 23505 = unique_violation; o único índice único de "user" é o do e-mail.
             if ("23505".equals(e.getSQLState()))
                 throw new IllegalStateException("Este e-mail já está cadastrado.", e);
             throw new RuntimeException("Erro ao inserir usuário: " + e.getMessage(), e);
@@ -157,15 +156,11 @@ public class UserPostgresDao implements UserDao {
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, encodedPassword);
             ps.setInt(2, id);
-            // executeUpdate, e não execute: sem linha alterada a senha não mudou,
-            // e devolver true aqui faria a tela dizer "senha redefinida" à toa.
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             throw new RuntimeException("Erro ao atualizar senha", e);
         }
     }
-
-    // ---- MFA ----
 
     @Override
     public void updateMfaSecret(int userId, String secret) {
@@ -216,8 +211,6 @@ public class UserPostgresDao implements UserDao {
     @Override
     public boolean existsStaffInCity(String city, String state) {
         if (city == null || city.isBlank()) return false;
-        // A UF entra na comparação só quando informada dos dois lados, para não
-        // excluir contas antigas que ainda não têm UF gravada.
         String sql = "SELECT 1 FROM \"user\" WHERE is_active = true " +
                      "AND role IN ('EMPLOYEE','ADMINISTRATOR') AND lower(city) = lower(?) " +
                      "AND (? = '' OR state IS NULL OR upper(state) = upper(?)) LIMIT 1";
@@ -233,8 +226,6 @@ public class UserPostgresDao implements UserDao {
             throw new RuntimeException("Erro ao verificar equipe do município", e);
         }
     }
-
-    // ---- helpers ----
 
     private UserModel queryOne(String sql, Object param) {
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
@@ -291,7 +282,6 @@ public class UserPostgresDao implements UserDao {
         return u;
     }
 
-    /** Devolve a conexão ao autocommit: a Connection é um bean único compartilhado pelos DAOs. */
     private void restoreAutoCommit() {
         try { connection.setAutoCommit(true); } catch (SQLException ignored) {}
     }

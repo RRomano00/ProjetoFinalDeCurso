@@ -18,10 +18,8 @@ export class RecoverPasswordComponent {
   step: ResetStep = 'request';
   loading = false;
 
-  // Etapa 1 — solicitar
   email = new FormControl('', [Validators.required, Validators.email]);
 
-  // Etapa 2 — confirmar com token
   token = new FormControl('', [Validators.required]);
   newPassword = new FormControl('', [
     Validators.required, Validators.minLength(8),
@@ -29,7 +27,6 @@ export class RecoverPasswordComponent {
   ]);
   confirmPassword = new FormControl('', [Validators.required]);
 
-  /** A senha nova é digitada às cegas; sem repetir, um typo vira senha perdida. */
   passwordsMatch(): boolean {
     return this.newPassword.value === this.confirmPassword.value;
   }

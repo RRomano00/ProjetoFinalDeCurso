@@ -5,23 +5,12 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
-/**
- * Payload para criar SUPER_ADMIN, ADMINISTRATOR ou EMPLOYEE — POST /api/user/employee.
- * O Super Administrador cria qualquer perfil; o administrador municipal, apenas
- * funcionários do seu município.
- * No primeiro login, o sistema exige configuração obrigatória do 2FA.
- */
 public class CreateEmployeeDto {
 
     @NotBlank private String fullname;
     @Email @NotBlank private String email;
     @NotBlank private String password;
 
-    /**
-     * Município ao qual a conta fica vinculada. Obrigatório para funcionário e
-     * administrador municipal, e vazio para o Super Administrador, que não tem
-     * recorte territorial (RF25) — a exigência é verificada no controlador.
-     */
     private String city;
     private String state;
 

@@ -41,13 +41,6 @@ public class JwtAuthenticationRestController {
     private final EmailMfaCodeStore     emailMfaCodeStore;
     private final ActiveSessionStore    activeSessions;
 
-    /**
-     * Contas dispensadas do 2FA obrigatório de Funcionário/Administrador. A conta de
-     * demonstração do seed usa um domínio que não recebe e-mail: exigir o código a
-     * deixaria inacessível. Sobrescreva com app.mfa.exempt-emails=a@x.com,b@y.com
-     * (vazio = ninguém dispensado). Quem está na lista ainda pode ativar o 2FA por
-     * conta própria em Meu Perfil — a dispensa é só da obrigatoriedade.
-     */
     @Value("${app.mfa.exempt-emails:admin@falacidade.com}")
     private String mfaExemptEmails;
 
@@ -86,9 +79,6 @@ public class JwtAuthenticationRestController {
         boolean app   = user.isAppMfaActive();
         boolean email = user.isEmailMfaActive();
 
-        // Staff sem nenhum método configurado: o padrão é o 2FA por e-mail (o app
-        // autenticador fica opcional, ativado depois em Meu Perfil). O e-mail é ativado
-        // de fato quando o primeiro código for validado, em verifyMfa.
         if (mandatory && !app && !email) {
             log.info("MFA obrigatório por e-mail no primeiro acesso: " + user.getEmail());
             String token = mfaTokenStore.createToken(user.getId());
@@ -96,10 +86,8 @@ public class JwtAuthenticationRestController {
             return ResponseEntity.ok(LoginResponseDto.requiresMfa(token, false, true));
         }
 
-        // Tem ao menos um método: pede o 2º fator
         if (app || email) {
             String token = mfaTokenStore.createToken(user.getId());
-            // Se o único método for e-mail, já envia o código
             if (email && !app) sendEmailCode(user);
             return ResponseEntity.ok(LoginResponseDto.requiresMfa(token, app, email));
         }
@@ -107,7 +95,6 @@ public class JwtAuthenticationRestController {
         return ResponseEntity.ok(LoginResponseDto.withJwt(generateJwt(user)));
     }
 
-    /** Envia (ou reenvia) o código de verificação por e-mail para o token de login em andamento. */
     @PostMapping("/mfa/send-email")
     public ResponseEntity<Void> sendEmailMfaCode(@RequestBody MfaVerifyDto dto) {
         int userId = mfaTokenStore.peek(dto.getMfaToken());
@@ -131,7 +118,6 @@ public class JwtAuthenticationRestController {
         if (!ok) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 
         UserModel user = userService.findById(userId);
-        // Primeiro acesso do staff: confirmar o código por e-mail é o que ativa o método.
         if (byEmail && !user.isEmailMfaActive()) {
             mfaService.setEmailMfa(userId, true);
             log.info("2FA por e-mail ativado no primeiro acesso: " + user.getEmail());
@@ -139,11 +125,6 @@ public class JwtAuthenticationRestController {
         return ResponseEntity.ok(LoginResponseDto.withJwt(generateJwt(user)));
     }
 
-    /**
-     * Pulso da sessão: responde 200 enquanto o token vale. Quando a mesma conta
-     * entra em outro aparelho, o JwtRequestFilter recusa este GET com 401 e
-     * SESSION_SUPERSEDED — é assim que a tela parada descobre que foi derrubada.
-     */
     @GetMapping("/session")
     public ResponseEntity<Void> session() {
         return ResponseEntity.ok().build();
@@ -162,8 +143,6 @@ public class JwtAuthenticationRestController {
 
     private String generateJwt(UserModel user) {
         UserDetails ud = userDetailsService.loadUserByUsername(user.getEmail());
-        // Uma conta, uma sessão: este login passa a ser o único válido e os tokens
-        // emitidos antes dele deixam de ser aceitos.
         String sessionId = activeSessions.open(user.getId());
         String jwt = jwtService.generateToken(ud, user.getFullname(), user.getRole(),
                                               user.getEmail(), user.getId(), sessionId);

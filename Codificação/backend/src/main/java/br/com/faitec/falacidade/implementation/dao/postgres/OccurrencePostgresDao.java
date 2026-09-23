@@ -22,27 +22,11 @@ public class OccurrencePostgresDao implements OccurrenceDao {
         "(SELECT COUNT(*) FROM occurrence_support s WHERE s.occurrence_id = o.id) AS support_count " +
         "FROM occurrence o ";
 
-    /** Os mesmos descartes do código de acompanhamento anônimo, pelo mesmo
-     *  motivo: O, 0, I e 1 são ambíguos em fonte sem serifa. */
+    /** Sem I, O, 0 e 1: o protocolo é ditado por telefone e copiado à mão. */
     private static final String ALFABETO = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     private static final int    SORTEADOS = 5;
     private static final SecureRandom SORTE = new SecureRandom();
 
-    /**
-     * Protocolo no formato FC-26-K8RQ3: a marca, o ano e cinco símbolos
-     * sorteados — onze caracteres, lidos em três blocos.
-     *
-     * A data completa saiu porque o registro já mostra data e hora ao lado do
-     * protocolo: os oito dígitos não acrescentavam nada e faziam o código ser
-     * lido e digitado errado. Os cinco símbolos vinham de um UUID, em
-     * hexadecimal, e traziam justamente o 0 e o 1 que o resto do sistema
-     * descarta.
-     *
-     * Sem a data, o sorteio deixa de ser disputado entre as ocorrências do mesmo
-     * dia e passa a valer para o ano inteiro, então o código é conferido no
-     * banco antes de ser usado. A coluna é UNIQUE: a conferência evita a
-     * exceção, e a exceção segue como garantia final.
-     */
     private String generateProtocol() {
         String ano = String.format("%02d", java.time.Year.now().getValue() % 100);
         for (int tentativa = 0; tentativa < 10; tentativa++) {
@@ -208,12 +192,6 @@ public class OccurrencePostgresDao implements OccurrenceDao {
                          "LEFT JOIN \"user\" u ON o.user_id=u.id ORDER BY o.created_at DESC");
     }
 
-    /**
-     * Busca pelo protocolo exatamente como foi gravado e, se não achar, de novo
-     * ignorando caixa e traços — quem copia de um e-mail ou anota no papel erra
-     * nesses dois. A primeira consulta usa o índice da coluna; a segunda, que
-     * aplica função sobre ela e não usa, só roda quando a primeira falha.
-     */
     @Override public GetOccurrenceDto readByProtocolNumber(String protocol) {
         GetOccurrenceDto achado = queryOne(SELECT_FIELDS +
                         "LEFT JOIN \"user\" u ON o.user_id=u.id WHERE o.protocol_number=?", protocol);
@@ -229,6 +207,13 @@ public class OccurrencePostgresDao implements OccurrenceDao {
                         "LEFT JOIN \"user\" u ON o.user_id=u.id WHERE o.anonymous_tracking_code_hash=?", hash);
     }
 
+    /**
+     * Recorta um QUADRADO em volta do ponto, não um círculo: 111.111 m é o
+     * comprimento de um grau de latitude, e o cosseno corrige a longitude, que
+     * encurta na direção dos polos. A aproximação sobra alguns metros nos
+     * cantos, e é o preço de a consulta usar o índice de latitude/longitude
+     * em vez de calcular distância em todas as linhas da tabela.
+     */
     @Override public List<GetOccurrenceDto> findNearby(double lat, double lon, String type, double radius) {
         double dLat = radius / 111_111.0;
         double dLon = radius / (111_111.0 * Math.cos(Math.toRadians(lat)));
@@ -322,8 +307,6 @@ public class OccurrencePostgresDao implements OccurrenceDao {
         int gid = rs.getInt("group_id"); if (!rs.wasNull()) o.setGroupId(gid);
         o.setSupportCount(rs.getInt("support_count"));
         o.setEmail(rs.getString("user_email"));
-        // user_id é ON DELETE SET NULL: se o autor apagou a conta, a ocorrência fica
-        // sem nome/e-mail. Identifica o autor perdido em vez de exibir um campo vazio.
         String fullname = rs.getString("fullname");
         o.setFullname(!o.isAnonymous() && fullname == null ? "Usuário Desconhecido" : fullname);
         Timestamp cat = rs.getTimestamp("created_at"); if (cat != null) o.setCreatedAt(cat.toLocalDateTime());

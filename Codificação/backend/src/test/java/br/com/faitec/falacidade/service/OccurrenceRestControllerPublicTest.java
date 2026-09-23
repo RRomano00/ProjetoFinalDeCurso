@@ -34,7 +34,6 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-/** Endpoints que o visitante (sem token) alcança: autoria da ocorrência e limites do upload. */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("OccurrenceRestController – endpoints públicos")
 class OccurrenceRestControllerPublicTest {
@@ -60,7 +59,6 @@ class OccurrenceRestControllerPublicTest {
         return d;
     }
 
-    /** Chama o create() e devolve a ocorrência que chegou ao service. */
     private Occurrence created(CreateOccurrenceDto d, Authentication auth) {
         when(occurrenceService.createOccurrence(any(), any()))
             .thenReturn(new CreateOccurrenceResponseDto(1, "2026-0001", null, false));

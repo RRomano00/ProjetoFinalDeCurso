@@ -49,7 +49,6 @@ public class MfaRestController {
             ? ResponseEntity.ok().build() : ResponseEntity.status(401).build();
     }
 
-    /** Estado atual do 2FA do usuário (para a tela Meu Perfil). */
     @GetMapping("/status")
     public ResponseEntity<Map<String, Object>> status(Authentication auth) {
         UserModel user = getUser(auth);
@@ -61,7 +60,6 @@ public class MfaRestController {
         ));
     }
 
-    /** Envia um código ao e-mail para CONFIRMAR a ativação do MFA por e-mail. */
     @PostMapping("/email/send-enable-code")
     public ResponseEntity<Void> sendEmailEnableCode(Authentication auth) {
         UserModel user = getUser(auth);
@@ -72,7 +70,6 @@ public class MfaRestController {
         return ResponseEntity.ok().build();
     }
 
-    /** Ativa o MFA por e-mail. Exige o código enviado ao próprio e-mail. */
     @PostMapping("/email")
     public ResponseEntity<Void> enableEmail(@RequestBody MfaVerifyDto dto, Authentication auth) {
         UserModel user = getUser(auth);
@@ -84,7 +81,6 @@ public class MfaRestController {
         return ResponseEntity.ok().build();
     }
 
-    /** Envia um código ao e-mail para CONFIRMAR a desativação do MFA por e-mail. */
     @PostMapping("/email/send-code")
     public ResponseEntity<Void> sendEmailDisableCode(Authentication auth) {
         UserModel user = getUser(auth);
@@ -95,34 +91,26 @@ public class MfaRestController {
         return ResponseEntity.ok().build();
     }
 
-    /**
-     * Desativa o MFA por e-mail. Exige o código enviado ao próprio e-mail (0.5).
-     * Admin/Funcionário não podem ficar sem nenhum MFA: bloqueia se o app não estiver ativo.
-     */
     @DeleteMapping("/email")
     public ResponseEntity<Void> disableEmail(@RequestBody MfaVerifyDto dto, Authentication auth) {
         UserModel user = getUser(auth);
         if (user == null) return ResponseEntity.status(401).build();
         if (!user.isEmailMfaActive()) return ResponseEntity.badRequest().build();
         if (isStaff(user) && !user.isAppMfaActive())
-            return ResponseEntity.status(HttpStatus.CONFLICT).build(); // precisa manter ao menos 1 método
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
         if (!emailMfaCodeStore.validate(user.getId(), dto.getTotpCode()))
             return ResponseEntity.status(401).build();
         mfaService.setEmailMfa(user.getId(), false);
         return ResponseEntity.ok().build();
     }
 
-    /**
-     * Desativa o MFA por aplicativo. Exige o código TOTP do próprio app (0.5).
-     * Admin/Funcionário não podem ficar sem nenhum MFA: bloqueia se o e-mail não estiver ativo.
-     */
     @DeleteMapping
     public ResponseEntity<Void> disable(@Valid @RequestBody MfaVerifyDto dto, Authentication auth) {
         UserModel user = getUser(auth);
         if (user == null) return ResponseEntity.status(401).build();
         if (!user.isAppMfaActive()) return ResponseEntity.badRequest().build();
         if (isStaff(user) && !user.isEmailMfaActive())
-            return ResponseEntity.status(HttpStatus.CONFLICT).build(); // precisa manter ao menos 1 método
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
         return mfaService.disable(user.getId(), dto.getTotpCode())
             ? ResponseEntity.ok().build() : ResponseEntity.status(401).build();
     }

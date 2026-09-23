@@ -1,13 +1,5 @@
 package br.com.faitec.falacidade.domain;
 
-/**
- * Representa o estado de um upload assíncrono para o Cloudinary.
- *
- * Ciclo de vida:
- *   PROCESSING → DONE (aceito)
- *   PROCESSING → REJECTED (foto borrada em categoria crítica)
- *   PROCESSING → ERROR (falha de rede/Cloudinary)
- */
 public class UploadStatus {
 
     public enum State { PROCESSING, DONE, REJECTED, ERROR }
@@ -15,12 +7,10 @@ public class UploadStatus {
     private final String uploadId;
     private volatile State state;
 
-    // Preenchidos quando state == DONE
     private volatile String publicId;
     private volatile String url;
     private volatile boolean blurred;
 
-    // Preenchidos quando state == REJECTED ou ERROR
     private volatile String message;
 
     public UploadStatus(String uploadId) {
@@ -45,7 +35,6 @@ public class UploadStatus {
         this.state   = State.ERROR;
     }
 
-    // ---- getters (sem setters – estado muda só pelos métodos mark*) ----
     public String getUploadId() { return uploadId; }
     public State  getState()    { return state; }
     public String getPublicId() { return publicId; }

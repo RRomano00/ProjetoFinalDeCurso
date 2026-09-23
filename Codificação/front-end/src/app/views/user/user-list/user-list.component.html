@@ -45,7 +45,6 @@
         <tr *ngFor="let u of filtered" [class.inactive-row]="!u.active">
           <td class="cell-name">{{ u.fullname }}</td>
           <td class="cell-email">{{ u.email }}</td>
-          <!-- RF25: o perfil é editável na própria linha; o próprio usuário não muda o seu -->
           <td class="cell-role">
             <span *ngIf="u.id === myId" class="role-pill role-{{ u.role?.toLowerCase() }}">
               {{ roleLabel(u.role) }}
@@ -67,12 +66,10 @@
             <span class="status-pill" [class.on]="u.active">{{ u.active ? 'Ativo' : 'Inativo' }}</span>
           </td>
           <td class="cell-actions">
-            <!-- Admin não inativa a própria conta por aqui -->
             <button *ngIf="u.id !== myId" class="btn-toggle" [class.danger]="u.active"
                     [disabled]="togglingId === u.id" (click)="toggleActive(u)">
               {{ togglingId === u.id ? '...' : (u.active ? 'Desativar' : 'Ativar') }}
             </button>
-            <!-- Excluir só aparece depois de inativada -->
             <button *ngIf="u.id !== myId && !u.active" class="btn-toggle danger"
                     [disabled]="deletingId === u.id" (click)="askRemove(u)">
               {{ deletingId === u.id ? '...' : 'Excluir' }}
@@ -88,7 +85,6 @@
     </div>
   </div>
 
-  <!-- Confirmação da exclusão: a pergunta nomeia a conta e o efeito -->
   <div class="modal-overlay" *ngIf="pendingDelete" (click)="pendingDelete = null">
     <div class="modal-card" (click)="$event.stopPropagation()">
       <h2>Excluir conta</h2>

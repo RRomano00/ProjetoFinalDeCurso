@@ -14,13 +14,11 @@ public class Occurrence {
     private String number;
     private String street;
     private String city;
-    /** UF do endereço da ocorrência; par do município (há homônimos entre estados). */
     private String state;
     private String urlMedia;
     private String cloudinaryPublicId;
     private boolean imageBlurred;
 
-    /** RF07: fotos anexadas (a 1ª também é gravada em urlMedia como capa). */
     private java.util.List<OccurrenceMedia> media;
     private OccurrenceStatus status;
     private OccurrenceType type;
@@ -29,20 +27,12 @@ public class Occurrence {
     private String email;
     private int usersId;
 
-    /**
-     * Hash SHA-256 (hex, 64 chars) do código de rastreamento anônimo.
-     * NUNCA armazenamos o código em plain text — só o hash.
-     * NULL para ocorrências identificadas.
-     */
     private String anonymousTrackingCodeHash;
 
-    /** Ponto de referência do endereço (ex.: "em frente ao mercado X"). */
     private String addressReference;
 
-    /** RF12: id da ocorrência raiz do grupo de duplicatas (null = não agrupada / é a raiz). */
     private Integer groupId;
 
-    /** IPv4/IPv6 do cliente — armazenado apenas para ocorrências anônimas (RF08). */
     private String ipAddress;
 
     private LocalDateTime createdAt;
@@ -104,11 +94,9 @@ public class Occurrence {
     public void setStreet(String street) { this.street = street; }
     public String getCity() { return city; }
     public String getState() { return state; }
-    /** Guarda em maiúsculas: a UF é comparada com os códigos do IBGE. */
     public void setState(String state) {
         this.state = state == null || state.isBlank() ? null : state.trim().toUpperCase();
     }
-    /** Ver UserModel.setCity: os dois lados da comparação precisam do trim. */
     public void setCity(String city) { this.city = city == null ? null : city.trim(); }
     public String getUrlMedia() { return urlMedia; }
     public void setUrlMedia(String urlMedia) { this.urlMedia = urlMedia; }

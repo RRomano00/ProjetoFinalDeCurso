@@ -21,7 +21,6 @@
 .form-section { padding: 1.5rem 1.75rem; border-bottom: 1px solid var(--line-soft); }
 .form-section:last-child { border-bottom: none; }
 
-/* Título do bloco: peso e fio, sem etiqueta em caixa alta. */
 .form-section-title {
   display: flex;
   align-items: center;
@@ -121,8 +120,6 @@ select.form-input { cursor: pointer; }
   .form-actions .btn-secondary { width: 100%; justify-content: center; }
 }
 
-/* A UF tem duas letras: o campo não ocupa a largura de um município. */
 .input-uf { text-transform: uppercase; letter-spacing: 0.06em; max-width: 6rem; }
 
-/* Município antes da UF: aceita valor, não aceita digitação. */
 .form-input[readonly] { background: var(--surface-2); color: var(--ink-mute); cursor: not-allowed; }

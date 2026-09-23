@@ -15,13 +15,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
-/**
- * RF22: departamentos da prefeitura — destinos possíveis do encaminhamento.
- *
- * O departamento é municipal: o funcionário administra os setores do próprio
- * município e o administrador, os de todos. A restrição de perfil está em
- * JwtSecurityConfiguration; a de município é aplicada aqui.
- */
 @RestController
 @RequestMapping("/api/department")
 public class DepartmentRestController {
@@ -34,17 +27,6 @@ public class DepartmentRestController {
         this.userService = userService;
     }
 
-    /**
-     * Lista os setores do município de quem consulta. O filtro city/state é do
-     * Super Administrador, que não tem município próprio e precisa alcançar
-     * qualquer um.
-     *
-     * Para a equipe o parâmetro é ignorado de propósito: a ocorrência que ela
-     * encaminha é sempre do seu município (RN07, conferido em
-     * OccurrenceRestController), então o único efeito de honrar o filtro seria
-     * deixar qualquer funcionário enxergar os setores de outra prefeitura
-     * trocando a consulta na barra de endereços.
-     */
     @GetMapping
     public ResponseEntity<List<Department>> getAll(
             @RequestParam(required = false) String city,
@@ -53,6 +35,9 @@ public class DepartmentRestController {
 
         UserModel user = currentUser(auth);
 
+        // Para a equipe o filtro city/state é ignorado de propósito: a ocorrência
+        // que ela encaminha é sempre do seu município, então honrá-lo só serviria
+        // para enxergar os setores de outra prefeitura trocando a consulta.
         if (isSuperAdmin(user))
             return ResponseEntity.ok(city != null && !city.isBlank() && state != null && !state.isBlank()
                 ? departmentService.findAllByCity(city, state)
@@ -68,17 +53,11 @@ public class DepartmentRestController {
         UserModel user = currentUser(auth);
         Department entity = dto.toDepartment();
 
-        // A equipe cadastra setores do próprio município; só o Super
-        // Administrador, sem município, cadastra em qualquer um. Sem essa trava,
-        // um município poderia receber destinos de encaminhamento criados por outro.
         if (!isSuperAdmin(user) && !sameCity(user, entity.getCity(), entity.getState()))
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
                 "error", "Você só pode cadastrar departamentos do seu município."));
 
         try {
-            // O serviço apara o nome e normaliza e-mail e UF; a resposta devolve os
-            // valores gravados, e não os digitados, para a tela não exibir uma
-            // grafia diferente da que está no banco.
             int id = departmentService.create(entity);
             entity.setId(id);
             return ResponseEntity.status(HttpStatus.CREATED).body(entity);
@@ -89,11 +68,6 @@ public class DepartmentRestController {
         }
     }
 
-    /**
-     * RF22/RF25: o administrador corrige nome, e-mail e município do setor.
-     * Precisa alcançar os dois municípios — o de origem e o de destino —, senão
-     * mudaria o setor de outra cidade, ou mandaria o seu para fora do alcance.
-     */
     @PutMapping("/{id}")
     public ResponseEntity<?> update(@PathVariable int id,
                                     @Valid @RequestBody CreateDepartmentDto dto,
@@ -111,7 +85,6 @@ public class DepartmentRestController {
 
         try {
             departmentService.update(id, entity);
-            // Devolve o que foi gravado, e não o digitado: a tela mostra a grafia do banco.
             return ResponseEntity.ok(entity);
         } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", e.getMessage()));
@@ -120,15 +93,12 @@ public class DepartmentRestController {
         }
     }
 
-    // ---- helpers ----
-
     private UserModel currentUser(Authentication auth) {
         if (auth == null || auth.getName() == null) return null;
         try { return userService.findByEmail(auth.getName()); }
         catch (Exception e) { return null; }
     }
 
-    /** Sem município próprio, o Super Administrador vê e cadastra em todos (RF25). */
     private boolean isSuperAdmin(UserModel user) {
         return user != null && user.isSuperAdmin();
     }

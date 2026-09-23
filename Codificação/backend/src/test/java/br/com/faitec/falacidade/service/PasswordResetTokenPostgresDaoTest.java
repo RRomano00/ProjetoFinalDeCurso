@@ -32,10 +32,6 @@ class PasswordResetTokenPostgresDaoTest {
         sut = new PasswordResetTokenPostgresDao(connection);
     }
 
-    // ================================================================
-    // save()
-    // ================================================================
-
     @Nested
     @DisplayName("save()")
     class Save {
@@ -73,10 +69,6 @@ class PasswordResetTokenPostgresDaoTest {
                 .hasMessageContaining("salvar token");
         }
     }
-
-    // ================================================================
-    // findByToken()
-    // ================================================================
 
     @Nested
     @DisplayName("findByToken()")
@@ -132,10 +124,6 @@ class PasswordResetTokenPostgresDaoTest {
         }
     }
 
-    // ================================================================
-    // markUsed()
-    // ================================================================
-
     @Nested
     @DisplayName("markUsed()")
     class MarkUsed {
@@ -161,10 +149,6 @@ class PasswordResetTokenPostgresDaoTest {
                 .hasMessageContaining("marcar token");
         }
     }
-
-    // ================================================================
-    // deleteExpiredByUserId()
-    // ================================================================
 
     @Nested
     @DisplayName("deleteExpiredByUserId()")

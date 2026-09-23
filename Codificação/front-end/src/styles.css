@@ -1,51 +1,34 @@
-/* ============================================================================
-   Fala, Cidade! — sistema de design
-   Referência visual: sinalização municipal brasileira (placa de logradouro
-   esmaltada azul, sinalização de obra em âmbar) sobre fundo de concreto.
-   Fonte única de cor, tipografia, raio e elevação — os componentes consomem
-   estes tokens via var(); nenhum hex solto nas telas.
-   ========================================================================= */
 
 :root {
-  /* ── Superfícies ── */
-  --bg:        #edf0f4;   /* concreto: fundo da aplicação */
-  --surface:   #ffffff;   /* cartão / painel */
-  --surface-2: #f5f7f9;   /* barra de ações, cabeçalho de tabela */
-  --line:      #d5dce4;   /* fio de estrutura (borda de cartão) */
-  --line-soft: #e7ebf0;   /* divisória interna */
+  --bg:        #edf0f4;
+  --surface:   #ffffff;
+  --surface-2: #f5f7f9;
+  --line:      #d5dce4;
+  --line-soft: #e7ebf0;
 
-  /* ── Texto ── */
-  --ink:       #1d2733;   /* ardósia azulada, não preto tingido */
+  --ink:       #1d2733;
   --ink-mute:  #59657a;
   --ink-faint: #68737f;
 
-  /* ── Azul de placa: marca, ações primárias, item ativo ── */
   --plate:      #14487e;
   --plate-deep: #0e3560;
   --plate-wash: #e4edf7;
   --plate-line: #b7cce4;
 
-  /* ── Status: uma cor, um significado, em TODAS as telas ──
-        pendente = aguarda triagem · em andamento = equipe atuando
-        concluída = serviço feito · indeferida  = recusa administrativa   */
   --st-pending:  #8a5800;  --st-pending-bg:  #fbf1dd;  --st-pending-line:  #ecd9ae;
   --st-progress: #14487e;  --st-progress-bg: #e4edf7;  --st-progress-line: #b7cce4;
   --st-done:     #176242;   --st-done-bg:    #e2f0e8;  --st-done-line:     #b2d7c4;
   --st-refused:  #8b3a2d;  --st-refused-bg:  #f6e8e5;  --st-refused-line:  #e1c1ba;
 
-  /* ── Prioridade ── */
   --pr-high: #a2352a;  --pr-medium: #8a5800;  --pr-low: #176242;
 
-  /* ── Raio: o valor comunica o que a superfície é ── */
-  --r-ctl:   4px;   /* controle: campo, botão, chip retangular */
-  --r-card: 10px;   /* cartão de registro */
-  --r-modal:14px;   /* algo que flutua sobre a tela */
+  --r-ctl:   4px;
+  --r-card: 10px;
+  --r-modal:14px;
 
-  /* ── Elevação: reservada ao que realmente flutua ── */
   --lift:      0 6px 18px -10px rgb(18 32 51 / .30);
   --lift-high: 0 24px 48px -18px rgb(18 32 51 / .40);
 
-  /* ── Tipografia ── */
   --font: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
   --mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
 
@@ -64,27 +47,22 @@ html, body {
   background-color: var(--bg);
   -webkit-font-smoothing: antialiased;
 }
-html { font-size: 16px; }   /* âncora do controle de tamanho de fonte (RF18) */
+html { font-size: 16px; }
 
 a { text-decoration: none; }
 input, textarea, select, button { font-family: inherit; }
 
-/* Foco visível em tudo que recebe teclado — piso de acessibilidade.
-   Só aparece na navegação por teclado, não no clique. */
 :focus-visible {
   outline: var(--focus);
   outline-offset: 2px;
   border-radius: 2px;
 }
 
-/* Número de protocolo: o objeto que dá identidade ao sistema.
-   Mesmo tratamento em toda tela onde ele aparece. */
 .protocol, .incident-id, .duplicate-protocol, .group-protocol, .tracking-code {
   font-family: var(--mono);
   font-feature-settings: 'zero' 1;
 }
 
-/* Atalho para o conteúdo (leitor de tela / teclado) */
 .skip-link {
   position: absolute;
   left: 0.5rem;
@@ -100,16 +78,16 @@ input, textarea, select, button { font-family: inherit; }
 }
 .skip-link:focus { top: 0.5rem; }
 
-/* Barra de rolagem */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
 ::-webkit-scrollbar-thumb { background: #c3ccd6; border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--ink-faint); }
 
-/* ===== RF18: Modo escuro =====
-   Inversão global de luminância (invert + hue-rotate mantém os tons das cores
-   de marca). Cobre TODAS as telas de uma vez. Mídias, mapas e o controle de
-   acessibilidade são re-invertidos para voltarem às cores reais. */
+/* Inversão global de luminância — invert + hue-rotate mantém os tons das cores
+   de marca e cobre todas as telas de uma vez. Mídias, mapas e o controle de
+   acessibilidade são re-invertidos logo abaixo para voltarem às cores reais.
+   Consequência: fundo declarado em CSS inverte junto, então o que precisa
+   chegar branco na tela escura é declarado preto. */
 html.dark-theme {
   filter: invert(0.92) hue-rotate(180deg);
   background: #0e0e10;
@@ -125,9 +103,6 @@ html.dark-theme .a11y-controls {
   filter: invert(1) hue-rotate(180deg);
 }
 
-/* Movimento responde a uma ação; nunca decora.
-   Em prefers-reduced-motion sobra apenas o giro dos indicadores de carga,
-   que é a única informação transmitida por movimento. */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     transition-duration: 0.01ms !important;
@@ -141,7 +116,6 @@ html.dark-theme .a11y-controls {
   }
 }
 
-/* ── RF11: convite a entrar para apoiar (listagem, detalhe e nova ocorrência) ── */
 .login-prompt-overlay {
   position: fixed;
   inset: 0;
@@ -166,22 +140,14 @@ html.dark-theme .a11y-controls {
 .login-prompt-actions { display: flex; justify-content: flex-end; gap: 0.5rem; }
 .login-prompt-actions .btn-primary { margin: 0; width: auto; }
 
-/* ── Cartão do marcador no mapa ──
-   O Leaflet monta o popup fora da árvore do componente, então o estilo mora
-   aqui, com os tokens do sistema, em vez de virar hex solto dentro do .ts. */
-/* O leaflet.css entra depois do styles.css no bundle, então estes overrides
-   precisam de especificidade maior que a do vendor para valerem. */
 .leaflet-popup .leaflet-popup-content-wrapper {
   border-radius: var(--r-card);
   box-shadow: var(--lift);
 }
 .leaflet-popup .leaflet-popup-content {
-  /* folga extra à direita para o × do Leaflet não encostar no conteúdo */
   margin: 0.875rem 1.75rem 0.875rem 1rem;
   line-height: 1.5;
 }
-/* .leaflet-popup-content p { margin: 1.3em 0 } separava tudo em bloco solto:
-   o espaçamento do cartão é o gap, um só, igual entre todas as linhas. */
 .leaflet-popup-content .occ-popup p { margin: 0; }
 
 .occ-popup {
@@ -191,7 +157,6 @@ html.dark-theme .a11y-controls {
   min-width: 190px;
   font-family: var(--font);
 }
-/* Protocolo é o caminho para o registro — mesmo tratamento da lista de agrupadas. */
 .occ-popup__protocol {
   font-family: var(--mono);
   font-size: 0.6875rem;
@@ -202,7 +167,6 @@ html.dark-theme .a11y-controls {
   width: fit-content;
 }
 .occ-popup__protocol:hover { text-decoration: underline; }
-/* O ponto da própria ocorrência não é atalho para ela mesma. */
 .occ-popup__protocol--current { color: var(--ink-faint); }
 .occ-popup__protocol--current:hover { text-decoration: none; }
 
@@ -246,15 +210,8 @@ html.dark-theme .a11y-controls {
   color: var(--ink-mute);
   white-space: nowrap;
 }
-/* No cartão estreito o botão ganha a linha inteira: alvo de toque decente. */
 .occ-popup__support { width: 100%; margin-top: 0.125rem; }
 
-/* ── Apoiar: um controle só, igual em toda tela ──
-   O mesmo botão liga e desliga o apoio. Apoiado, ele fica verde; com o
-   ponteiro em cima vira "Não apoiar" em tom de recusa, dizendo o que o
-   próximo clique faz. Usado na listagem, na ficha, nas duplicatas do
-   cadastro e no cartão do mapa (este último montado pelo Leaflet, fora
-   do Angular — por isso as regras vivem aqui e não num componente). */
 .btn-support {
   display: inline-flex;
   align-items: center;
@@ -288,22 +245,17 @@ html.dark-theme .a11y-controls {
   color: var(--st-refused);
 }
 
-/* Troca de rótulo: só quem já apoia vê "Não apoiar". */
 .btn-support__undo { display: none; }
 .btn-support.supported:hover:not(:disabled) .btn-support__state,
 .btn-support.supported:focus-visible .btn-support__state { display: none; }
 .btn-support.supported:hover:not(:disabled) .btn-support__undo,
 .btn-support.supported:focus-visible .btn-support__undo { display: inline; }
 
-/* Variante compacta: cartões da listagem, duplicatas e cartão do mapa. */
 .btn-support.btn-support--sm {
   padding: 0.3125rem 0.6875rem;
   font-size: 0.75rem;
 }
 
-/* ── Barra de filtros de listagem ──
-   Mesmo desenho em todas as telas com lista (ocorrências, usuários,
-   departamentos): o recorte se aprende uma vez e vale em qualquer uma. */
 .filters { display: flex; gap: 0.625rem; flex-wrap: wrap; align-items: center; }
 .filter-input,
 .filter-select {
@@ -326,11 +278,6 @@ html.dark-theme .a11y-controls {
   .filter-select { width: 100%; min-width: 0; flex: none; }
 }
 
-/* ── Modal de confirmação ──
-   O confirm() do navegador carimba o domínio no título ("x.com says") e não
-   aceita texto próprio; quando a pergunta precisa dizer de quem é a conta, a
-   caixa é da aplicação. Telas com modal próprio (nova ocorrência, listagem de
-   ocorrências) mantêm as medidas delas por herdarem o estilo do componente. */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -339,7 +286,7 @@ html.dark-theme .a11y-controls {
   align-items: center;
   justify-content: center;
   padding: 1rem;
-  z-index: 2000;   /* acima da navbar (1100) e da sidebar/drawer (1050-1300) */
+  z-index: 2000;
 }
 .modal-card {
   background: var(--surface);
@@ -356,9 +303,6 @@ html.dark-theme .a11y-controls {
 .modal-card p { font-size: 0.875rem; color: var(--ink-mute); line-height: 1.55; margin: 0; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.25rem; }
 
-/* ── Bússola do mapa: leva a vista até onde a pessoa está ──
-      Fica sobre o mapa, na faixa 1000 dos controles do Leaflet. O container
-      que a recebe precisa ser position: relative. */
 .map-locate {
   position: absolute; top: 10px; right: 10px; z-index: 1000;
   display: flex; align-items: center; justify-content: center;
@@ -367,9 +311,6 @@ html.dark-theme .a11y-controls {
   background: var(--surface); color: var(--ink); cursor: pointer;
 }
 .map-locate:hover:not(:disabled) { background: var(--surface-2); }
-/* Procurando: a agulha gira, mas a bússola continua na tela. Trocá-la por um
-   spinner fazia o botão parecer que tinha sumido durante a busca — que leva
-   até 20 s, somadas as duas tentativas de leitura do aparelho. */
 .map-locate.locating { cursor: progress; color: var(--ink-faint); }
 .map-locate.locating svg { animation: spin 1.4s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }

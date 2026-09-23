@@ -31,7 +31,6 @@ public class CustomUserDetailsService implements UserDetailsService {
             throw new UsernameNotFoundException("E-mail não encontrado: " + email);
         }
 
-        // BUGFIX: estava "Role_ " (com espaço). Corrigido para "ROLE_" (padrão Spring Security)
         List<GrantedAuthority> authorities = List.of(
             new SimpleGrantedAuthority("ROLE_" + userModel.getRole().name())
         );

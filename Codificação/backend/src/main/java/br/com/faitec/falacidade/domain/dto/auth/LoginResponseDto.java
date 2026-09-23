@@ -1,19 +1,12 @@
 package br.com.faitec.falacidade.domain.dto.auth;
 
-/**
- * Resposta do POST /api/authenticate (Step 1).
- *
- * Cenários possíveis:
- *   token preenchido          → login completo, sem 2FA
- *   requiresMfa = true        → envie o código (por app ou e-mail, ver as flags)
- */
 public class LoginResponseDto {
 
     private String  token;
     private boolean requiresMfa;
     private String  mfaToken;
-    private boolean mfaAppAvailable;    // usuário tem app autenticador ativo
-    private boolean mfaEmailAvailable;  // usuário tem MFA por e-mail ativo
+    private boolean mfaAppAvailable;
+    private boolean mfaEmailAvailable;
 
     private LoginResponseDto() {}
 

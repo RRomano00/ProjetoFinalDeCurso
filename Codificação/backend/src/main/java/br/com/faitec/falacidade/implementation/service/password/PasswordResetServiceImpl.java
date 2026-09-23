@@ -40,15 +40,10 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     @Override
     public void requestReset(String email) {
         UserModel user = userService.findByEmail(email);
-        // Não revelamos se o e-mail existe ou não (segurança)
         if (user == null) return;
 
-        // Limpa tokens antigos deste usuário
         tokenDao.deleteExpiredByUserId(user.getId());
 
-        // Código curto de 8 chars (o mesmo gerador do rastreamento anônimo): é isso
-        // que a pessoa digita de volta na tela. Um link para localhost não abre em
-        // lugar nenhum e ainda cheira a phishing para o filtro de spam.
         String rawToken = codeService.generateCode();
 
         PasswordResetToken token = new PasswordResetToken();
@@ -64,14 +59,12 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     @Override
     public boolean confirmReset(String rawToken, String newPassword) {
         if (rawToken == null) return false;
-        // Código digitado à mão: espaço nas pontas e minúsculas não podem reprovar.
         PasswordResetToken token = tokenDao.findByToken(rawToken.trim().toUpperCase());
 
         if (token == null || token.isExpired() || token.isUsed()) {
             return false;
         }
 
-        // Valida complexidade de senha (RNF17 – mínimo 8 chars, letra, número e especial)
         if (!isPasswordValid(newPassword)) {
             return false;
         }

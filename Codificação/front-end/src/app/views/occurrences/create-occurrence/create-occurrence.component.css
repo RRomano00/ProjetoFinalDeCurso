@@ -7,7 +7,6 @@
   margin: 0 auto;
 }
 
-/* ── Cabeçalho ── */
 .page-header {
   display: flex;
   align-items: center;
@@ -40,7 +39,6 @@
 }
 .btn-secondary:hover { background: var(--surface-2); border-color: var(--plate-line); }
 
-/* ── Formulário ── */
 .occurrence-form {
   background: var(--surface);
   border: 1px solid var(--line);
@@ -52,7 +50,6 @@
   padding: 1.5rem 1.75rem;
   border-bottom: 1px solid var(--line-soft);
 }
-/* Título da etapa: peso e fio, sem etiqueta em caixa alta. */
 .form-section > h3 {
   font-size: 0.9375rem;
   font-weight: 600;
@@ -112,7 +109,6 @@
   accent-color: var(--plate);
 }
 
-/* Barra de ações */
 .form-actions {
   display: flex;
   justify-content: flex-end;
@@ -141,8 +137,6 @@
 .btn-primary:hover:not(:disabled) { background: var(--plate-deep); }
 .btn-primary:disabled { opacity: 0.55; cursor: not-allowed; }
 
-/* ── Código de acompanhamento ──
-   Único momento em que o código é mostrado: ele é o objeto principal da tela. */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -170,7 +164,7 @@
   font-size: 1.75rem;
   font-weight: 600;
   letter-spacing: 0.28em;
-  text-indent: 0.28em;      /* compensa o espaço extra à direita do letter-spacing */
+  text-indent: 0.28em;
   color: #fff;
   background: var(--plate);
   border-radius: var(--r-ctl);
@@ -182,7 +176,6 @@
 
 .modal-card .btn-primary { margin: 0.5rem 0 0 0; width: 100%; }
 
-/* ── Fotos (RF07/RF20) ── */
 .photo-note { font-size: 0.8125rem; color: var(--ink-mute); margin: 0 0 0.75rem; }
 
 .btn-upload {
@@ -272,7 +265,6 @@
 }
 .btn-thumb-remove:hover { background: var(--st-refused); }
 
-/* ── Mapa de seleção do local (RF09) ── */
 .map-select-wrapper {
   border: 1px solid var(--line);
   border-radius: var(--r-card);
@@ -281,7 +273,6 @@
 }
 #create-map { width: 100%; height: 300px; cursor: crosshair; }
 
-/* O mapa hospeda a bússola, que é compartilhada (styles.css). */
 .map-holder { position: relative; }
 
 .map-hint {
@@ -322,7 +313,6 @@
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ── RF16: duplicatas próximas ── */
 .duplicates-panel {
   margin-top: 1.25rem;
   padding: 1rem 1.125rem;
@@ -374,9 +364,7 @@
   white-space: nowrap;
 }
 .duplicate-actions { display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; }
-/* .btn-support agora é do sistema (styles.css); o "Ver" saiu: o protocolo é o link. */
 
-/* ── RF08: aviso do modo visitante ── */
 .visitor-note {
   font-size: 0.9375rem;
   color: var(--ink);
@@ -389,7 +377,6 @@
   max-width: 64ch;
 }
 
-
 @media (max-width: 640px) {
   .form-row { grid-template-columns: 1fr; }
   .form-section { padding: 1.25rem 1.125rem; }
@@ -399,13 +386,9 @@
   .tracking-code { font-size: 1.375rem; letter-spacing: 0.2em; text-indent: 0.2em; }
 }
 
-/* ── Endereço: bairro · UF · município ──
-   A UF só precisa de duas letras e vem antes do município porque é ela que
-   carrega a lista de sugestões. */
 .form-row:has(.form-group--uf) { grid-template-columns: 1fr 5.5rem 1.4fr; }
 .input-uf { text-transform: uppercase; letter-spacing: 0.06em; }
 
-/* Município antes da UF: aceita o valor vindo do mapa, mas não digitação. */
 input[readonly] { background: var(--surface-2); color: var(--ink-mute); cursor: not-allowed; }
 
 .field-hint { font-size: 0.75rem; color: var(--ink-faint); line-height: 1.4; }
@@ -414,9 +397,6 @@ input[readonly] { background: var(--surface-2); color: var(--ink-mute); cursor: 
   .form-row:has(.form-group--uf) { grid-template-columns: 1fr; }
 }
 
-/* ── Município sem equipe cadastrada ──
-   Âmbar de sinalização de obra: é aviso, não erro. O registro continua valendo,
-   então o tom de recusa (tijolo) seria mentira. */
 .coverage-notice {
   display: flex;
   align-items: flex-start;

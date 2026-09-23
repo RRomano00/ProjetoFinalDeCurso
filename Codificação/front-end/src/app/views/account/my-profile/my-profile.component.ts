@@ -21,49 +21,38 @@ import { AuthenticationService } from '../../../services/security/authentication
   styleUrl: './my-profile.component.css'
 })
 export class MyProfileComponent {
-  /** Sugestões dos campos de localidade (RF04). */
   units: { uf: string; name: string }[] = [];
   cityOptions: CityOptions = { list: [], ready: false };
 
   user: User = { fullname: '', email: '', password: '', role: UserRole.CITIZEN };
   form!: FormGroup;
-  /** RF04: formulário de edição dos dados de perfil. */
   profileForm!: FormGroup;
   savingProfile = false;
   id? = localStorage.getItem('id');
-  /** RNF19: mínimo 8 caracteres com letra, número e caractere especial. */
   passwordMinLength = 8;
 
-  // ── 2FA / MFA ──
   mfaAppActive = false;
   mfaEmailActive = false;
   userRole = '';
   loadingMfa = true;
-  // Fluxo de ativação do app autenticador
   showQr = false;
   qrCodeImgUrl = '';
   secret = '';
   confirmCode = '';
   savingMfa = false;
-  // Ativação do e-mail (com código)
   enablingEmail = false;
   emailEnableCode = '';
-  // Desativação com código
   disablingEmail = false;
   emailDisableCode = '';
   disablingApp = false;
   appDisableCode = '';
-  // Exclusão de conta (RF06)
   deletingAccount = false;
   deleteCode = '';
   deletingNow = false;
 
-  /** Precisa de código MFA para excluir a conta (algum método ativo). */
   get deleteNeedsCode(): boolean { return this.mfaAppActive || this.mfaEmailActive; }
-  /** Quando o único método é e-mail, enviamos um código por e-mail. */
   get deleteUsesEmailCode(): boolean { return this.mfaEmailActive && !this.mfaAppActive; }
 
-  /** Admin/Funcionário precisam manter ao menos um método de MFA ativo. */
   get isStaff(): boolean {
     return this.userRole === 'SUPER_ADMIN'
         || this.userRole === 'ADMINISTRATOR' || this.userRole === 'EMPLOYEE';
@@ -92,11 +81,6 @@ export class MyProfileComponent {
     this.initializeForm();
   }
 
-  /**
-   * RF25: para a equipe o município não é endereço, é a jurisdição — define
-   * quais ocorrências a conta atende e onde ela cadastra setores. Quem quiser
-   * mudá-lo pede ao Super Administrador; o back-end recusa do mesmo jeito.
-   */
   get municipalityLocked(): boolean { return this.auth.isStaff(); }
 
   ngOnInit(): void {
@@ -106,7 +90,6 @@ export class MyProfileComponent {
     this.loadProfile();
   }
 
-  /** RF04: pré-preenche o formulário com os dados atuais do usuário. */
   async loadProfile() {
     if (!this.id) return;
     try {
@@ -127,7 +110,6 @@ export class MyProfileComponent {
     }
   }
 
-  /** RF04: salva os dados de perfil (PUT /api/user/{id}). */
   saveProfile() {
     if (this.profileForm.invalid || !this.id) return;
     const dto: UpdateProfileDto = {
@@ -158,7 +140,6 @@ export class MyProfileComponent {
       this.mfaEmailActive = !!s.emailActive;
       this.userRole = s.role || '';
     } catch {
-      // silencioso: apenas não mostra o estado
     } finally {
       this.loadingMfa = false;
     }
@@ -201,7 +182,6 @@ export class MyProfileComponent {
     this.confirmCode = '';
   }
 
-  // ── Ativar e-mail (com código enviado ao e-mail) ──
   async startEnableEmail() {
     this.enablingEmail = true;
     this.emailEnableCode = '';
@@ -237,7 +217,6 @@ export class MyProfileComponent {
     }
   }
 
-  // ── Desativar e-mail (com código enviado ao e-mail) ──
   async startDisableEmail() {
     if (this.blocksLastMfaRemoval()) return;
     this.disablingEmail = true;
@@ -273,7 +252,6 @@ export class MyProfileComponent {
     }
   }
 
-  // ── Desativar app (com código TOTP) ──
   startDisableApp() {
     if (this.blocksLastMfaRemoval()) return;
     this.disablingApp = true;
@@ -309,11 +287,9 @@ export class MyProfileComponent {
     }
   }
 
-  // ── Excluir a própria conta (RF06) ──
   async startDeleteAccount() {
     this.deletingAccount = true;
     this.deleteCode = '';
-    // Se o único método ativo é o e-mail, enviamos o código automaticamente.
     if (this.deleteUsesEmailCode) {
       this.deletingNow = true;
       try {
@@ -355,7 +331,6 @@ export class MyProfileComponent {
                          Validators.pattern(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])/)]],
       confirmPassword: ['', [Validators.required]]
     });
-    // RF04: dados de perfil (município obrigatório — RN01)
     this.profileForm = this.formBuilder.group({
       fullname:     ['', [Validators.required, Validators.minLength(3)]],
       phoneNumber:  [''],
@@ -368,7 +343,6 @@ export class MyProfileComponent {
     });
 
     this.units = this.locality.units;
-    // O município só aceita digitação depois da UF (regra igual no cadastro).
     this.cityOptions = this.locality.bindCityToUf(this.profileForm);
 
     if (this.municipalityLocked) {

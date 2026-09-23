@@ -55,10 +55,6 @@ class OccurrenceServiceImplTest {
         return g;
     }
 
-    // ================================================================
-    // Prioridade automática (RN04) via createOccurrence()
-    // ================================================================
-
     @Nested
     @DisplayName("Prioridade automática (RN04)")
     class Priority {
@@ -105,10 +101,6 @@ class OccurrenceServiceImplTest {
         }
     }
 
-    // ================================================================
-    // updateOccurrenceStatusToInProgress()
-    // ================================================================
-
     @Nested
     @DisplayName("updateOccurrenceStatusToInProgress()")
     class ToInProgress {
@@ -126,10 +118,6 @@ class OccurrenceServiceImplTest {
         }
     }
 
-    // ================================================================
-    // updateOccurrenceStatusToConclude()
-    // ================================================================
-
     @Nested
     @DisplayName("updateOccurrenceStatusToConclude()")
     class ToConclude {
@@ -146,10 +134,6 @@ class OccurrenceServiceImplTest {
             verifyNoInteractions(occurrenceDao);
         }
     }
-
-    // ================================================================
-    // updateStatus()
-    // ================================================================
 
     @Nested
     @DisplayName("updateStatus()")
@@ -179,10 +163,6 @@ class OccurrenceServiceImplTest {
         }
     }
 
-    // ================================================================
-    // findById()
-    // ================================================================
-
     @Nested
     @DisplayName("findById()")
     class FindById {
@@ -200,10 +180,6 @@ class OccurrenceServiceImplTest {
         }
     }
 
-    // ================================================================
-    // findAll()
-    // ================================================================
-
     @Nested
     @DisplayName("findAll()")
     class FindAll {
@@ -214,10 +190,6 @@ class OccurrenceServiceImplTest {
             assertThat(sut.findAll()).hasSize(2).isSameAs(list);
         }
     }
-
-    // ================================================================
-    // findByProtocolNumber()
-    // ================================================================
 
     @Nested
     @DisplayName("findByProtocolNumber()")
@@ -236,10 +208,6 @@ class OccurrenceServiceImplTest {
         }
     }
 
-    // ================================================================
-    // findNearbyDuplicates()
-    // ================================================================
-
     @Nested
     @DisplayName("findNearbyDuplicates()")
     class FindNearby {
@@ -257,10 +225,6 @@ class OccurrenceServiceImplTest {
             verifyNoInteractions(occurrenceDao);
         }
     }
-
-    // ================================================================
-    // findAllByUserEmail() / findAllByCity()  (RF a.8 / b.2)
-    // ================================================================
 
     @Nested
     @DisplayName("findAllByUserEmail() / findAllByCity()")

@@ -1,5 +1,4 @@
 <div class="page-home">
-  <!-- Header -->
   <div class="page-header">
     <div class="welcome-block">
       <h1>Bem-vindo(a), {{ username }}!</h1>
@@ -15,15 +14,11 @@
     </a>
   </div>
 
-  <!-- Body: lista + mapa -->
   <div class="home-body">
 
-    <!-- Coluna principal: mapa da cidade + números -->
     <div class="map-col">
       <h2 class="col-title">Mapa de Ocorrências</h2>
 
-      <!-- Município: recorta a tela toda (e leva o mapa até ele).
-           RF21: bairro, categoria e status recortam o mapa. -->
       <div class="map-filters">
         <select class="select-city" [(ngModel)]="filterCity" (ngModelChange)="onCityChange()">
           <option value="">Todos os municípios</option>
@@ -48,7 +43,6 @@
 
       <div class="map-wrapper">
         <div id="incident-map"></div>
-        <!-- Bússola: leva o mapa até onde a pessoa está (a mesma da nova ocorrência) -->
         <button type="button" class="map-locate" [class.locating]="locating"
                 (click)="goToMyLocation()" [disabled]="locating"
                 [attr.aria-busy]="locating"
@@ -72,7 +66,6 @@
         </div>
       </div>
 
-      <!-- Situação da cidade: a proporção fecha sozinha, o que três números não faziam -->
       <div class="city-state" *ngIf="totalOccurrences">
         <div class="city-state-top">
           <h3>Situação das ocorrências</h3>
@@ -90,7 +83,6 @@
       </div>
     </div>
 
-    <!-- Coluna secundária: ocorrências recentes -->
     <div class="incidents-col">
       <h2 class="col-title">Ocorrências Recentes</h2>
       <div class="incident-list">
@@ -120,7 +112,6 @@
               {{ o.street || '' }} {{ o.neighborhood ? ', ' + o.neighborhood : '' }}
             </span>
           </div>
-          <!-- Mesma pílula colorida da listagem e do detalhe, não o enum cru -->
           <span class="incident-tag" *ngIf="o.type"
                 [style.background]="typeColor(o.type) + '18'"
                 [style.color]="typeColor(o.type)"
@@ -130,7 +121,6 @@
 
           <div class="incident-foot">
             <span class="incident-id">{{ o.protocolNumber }}</span>
-            <!-- "Recentes" é uma afirmação sobre data: mostra a data. -->
             <time *ngIf="o.createdAt">{{ o.createdAt | date:'dd/MM/yyyy, HH:mm' }}</time>
           </div>
         </a>
@@ -143,7 +133,6 @@
 
   </div>
 
-  <!-- RF11: visitante tentou apoiar pelo mapa → precisa entrar -->
   <div class="login-prompt-overlay" *ngIf="showLoginPrompt" (click)="showLoginPrompt = false">
     <div class="login-prompt-card" (click)="$event.stopPropagation()">
       <h2>🤝 Quer apoiar esta ocorrência?</h2>

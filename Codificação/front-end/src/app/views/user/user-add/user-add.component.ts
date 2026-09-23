@@ -17,31 +17,17 @@ import { Router, RouterModule } from '@angular/router';
 })
 export class UserAddComponent implements OnInit {
   units: { uf: string; name: string }[] = [];
-  /** Municípios da UF; enquanto não houver UF, o campo não recebe digitação. */
   cityOptions: CityOptions = { list: [], ready: false };
 
   form!: FormGroup;
   loading = false;
 
-
-  /**
-   * RF25: o Super Administrador nomeia outros Super e escolhe o município de
-   * cada conta; o administrador municipal monta a equipe do seu próprio
-   * município — funcionários e outros administradores.
-   */
   get isSuperAdmin() { return this.auth.isSuperAdmin(); }
 
-  /**
-   * Montada uma vez, no construtor. Como getter, devolvia objetos novos a cada
-   * ciclo de detecção: o *ngFor recriava as <option> e o <select> caía de volta
-   * na primeira — o perfil escolhido virava "Funcionário" sozinho.
-   */
   roles: { value: string; label: string }[] = [];
 
-  /** O Super Administrador não tem município: os campos somem do formulário. */
   get isSuperAdminSelected() { return this.form.value.role === 'SUPER_ADMIN'; }
 
-  /** Município fixo de quem cadastra, quando não é o Super Administrador. */
   get localityLocked() { return !this.isSuperAdmin; }
 
   constructor(
@@ -70,24 +56,20 @@ export class UserAddComponent implements OnInit {
                   { value: 'ADMINISTRATOR', label: 'Administrador do município' }];
     if (this.isSuperAdmin) this.roles.push({ value: 'SUPER_ADMIN', label: 'Super Administrador' });
 
-    // O Super Administrador não tem município; ao escolher esse perfil, as
-    // exigências de UF e município saem do formulário.
     this.form.get('role')!.valueChanges.subscribe(role => this.applyRoleRules(role));
   }
 
   async ngOnInit() {
     if (this.isSuperAdmin) return;
-    // Administrador municipal: o município é o dele, e não se digita.
     const id = localStorage.getItem('id');
     if (!id) return;
     try {
       const me = await this.userReadService.findById(id);
       if (me?.state) this.form.patchValue({ state: me.state });
       if (me?.city)  this.form.patchValue({ city: me.city });
-    } catch { /* sem o perfil, os campos seguem editáveis */ }
+    } catch { }
   }
 
-  /** Perfil sem município: tira as exigências; com município, devolve. */
   private applyRoleRules(role: string) {
     const state = this.form.get('state')!, city = this.form.get('city')!;
     if (role === 'SUPER_ADMIN') {
@@ -109,7 +91,6 @@ export class UserAddComponent implements OnInit {
     if (!this.passwordsMatch()) { this.toastr.error('As senhas não coincidem!'); return; }
 
     this.loading = true;
-    // Usa o endpoint correto /api/user/employee (requer token de ADMINISTRATOR)
     this.userCreateService.createStaff({
       fullname: this.form.value.fullname,
       email:    this.form.value.email,

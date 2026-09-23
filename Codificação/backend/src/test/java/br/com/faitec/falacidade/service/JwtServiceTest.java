@@ -18,7 +18,6 @@ import static org.assertj.core.api.Assertions.*;
 @DisplayName("JwtService")
 class JwtServiceTest {
 
-    // JwtService não tem dependências externas — instanciamos direto
     JwtService sut = new JwtService("FalaCidade#Test@SecretKey!MustBe32+Chars");
 
     UserDetails userDetails;
@@ -41,10 +40,6 @@ class JwtServiceTest {
         );
     }
 
-    // ================================================================
-    // generateToken()
-    // ================================================================
-
     @Nested
     @DisplayName("generateToken()")
     class GenerateToken {
@@ -64,17 +59,12 @@ class JwtServiceTest {
         @Test
         @DisplayName("tokens gerados para o mesmo usuário são diferentes (timestamp diferente)")
         void tokensAreDifferent() throws InterruptedException {
-            // O 'iat' do JWT tem precisão de segundos — espera > 1s garante timestamps distintos
             Thread.sleep(1100);
             String token2 = sut.generateToken(
                 userDetails, "João Silva", UserModel.UserRole.CITIZEN, "joao@email.com", 42, "sessao-1");
             assertThat(token).isNotEqualTo(token2);
         }
     }
-
-    // ================================================================
-    // getEmailFromToken()
-    // ================================================================
 
     @Nested
     @DisplayName("getEmailFromToken()")
@@ -93,10 +83,6 @@ class JwtServiceTest {
                 .isInstanceOf(Exception.class);
         }
     }
-
-    // ================================================================
-    // getExpirationDateFromToken()
-    // ================================================================
 
     @Nested
     @DisplayName("getExpirationDateFromToken()")
@@ -121,10 +107,6 @@ class JwtServiceTest {
                 .isLessThan(tenHoursMs + 30_000);
         }
     }
-
-    // ================================================================
-    // validToken()
-    // ================================================================
 
     @Nested
     @DisplayName("validToken()")
@@ -153,10 +135,6 @@ class JwtServiceTest {
                 .isInstanceOf(Exception.class);
         }
     }
-
-    // ================================================================
-    // Claims customizados (fullname, role)
-    // ================================================================
 
     @Nested
     @DisplayName("Claims customizados")

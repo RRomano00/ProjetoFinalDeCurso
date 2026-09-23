@@ -6,7 +6,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 
-/** Payload do cadastro público de cidadão — POST /api/user/register. */
 public class RegisterUserDto {
 
     @NotBlank(message = "Nome é obrigatório")
@@ -30,7 +29,6 @@ public class RegisterUserDto {
     @NotNull(message = "Você deve aceitar os termos de uso")
     private Boolean acceptsTerms;
 
-    /** Se true, ativa o MFA por e-mail já no cadastro (opcional). */
     private Boolean mfaEmailEnabled;
 
     public UserModel toUserModel() {

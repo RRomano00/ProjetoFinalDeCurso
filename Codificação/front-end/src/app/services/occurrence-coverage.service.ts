@@ -3,13 +3,6 @@ import { Injectable } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
 
-/**
- * Cobertura do município: há equipe cadastrada para atender ali?
- *
- * Serve só para avisar quem registra — o registro é aceito de qualquer forma.
- * A resposta fica em cache na sessão porque a mesma pergunta se repete a cada
- * ajuste do endereço.
- */
 @Injectable({ providedIn: 'root' })
 export class OccurrenceCoverageService {
 
@@ -33,8 +26,6 @@ export class OccurrenceCoverageService {
       this.cache.set(key, !!res?.served);
       return !!res?.served;
     } catch {
-      // Sem resposta do servidor não se afirma nada: melhor não avisar do que
-      // avisar errado que o município não é atendido.
       return null;
     }
   }

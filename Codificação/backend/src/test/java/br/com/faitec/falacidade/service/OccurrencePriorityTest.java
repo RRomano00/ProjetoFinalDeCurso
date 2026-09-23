@@ -10,11 +10,6 @@ import org.junit.jupiter.params.provider.EnumSource;
 
 import static org.assertj.core.api.Assertions.*;
 
-/**
- * Testa a lógica de negócio do domínio Occurrence:
- *  - Atribuição automática de prioridade (RN04)
- *  - Cobertura de todos os OccurrenceTypes
- */
 @DisplayName("Occurrence – lógica de domínio (RN04)")
 class OccurrencePriorityTest {
 

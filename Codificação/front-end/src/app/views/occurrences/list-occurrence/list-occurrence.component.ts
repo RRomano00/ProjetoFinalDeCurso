@@ -22,7 +22,6 @@ export class ListOccurrenceComponent implements OnInit {
   loading = true;
 
   search = '';
-  /** Município em exibição (vazio = todos) — a mesma escolha do mapa. */
   filterCity     = '';
   municipalityOptions: Municipality[] = [];
   municipalityLabel = LocalityPreferenceService.label;
@@ -40,7 +39,6 @@ export class ListOccurrenceComponent implements OnInit {
 
   statusOptions = ['PENDENTE', 'EM_ANDAMENTO', 'CONCLUIDA', 'INDEFERIDA'];
 
-  /** RF08/RF11: visitante tentou apoiar → pede login (mesmo convite do detalhe). */
   showLoginPrompt = false;
 
   showProtocolModal = false;
@@ -56,11 +54,6 @@ export class ListOccurrenceComponent implements OnInit {
     private toastr: ToastrService
   ) {}
 
-  /**
-   * "Minhas" vem do servidor, por autoria, e não de um recorte da listagem
-   * pública: a ocorrência que a pessoa registrou em outro município precisa
-   * aparecer aqui mesmo quando não estiver na lista geral.
-   */
   private mine: Occurrence[] | null = null;
   loadingMine = false;
 
@@ -77,10 +70,6 @@ export class ListOccurrenceComponent implements OnInit {
     await this.loadMySupports();
   }
 
-  /**
-   * Opções do filtro: os municípios da lista, mais o escolhido e o do cadastro
-   * — estes podem ainda não ter nenhuma ocorrência registrada.
-   */
   private async loadMunicipalities() {
     const chosen = this.locality.choice;
     this.municipalityOptions = LocalityPreferenceService.options(
@@ -88,13 +77,11 @@ export class ListOccurrenceComponent implements OnInit {
     if (chosen) this.filterCity = LocalityPreferenceService.fold(chosen.city);
   }
 
-  /** Município escolhido, ou null quando a listagem está global. */
   get selectedMunicipality(): Municipality | null {
     return this.municipalityOptions.find(
       m => LocalityPreferenceService.fold(m.city) === this.filterCity) || null;
   }
 
-  /** A escolha vale para o mapa também: é a mesma preferência. */
   onCityChange() {
     this.locality.choice = this.selectedMunicipality;
     this.applyFilters();
@@ -115,11 +102,6 @@ export class ListOccurrenceComponent implements OnInit {
 
   goToLogin() { this.router.navigate(['/account/sign-in']); }
 
-  /**
-   * Apoia ou desfaz o apoio no mesmo botão. Quem manda no estado é a resposta
-   * do servidor (`supportedByMe`) — antes a tela dava `add()` no conjunto local
-   * e passava a exibir "Você apoia" mesmo quando o back-end não gravou nada.
-   */
   async toggleSupport(o: Occurrence) {
     if (this.auth.isVisitor()) { this.showLoginPrompt = true; return; }
     if (o.id == null || this.supportingId != null) return;
@@ -141,19 +123,17 @@ export class ListOccurrenceComponent implements OnInit {
     }
   }
 
-  /** Minúsculas e sem acento: quem digita "onibus" tem que achar "ônibus". */
   private fold(text?: string): string {
     return (text || '').normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
   }
 
-  /** Liga/desliga "somente as minhas": busca a lista por autoria na primeira vez. */
   async toggleMine() {
     if (this.filterMine && this.mine === null && !this.auth.isVisitor()) {
       this.loadingMine = true;
       try {
         this.mine = await this.occurrenceReadService.findMine();
       } catch {
-        this.mine = null;   // sem a lista do servidor, recai no recorte local
+        this.mine = null;
       } finally {
         this.loadingMine = false;
       }
@@ -163,7 +143,6 @@ export class ListOccurrenceComponent implements OnInit {
 
   applyFilters() {
     const term = this.fold(this.search.trim());
-    // Com "minhas" ligado, a fonte é a lista por autoria; sem ele, a pública.
     const source = this.filterMine && this.mine !== null ? this.mine : this.occurrences;
     const chosen = this.selectedMunicipality;
     this.filtered = source.filter(o => {
@@ -173,8 +152,6 @@ export class ListOccurrenceComponent implements OnInit {
       const matchStatus = !this.filterStatus || o.status === this.filterStatus;
       const matchType   = !this.filterType   || o.type   === this.filterType;
       const matchCity   = LocalityPreferenceService.matches(chosen, o.city, o.state);
-      // Com a lista por autoria, tudo que veio já é da pessoa; o recorte local
-      // continua valendo como reserva quando o servidor não respondeu.
       const matchMine   = !this.filterMine || this.mine !== null
                        || (!!o.email && o.email === this.myEmail);
       return matchSearch && matchStatus && matchType && matchMine && matchCity;
@@ -211,7 +188,7 @@ export class ListOccurrenceComponent implements OnInit {
         color: this.groupBy === 'type' ? this.typeColor(key) : null,
         items
       }))
-      .sort((a, b) => b.items.length - a.items.length);   // grupos maiores primeiro
+      .sort((a, b) => b.items.length - a.items.length);
   }
 
   openProtocolModal() { this.showProtocolModal = true; this.trackingCodeInput = ''; }

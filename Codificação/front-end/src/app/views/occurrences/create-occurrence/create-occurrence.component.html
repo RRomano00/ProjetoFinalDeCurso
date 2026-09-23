@@ -1,5 +1,4 @@
 <div class="page-container">
-  <!-- Modal do código de rastreamento anônimo -->
   @if (trackingCode) {
     <div class="modal-overlay">
       <div class="modal-card">
@@ -20,7 +19,6 @@
 
   <form (ngSubmit)="create()" [formGroup]="form" class="occurrence-form">
 
-    <!-- 1. Dados da ocorrência -->
     <div class="form-section">
       <h3>Dados da ocorrência</h3>
 
@@ -43,7 +41,6 @@
       </div>
     </div>
 
-    <!-- 2. Categoria da ocorrência -->
     <div class="form-section">
       <h3>Categoria da ocorrência</h3>
       <div class="form-group">
@@ -58,11 +55,9 @@
       </div>
     </div>
 
-    <!-- 3. Localização -->
     <div class="form-section">
       <h3>Localização</h3>
 
-      <!-- Mapa: clique para marcar o local; o endereço é preenchido automaticamente (RF09) -->
       <div class="map-select-wrapper">
         <div class="map-hint" [class.loading]="geocodeStatus === 'loading'" [class.success]="geocodeStatus === 'success'"
              [class.partial]="geocodeStatus === 'partial'" [class.error]="geocodeStatus === 'error'">
@@ -75,7 +70,6 @@
         </div>
         <div class="map-holder">
           <div id="create-map"></div>
-          <!-- Bússola: leva o mapa até onde a pessoa está e marca o ponto (RF09) -->
           <button type="button" class="map-locate" [class.locating]="locating"
                   (click)="requestCurrentLocation()" [disabled]="locating"
                   [attr.aria-busy]="locating"
@@ -126,7 +120,6 @@
         </div>
         <div class="form-group">
           <label>Cidade *</label>
-          <!-- Só recebe digitação depois da UF: é ela que traz os municípios. -->
           <input type="text" formControlName="city" list="occ-city-options"
                  [readOnly]="!cityOptions.ready" spellcheck="false" autocomplete="off"
                  [placeholder]="cityOptions.ready ? 'Comece a digitar o município' : 'Informe a UF primeiro'" />
@@ -140,7 +133,6 @@
         </div>
       </div>
 
-      <!-- Município sem equipe cadastrada: avisa, mas não impede o registro. -->
       <div class="coverage-notice" *ngIf="cityServed === false" role="status">
         <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -163,7 +155,6 @@
                placeholder="Ex.: Em frente ao mercado X, próximo ao parque..." />
       </div>
 
-      <!-- RF16: duplicatas próximas (mesmo tipo, raio de 50 m) -->
       <div class="duplicates-panel" *ngIf="nearbyDuplicates.length > 0">
         <div class="duplicates-title">
           ⚠️ Já existe{{ nearbyDuplicates.length > 1 ? 'm' : '' }}
@@ -176,8 +167,6 @@
         </p>
         <div class="duplicate-item" *ngFor="let d of nearbyDuplicates">
           <div class="duplicate-info">
-            <!-- O protocolo é o caminho para o registro; abre em outra aba para
-                 não perder o que já foi preenchido neste formulário. -->
             <a class="duplicate-protocol" [routerLink]="['/occurrence/detail', d.id]"
                target="_blank" rel="noopener"
                [attr.aria-label]="'Abrir a ocorrência ' + d.protocolNumber + ' em uma nova aba'">
@@ -186,7 +175,6 @@
             <span class="duplicate-desc">{{ d.title || (d.description | slice:0:60) }}</span>
           </div>
           <div class="duplicate-actions">
-            <!-- Um botão só: apoia e desfaz. Ver .btn-support em styles.css. -->
             <button type="button" class="btn-support btn-support--sm"
                     [class.supported]="isSupported(d.id)"
                     [disabled]="supportingId === d.id"
@@ -203,12 +191,10 @@
       </div>
     </div>
 
-    <!-- 4. Fotos da ocorrência (RF07/RF08/RF20) -->
     <div class="form-section">
       <h3>Fotos (opcional — até {{ MAX_PHOTOS }})</h3>
       <p class="photo-note">Rostos são desfocados automaticamente para preservar a privacidade (LGPD).</p>
 
-      <!-- Miniaturas das fotos já enviadas -->
       <div class="photo-grid" *ngIf="photos.length > 0">
         <div class="photo-thumb" *ngFor="let ph of photos; let i = index">
           <img [src]="ph.url" alt="Foto {{ i + 1 }}" />
@@ -235,7 +221,6 @@
     </div>
 
     <div class="form-section">
-      <!-- RF08: visitante registra sempre como anônimo -->
       <label class="checkbox-label" *ngIf="!auth.isVisitor()">
         <input type="checkbox" formControlName="anonymous" />
         Registrar como anônimo (você receberá um código de rastreamento)
@@ -254,7 +239,6 @@
     </div>
   </form>
 
-  <!-- RF11: visitante tentou apoiar → precisa entrar -->
   <div class="login-prompt-overlay" *ngIf="showLoginPrompt" (click)="showLoginPrompt = false">
     <div class="login-prompt-card" (click)="$event.stopPropagation()">
       <h2>🤝 Quer apoiar esta ocorrência?</h2>

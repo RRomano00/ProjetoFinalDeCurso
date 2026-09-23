@@ -4,7 +4,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
-/** Payload para consulta de ocorrência anônima — GET /api/occurrence/anonymous-status. */
 public class AnonymousTrackingQueryDto {
     @NotBlank
     @Size(min = 8, max = 8, message = "Código deve ter exatamente 8 caracteres")

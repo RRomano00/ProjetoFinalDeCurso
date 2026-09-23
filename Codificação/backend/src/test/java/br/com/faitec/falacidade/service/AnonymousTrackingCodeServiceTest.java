@@ -16,10 +16,6 @@ class AnonymousTrackingCodeServiceTest {
 
     AnonymousTrackingCodeService sut = new AnonymousTrackingCodeService();
 
-    // ================================================================
-    // generateCode()
-    // ================================================================
-
     @Nested
     @DisplayName("generateCode()")
     class GenerateCode {
@@ -33,7 +29,6 @@ class AnonymousTrackingCodeServiceTest {
         @Test
         @DisplayName("código contém apenas caracteres do alfabeto seguro (sem O, 0, I, 1)")
         void usesOnlySafeAlphabet() {
-            // Gera 500 códigos e verifica que nenhum contém caracteres ambíguos
             for (int i = 0; i < 500; i++) {
                 String code = sut.generateCode();
                 assertThat(code)
@@ -56,14 +51,9 @@ class AnonymousTrackingCodeServiceTest {
             for (int i = 0; i < 1000; i++) {
                 codes.add(sut.generateCode());
             }
-            // Com 1000 gerações, esperamos quase nenhuma colisão
             assertThat(codes.size()).isGreaterThan(995);
         }
     }
-
-    // ================================================================
-    // hash()
-    // ================================================================
 
     @Nested
     @DisplayName("hash()")
@@ -105,10 +95,6 @@ class AnonymousTrackingCodeServiceTest {
             assertThatCode(() -> sut.hash("A".repeat(1000))).doesNotThrowAnyException();
         }
     }
-
-    // ================================================================
-    // matches()
-    // ================================================================
 
     @Nested
     @DisplayName("matches()")
@@ -152,7 +138,6 @@ class AnonymousTrackingCodeServiceTest {
         @DisplayName("código minúsculo bate com hash gerado do maiúsculo (normalização)")
         void lowercaseCodeMatchesUppercaseHash() {
             String hash = sut.hash("A3KP7NB2");
-            // O cidadão pode digitar em minúsculo — matches() deve normalizar
             assertThat(sut.matches("a3kp7nb2", hash)).isTrue();
         }
 

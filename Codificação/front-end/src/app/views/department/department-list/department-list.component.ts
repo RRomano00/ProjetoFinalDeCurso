@@ -8,14 +8,6 @@ import { AuthenticationService } from '../../../services/security/authentication
 import { Department } from '../../../domain/model/department';
 import { ToastrService } from 'ngx-toastr';
 
-/**
- * RF22: departamentos da prefeitura — os destinos possíveis do encaminhamento
- * de uma ocorrência.
- *
- * O formulário de cadastro abre na própria lista, e não em outra rota: a
- * validação aqui é "não repetir nome nem e-mail", então quem digita precisa ver
- * o que já existe.
- */
 @Component({
   selector: 'app-department-list',
   imports: [CommonModule, ReactiveFormsModule, FormsModule],
@@ -28,18 +20,14 @@ export class DepartmentListComponent implements OnInit {
   loading = true;
   saving = false;
   formOpen = false;
-  /** null = cadastro; id = edição daquele setor. O formulário é o mesmo. */
   editingId: number | null = null;
   form!: FormGroup;
 
   @ViewChild('nameInput') nameInput?: ElementRef<HTMLInputElement>;
 
-  // ── Filtros da listagem ──
   search     = '';
   filterCity = '';
 
-  /** Municípios que existem na lista — não adianta oferecer o que não está aqui.
-      (Nome distinto de `cityOptions`, que é a lista do IBGE usada no formulário.) */
   get filterCityOptions(): string[] {
     return [...new Set(this.departments.map(d => d.city).filter((c): c is string => !!c))]
       .sort((a, b) => a.localeCompare(b, 'pt-BR'));
@@ -56,7 +44,6 @@ export class DepartmentListComponent implements OnInit {
 
   clearFilters() { this.search = this.filterCity = ''; }
 
-  /** UF e municípios, no mesmo padrão dos cadastros de usuário e de ocorrência. */
   units: { uf: string; name: string }[] = [];
   cityOptions: CityOptions = { list: [], ready: false };
 
@@ -71,9 +58,6 @@ export class DepartmentListComponent implements OnInit {
     this.form = this.fb.group({
       name:  ['', [Validators.required, Validators.maxLength(100)]],
       email: ['', [Validators.required, Validators.email, Validators.maxLength(150)]],
-      // O setor é municipal: é o município do endereço da ocorrência que define
-      // para onde ela pode ser encaminhada. Vem preenchido com o município de
-      // quem cadastra, que é onde o funcionário pode cadastrar.
       state: ['', [Validators.required]],
       city:  ['', [Validators.required]]
     });
@@ -85,12 +69,6 @@ export class DepartmentListComponent implements OnInit {
     await Promise.all([this.load(), this.loadMyCity()]);
   }
 
-  /**
-   * Município de quem está cadastrando: o servidor só aceita esse, para a
-   * equipe — o setor é destino de encaminhamento da própria prefeitura. Por
-   * isso o campo vem preenchido e bloqueado; só o Super Administrador, que não
-   * tem município, escolhe.
-   */
   private async loadMyCity() {
     if (this.canChooseCity) return;
     const id = localStorage.getItem('id');
@@ -98,12 +76,11 @@ export class DepartmentListComponent implements OnInit {
     try {
       const me: any = await this.userReadService.findById(id);
       if (me?.city) this.form.patchValue({ state: me.state || '', city: me.city });
-    } catch { /* sem preenchimento prévio: a pessoa informa o município */ }
+    } catch { }
     this.form.get('state')!.disable();
     this.form.get('city')!.disable();
   }
 
-  /** RF25: sem município próprio, o Super Administrador cadastra em qualquer um. */
   get canChooseCity() { return this.auth.isSuperAdmin(); }
 
   private async load() {
@@ -117,7 +94,6 @@ export class DepartmentListComponent implements OnInit {
     }
   }
 
-  /** RF25: corrigir o setor é do administrador; o funcionário cadastra e consulta. */
   get canEdit() { return this.auth.isAdmin(); }
 
   openForm() {
@@ -126,15 +102,10 @@ export class DepartmentListComponent implements OnInit {
     setTimeout(() => this.nameInput?.nativeElement.focus(), 0);
   }
 
-  /** Abre o mesmo formulário já preenchido com o setor escolhido. */
   edit(d: Department) {
     this.editingId = d.id;
     this.formOpen = true;
     this.form.patchValue({ name: d.name, email: d.email, state: d.state || '', city: d.city || '' });
-    // Trocar a UF repovoa a lista do IBGE e pode limpar o município digitado;
-    // o que está gravado é reposto depois disso.
-    // ponytail: repõe no tique seguinte — basta para a lista em cache; se a UF
-    // ainda não tiver sido buscada, esperar o Observable de municípios.
     setTimeout(() => {
       this.form.patchValue({ city: d.city || '' }, { emitEvent: false });
       this.nameInput?.nativeElement.focus();
@@ -144,22 +115,12 @@ export class DepartmentListComponent implements OnInit {
   closeForm() {
     this.formOpen = false;
     this.editingId = null;
-    // Mantém o município: quem cadastra vários setores é sempre do mesmo lugar.
     const { state, city } = this.form.getRawValue();
     this.form.reset({ state, city });
   }
 
-  /**
-   * A duplicidade é conferida aqui, contra a lista em tela, para responder sem
-   * ida ao servidor; o servidor confere de novo e é ele quem tem a palavra
-   * final, porque a lista local pode estar desatualizada.
-   *
-   * O nome se repete entre municípios — cada prefeitura tem a sua Secretaria de
-   * Obras —, então só conflita dentro do mesmo município. O e-mail é o destino
-   * do encaminhamento: não se repete em lugar nenhum.
-   */
   private duplicateField(): 'name' | 'email' | null {
-    // getRawValue, e não value: o município fica desabilitado para a equipe e
+    // getRawValue, e não value: o município fica desabilitado para a equipe, e
     // controle desabilitado não entra em form.value.
     const bruto = this.form.getRawValue();
     const name  = (bruto.name  || '').trim().toLowerCase();
@@ -169,9 +130,11 @@ export class DepartmentListComponent implements OnInit {
 
     const mesmoMunicipio = (d: any) =>
       d.city?.trim().toLowerCase() === city && d.state?.trim().toUpperCase() === state;
-    // Na edição, o próprio setor não conflita consigo mesmo.
     const outros = this.departments.filter(d => d.id !== this.editingId);
 
+    // O nome se repete entre municípios — cada prefeitura tem a sua Secretaria
+    // de Obras —, então só conflita dentro do mesmo município. O e-mail é o
+    // destino do encaminhamento: não se repete em lugar nenhum.
     if (outros.some(d => mesmoMunicipio(d) && d.name?.trim().toLowerCase() === name)) return 'name';
     if (outros.some(d => d.email?.trim().toLowerCase() === email)) return 'email';
     return null;
@@ -206,7 +169,7 @@ export class DepartmentListComponent implements OnInit {
     } catch (err: any) {
       if (err?.status === 409) {
         this.toastr.error(err.error?.error || 'Nome ou e-mail já cadastrados.');
-        await this.load();          // a lista estava desatualizada
+        await this.load();
       } else if (err?.status === 400) {
         this.toastr.error(err.error?.error || 'Verifique os dados informados.');
       } else if (err?.status === 403) {

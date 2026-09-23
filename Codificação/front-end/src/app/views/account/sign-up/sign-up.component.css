@@ -1,4 +1,3 @@
-/* Específico da criação de conta — a base está em ../auth-shell.css */
 
 .checkbox-label {
   display: flex;
@@ -30,7 +29,6 @@
 .auth-link a { color: var(--plate); font-weight: 600; text-decoration: none; }
 .auth-link a:hover { text-decoration: underline; }
 
-/* ── Termos de uso (flutua: recebe elevação) ── */
 .terms-overlay {
   position: fixed;
   inset: 0;
@@ -127,9 +125,6 @@
   .terms-footer .btn-secondary { width: 100%; }
 }
 
-/* ── UF + Município na mesma linha ──
-   A UF é curta e determina as sugestões do município, então fica antes e
-   ocupa só o que precisa. No celular, cada campo pega a linha inteira. */
 .field-row {
   display: grid;
   grid-template-columns: 5.5rem 1fr;
@@ -138,7 +133,6 @@
 }
 .field-uf input { text-transform: uppercase; letter-spacing: 0.06em; }
 
-/* "(opcional)" pesa menos que o rótulo: informa sem competir com ele. */
 .label-optional { font-weight: 400; color: var(--ink-faint); }
 
 .field-hint {
@@ -151,5 +145,4 @@
   .field-row { grid-template-columns: 1fr; }
 }
 
-/* Município antes da UF: aceita valor, não aceita digitação. */
 .input-wrapper input[readonly] { background: var(--surface-2); color: var(--ink-mute); cursor: not-allowed; }

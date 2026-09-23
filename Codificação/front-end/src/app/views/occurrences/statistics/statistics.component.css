@@ -1,10 +1,3 @@
-/* Estatísticas — quadro de plantão.
-   Lê-se de cima para baixo: a carga do período, quem está esperando, se a
-   equipe está dando conta, e só então os recortes por tipo, bairro e apoio.
-
-   Toda a cor vem dos tokens do app (styles.css). A única regra nova é a rampa
-   de espera: quanto mais tempo parada, mais perto a barra chega do vermelho de
-   advertência — a mesma lógica das placas que dão nome ao azul do sistema. */
 
 .page-stats {
   max-width: 1180px;
@@ -15,13 +8,10 @@
   gap: 1.5rem;
 }
 
-/* Numeral de largura fixa: o número não dança quando o filtro muda, e as
-   colunas de valores alinham sem precisar de fonte monoespaçada. */
 .page-stats :is(.key-num, .queue-num, .age-val, .bar-val, .support-count, .load-figures dd, .load-count) {
   font-variant-numeric: tabular-nums;
 }
 
-/* ── Cabeçalho ─────────────────────────────────────────────────────────── */
 .page-header h1 {
   font-size: 1.5rem;
   font-weight: 600;
@@ -36,7 +26,6 @@
   max-width: 62ch;
 }
 
-/* ── Filtros ───────────────────────────────────────────────────────────── */
 .stats-filters {
   display: flex;
   flex-wrap: wrap;
@@ -86,11 +75,6 @@
 }
 .stats-empty p { color: var(--ink-mute); margin: 0 0 1rem 0; }
 
-/* Os nomes de estado levam prefixo de propósito: o Bootstrap é global neste
-   projeto e define .progress e .alert. Sem o prefixo, o <li> do "Em andamento"
-   virava barra de progresso do Bootstrap e engolia o próprio texto. */
-
-/* ── Carga do período ──────────────────────────────────────────────────── */
 .load {
   padding: 1.25rem 1.5rem 1.5rem;
   background: var(--surface);
@@ -106,7 +90,6 @@
 }
 .load-count { font-size: 0.9375rem; color: var(--ink-mute); margin: 0; }
 
-/* A faixa carrega a proporção; os números logo abaixo carregam o valor. */
 .load-band {
   display: flex;
   gap: 2px;
@@ -158,7 +141,6 @@
 .load-figures dd.em-atraso { color: var(--pr-high); }
 .load-figures .unit { font-size: 0.9375rem; font-weight: 500; color: var(--ink-mute); margin-left: 1px; }
 
-/* ── Painéis ───────────────────────────────────────────────────────────── */
 .panel-row { display: grid; gap: 1.5rem; align-items: stretch; }
 .panel-row-three { grid-template-columns: repeat(3, 1fr); }
 .panel {
@@ -171,7 +153,6 @@
 .panel-head p { font-size: 0.8125rem; color: var(--ink-mute); margin: 0.1875rem 0 0; }
 .panel-empty { font-size: 0.875rem; color: var(--ink-mute); margin: 0; }
 
-/* ── A fila: o único lugar onde a tela levanta a voz ───────────────────── */
 .queue-lead { display: flex; align-items: baseline; gap: 0.625rem; margin: 0 0 1.25rem; }
 .queue-num { font-size: 2.75rem; font-weight: 600; line-height: 1; color: var(--ink); }
 .queue-num.em-atraso { color: var(--pr-high); }
@@ -181,8 +162,6 @@
 .age-list li { display: grid; grid-template-columns: 6.5rem 1fr 2rem; align-items: center; gap: 0.75rem; }
 .age-lbl { font-size: 0.8125rem; color: var(--ink-mute); }
 .age-track { height: 9px; background: var(--bg); border-radius: 2px; overflow: hidden; }
-/* Barra de dado com raio 2px, não pílula: a pílula arredonda os dois topos e
-   engorda visualmente os valores pequenos. */
 .age-fill { display: block; height: 100%; border-radius: 2px; min-width: 2px; }
 .age-fill.age-fresh { background: var(--st-done);     }
 .age-fill.age-warm  { background: var(--st-pending);  }
@@ -190,12 +169,8 @@
 .age-fill.age-late  { background: var(--pr-high);     }
 .age-val { font-size: 0.875rem; font-weight: 600; color: var(--ink); text-align: right; }
 
-/* Com a largura inteira, a fila e o caso mais antigo dividem a linha. */
 .queue-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 20rem); gap: 1.5rem 2.5rem; align-items: start; }
 
-/* O tempo de espera lidera como dado, do mesmo jeito que os demais números da
-   página. Antes era uma tarja vermelha na lateral — decoração dizendo o que o
-   próprio número já diz. */
 .oldest {
   display: flex;
   align-items: baseline;
@@ -230,7 +205,6 @@
 .oldest-title { font-size: 0.8125rem; color: var(--ink-mute); margin-top: 0.0625rem; }
 .oldest-proto { font-family: var(--mono); font-size: 0.6875rem; color: var(--ink-faint); margin-top: 0.125rem; }
 
-/* ── Listas de barras (tipo e bairro) ──────────────────────────────────── */
 .bar-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.8125rem; }
 .bar-list li { display: flex; flex-direction: column; gap: 0.3125rem; }
 .bar-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; }
@@ -247,7 +221,6 @@
 .bar-fill.plate { background: var(--plate); }
 .bar-val { font-size: 0.8125rem; font-weight: 600; color: var(--ink); flex-shrink: 0; }
 
-/* ── Mais apoiadas ─────────────────────────────────────────────────────── */
 .support-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
 .support-list li {
   display: flex;
@@ -280,7 +253,6 @@
   flex-shrink: 0;
 }
 
-/* ── Carregando ────────────────────────────────────────────────────────── */
 .loading-state { display: flex; flex-direction: column; align-items: center; gap: 0.875rem; padding: 4rem 1.5rem; }
 .loading-state p { font-size: 0.875rem; color: var(--ink-mute); margin: 0; }
 .spinner {
@@ -296,7 +268,6 @@
   .spinner { animation-duration: 2.4s; }
 }
 
-/* ── Telas estreitas ───────────────────────────────────────────────────── */
 @media (max-width: 900px) {
   .panel-row-three { grid-template-columns: 1fr; }
   .queue-body { grid-template-columns: 1fr; }

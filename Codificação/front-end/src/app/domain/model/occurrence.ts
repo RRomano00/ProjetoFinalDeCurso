@@ -1,11 +1,9 @@
-/** RF07: foto anexada à ocorrência. */
 export interface OccurrenceMedia {
     url:                 string;
     cloudinaryPublicId?: string;
     imageBlurred?:       boolean;
 }
 
-/** RN03/RF11: uma mudança de status (quem/quando/justificativa). */
 export interface OccurrenceHistory {
     oldStatus?:     string;
     newStatus:      string;
@@ -24,7 +22,6 @@ export interface Occurrence {
     neighborhood?:      string;
     addressReference?:  string;
     city:               string;
-    /** UF do endereço da ocorrência. */
     state?:             string;
     latitude?:       number;
     longitude?:      number;

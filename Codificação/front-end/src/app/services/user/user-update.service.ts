@@ -9,7 +9,6 @@ export class UserUpdateService {
 
   constructor(private http: HttpClient) { }
 
-  /** Altera a senha do usuário (exige a senha atual). */
   updatePassword(data: UpdatePasswordDto): Observable<UpdatePasswordDto> {
     const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
     const body = {
@@ -21,7 +20,6 @@ export class UserUpdateService {
       `${environment.authentication_api_endpoint}/user/update-password`, body, { headers });
   }
 
-  /** RF04: atualiza os dados de perfil do usuário (PUT /api/user/{id}). */
   updateProfile(data: UpdateProfileDto): Observable<void> {
     return this.http.put<void>(`${environment.api_endpoint}/user/${data.id}`, data);
   }

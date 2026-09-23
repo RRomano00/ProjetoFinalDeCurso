@@ -33,7 +33,6 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
-/** Quem é obrigado a passar pelo 2FA no login — e quem está dispensado. */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 @DisplayName("JwtAuthenticationRestController – 2FA obrigatório da equipe")

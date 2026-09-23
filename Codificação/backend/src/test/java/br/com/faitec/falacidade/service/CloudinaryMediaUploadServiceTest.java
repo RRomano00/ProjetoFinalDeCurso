@@ -33,16 +33,10 @@ class CloudinaryMediaUploadServiceTest {
     @BeforeEach
     void setUp() {
         lenient().when(cloudinary.uploader()).thenReturn(uploader);
-        // buildPrivacyUrl usa cloudinary.url(); devolve um Url real com config fake
-        // (cloud_name/api_secret de teste) para gerar e assinar URLs sem rede.
         lenient().when(cloudinary.url()).thenAnswer(inv ->
             new Cloudinary("cloudinary://key:secret@test-cloud").url());
         sut = new CloudinaryMediaUploadService(cloudinary);
     }
-
-    // ================================================================
-    // Helpers
-    // ================================================================
 
     private Map<String, Object> cloudinaryResponse(String publicId, String url, Double focusScore) {
         Map<String, Object> response = new HashMap<>();
@@ -57,10 +51,6 @@ class CloudinaryMediaUploadServiceTest {
 
         return response;
     }
-
-    // ================================================================
-    // uploadSync() – detecção de blur e categorias críticas
-    // ================================================================
 
     @Nested
     @DisplayName("uploadSync()")
@@ -79,7 +69,6 @@ class CloudinaryMediaUploadServiceTest {
 
             assertThat(result.rejected()).isFalse();
             assertThat(result.blurred()).isFalse();
-            // A URL de entrega aplica o blur de rostos (LGPD), não é a secure_url crua
             assertThat(result.url()).contains("e_blur_faces").contains("fc/img1");
             assertThat(result.publicId()).isEqualTo("fc/img1");
         }
@@ -118,7 +107,6 @@ class CloudinaryMediaUploadServiceTest {
             assertThat(result.publicId()).isNull();
             assertThat(result.rejectionReason()).isNotBlank();
 
-            // Deve deletar a imagem rejeitada do Cloudinary
             verify(uploader).destroy(eq("fc/img3"), any());
         }
 
@@ -196,10 +184,6 @@ class CloudinaryMediaUploadServiceTest {
         }
     }
 
-    // ================================================================
-    // uploadAsync() + getUploadStatus() – fluxo assíncrono
-    // ================================================================
-
     @Nested
     @DisplayName("uploadAsync() + getUploadStatus()")
     class AsyncFlow {
@@ -213,9 +197,6 @@ class CloudinaryMediaUploadServiceTest {
         @Test
         @DisplayName("status fica PROCESSING enquanto ainda não concluiu")
         void processingState() {
-            // Registrar manualmente um status PROCESSING (sem chamar uploadAsync para evitar thread real)
-            // Validamos via uploadSync + mocking que o estado correto é propagado
-            // O teste do estado PROCESSING é cobertura do domínio UploadStatus
             UploadStatus status = new UploadStatus("test-id");
             assertThat(status.getState()).isEqualTo(UploadStatus.State.PROCESSING);
         }
@@ -259,7 +240,6 @@ class CloudinaryMediaUploadServiceTest {
                 .thenReturn(cloudinaryResponse("fc/img", "https://img.jpg", 0.9));
 
             String uploadId = "test-async-id";
-            // Executar de forma síncrona para o teste (a anotação @Async é ignorada sem contexto Spring)
             sut.uploadAsync(new byte[]{1, 2, 3}, Occurrence.OccurrenceType.BURACO_NA_RUA_OU_CALCADA, uploadId);
 
             UploadStatus status = sut.getUploadStatus(uploadId);

@@ -7,7 +7,6 @@ import { environment } from '../../environments/environment';
 export class ContactService {
   constructor(private http: HttpClient) {}
 
-  /** Envia uma mensagem de contato — POST /api/contact (RF17). */
   send(data: { name: string; email: string; subject: string; message: string }): Promise<any> {
     return firstValueFrom(this.http.post(`${environment.api_endpoint}/contact`, data));
   }

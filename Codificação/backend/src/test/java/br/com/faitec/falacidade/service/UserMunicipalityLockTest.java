@@ -25,12 +25,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-/**
- * RF25: para a equipe o município é a jurisdição, não o endereço — trocá-lo
- * transfere a pessoa de prefeitura. Só o Super Administrador faz isso, e o
- * titular da conta é avisado por e-mail de qualquer alteração feita por outra
- * pessoa.
- */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("Município da equipe e aviso de alteração de conta")
 class UserMunicipalityLockTest {
@@ -66,10 +60,6 @@ class UserMunicipalityLockTest {
         d.setId(id); d.setFullname("Fulano"); d.setCity(city); d.setState(state);
         return d;
     }
-
-    // ================================================================
-    // Trava do município
-    // ================================================================
 
     @Test
     @DisplayName("funcionário não muda o próprio município")
@@ -119,7 +109,7 @@ class UserMunicipalityLockTest {
         UserModel eu = user(5, "func@prefeitura.com", UserModel.UserRole.EMPLOYEE, "Itajubá", "MG");
         when(userService.findByEmail(eu.getEmail())).thenReturn(eu);
 
-        UpdateUserDto d = dto(5, null, null);          // a tela nem envia o campo bloqueado
+        UpdateUserDto d = dto(5, null, null);
         d.setPhoneNumber("(35) 99999-0000");
         ResponseEntity<?> res = sut.update(5, d, auth(eu.getEmail()));
 
@@ -143,10 +133,6 @@ class UserMunicipalityLockTest {
         verify(userService).update(eq(9), gravado.capture());
         assertThat(gravado.getValue().getCity()).isEqualTo("Pouso Alegre");
     }
-
-    // ================================================================
-    // Aviso por e-mail
-    // ================================================================
 
     @Test
     @DisplayName("alteração feita por outra pessoa avisa o titular, dizendo o que mudou e quem mudou")

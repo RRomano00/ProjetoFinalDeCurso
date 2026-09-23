@@ -39,7 +39,6 @@
 }
 .btn-primary:hover { background: var(--plate-deep); }
 
-/* O mapa é a coluna principal; os registros recentes ficam no trilho. */
 .home-body {
   display: grid;
   grid-template-columns: 1fr 340px;
@@ -56,7 +55,6 @@
   margin: 0 0 0.75rem 0;
 }
 
-/* ── Registros recentes ── */
 .incident-list { display: flex; flex-direction: column; gap: 0.5rem; }
 
 .incident-card {
@@ -71,10 +69,8 @@
   transition: border-color 0.15s, background 0.15s;
   cursor: pointer;
 }
-/* Hover muda a cor, não a geometria: nada salta na página. */
 .incident-card:hover { border-color: var(--plate); background: var(--plate-wash); }
 
-/* O título encabeça o cartão; o protocolo é referência, não manchete. */
 .incident-top {
   display: flex;
   align-items: flex-start;
@@ -100,7 +96,6 @@
   white-space: nowrap;
 }
 
-/* Status: mesma convenção do mapa, da listagem e do detalhe. */
 .badge-open     { background: var(--st-pending-bg);  color: var(--st-pending); }
 .badge-progress { background: var(--st-progress-bg); color: var(--st-progress); }
 .badge-done     { background: var(--st-done-bg);     color: var(--st-done); }
@@ -135,9 +130,6 @@
   color: var(--ink-mute);
 }
 
-/* Rodapé de referência: categoria, protocolo e data — o que identifica e data
-   o registro, abaixo do que ele diz. */
-/* Linha de referência: protocolo e data, sempre nessa ordem e sempre cabendo. */
 .incident-foot {
   display: flex;
   align-items: baseline;
@@ -163,7 +155,6 @@
   font-weight: 600;
 }
 
-
 .empty-incidents {
   padding: 2rem 1.25rem;
   text-align: center;
@@ -174,7 +165,6 @@
   border-radius: var(--r-card);
 }
 
-/* ── RF21: filtros do mapa ── */
 .map-filters {
   display: flex;
   flex-wrap: wrap;
@@ -191,8 +181,6 @@
   background: var(--surface);
   color: var(--ink);
 }
-/* O município é o escopo da tela — mapa, números e recentes —, e não mais um
-   recorte do mapa: fica sozinho na primeira linha, acima dos três filtros. */
 .map-filters .select-city {
   flex-basis: 100%;
   font-weight: 600;
@@ -218,7 +206,6 @@
 .btn-clear-map:hover:not(:disabled) { background: var(--surface-2); border-color: var(--plate-line); }
 .btn-clear-map:disabled { opacity: 0.45; cursor: not-allowed; }
 
-/* ── Mapa ── */
 .map-wrapper {
   position: relative;
   border: 1px solid var(--line);
@@ -280,10 +267,6 @@
 .dot.done    { background: var(--st-done); }
 .dot.refused { background: var(--st-refused); }
 
-/* ── Números da cidade: faixa sob o mapa ── */
-/* ── Situação da cidade ──
-   Uma barra proporcional no lugar de três contagens: a soma é visível,
-   e as cores são as mesmas do mapa, da listagem e do detalhe. */
 .city-state {
   background: var(--surface);
   border: 1px solid var(--line);
@@ -340,7 +323,6 @@
   flex-shrink: 0;
 }
 
-/* ── Responsivo ── */
 @media (max-width: 900px) {
   .home-body { grid-template-columns: 1fr; }
   #incident-map { height: 320px; }

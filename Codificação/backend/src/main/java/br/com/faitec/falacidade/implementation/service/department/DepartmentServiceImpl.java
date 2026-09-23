@@ -23,25 +23,16 @@ public class DepartmentServiceImpl implements DepartmentService {
     public int create(Department entity) {
         normalize(entity);
 
-        // O nome se repete entre municípios — cada prefeitura tem a sua Secretaria
-        // de Obras —, mas o e-mail é o destino do encaminhamento e é único.
         if (departmentDao.existsByNameInCity(entity.getName(), entity.getCity(), entity.getState()))
             throw new IllegalStateException("Já existe um departamento com este nome neste município");
         if (departmentDao.existsByEmail(entity.getEmail()))
             throw new IllegalStateException("Já existe um departamento com este e-mail");
 
         int id = departmentDao.add(entity);
-        // −1 só acontece quando a restrição do banco barra uma duplicata que passou
-        // pela verificação acima (duas requisições simultâneas).
         if (id < 0) throw new IllegalStateException("Já existe um departamento com este nome ou e-mail");
         return id;
     }
 
-    /**
-     * RF22: o administrador municipal corrige o setor. A duplicidade fica a cargo
-     * da restrição do banco: ao editar, ela é a única que isenta o próprio
-     * registro — uma consulta prévia acusaria o setor contra ele mesmo.
-     */
     @Override
     public void update(int id, Department entity) {
         if (id <= 0) throw new IllegalArgumentException("Departamento inexistente");
@@ -51,7 +42,6 @@ public class DepartmentServiceImpl implements DepartmentService {
             throw new IllegalStateException("Já existe um departamento com este nome ou e-mail");
     }
 
-    /** Apara e confere o que é obrigatório, gravando os valores já normalizados. */
     private void normalize(Department entity) {
         if (entity == null) throw new IllegalArgumentException("Departamento não pode ser nulo");
 

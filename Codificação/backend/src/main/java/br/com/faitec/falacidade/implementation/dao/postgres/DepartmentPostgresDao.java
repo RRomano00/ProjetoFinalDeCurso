@@ -31,18 +31,11 @@ public class DepartmentPostgresDao implements DepartmentDao {
             }
             return -1;
         } catch (SQLException e) {
-            // 23505 = unique_violation: e-mail repetido, ou nome repetido dentro do
-            // mesmo município. A restrição do banco é a última palavra, mesmo quando
-            // duas requisições chegam juntas.
             if ("23505".equals(e.getSQLState())) return -1;
             throw new RuntimeException("Erro ao cadastrar departamento", e);
         }
     }
 
-    /**
-     * A restrição do banco é quem julga a duplicidade também aqui — e só ela
-     * sabe isentar o próprio registro, que uma consulta prévia acusaria.
-     */
     @Override
     public boolean update(Department entity) {
         String sql = "UPDATE department SET name=?, email=?, city=?, state=? WHERE id=?";
@@ -85,20 +78,16 @@ public class DepartmentPostgresDao implements DepartmentDao {
         return null;
     }
 
-    /** "Secretaria de Obras" pode existir em cada município; duas vezes no mesmo, não. */
     @Override
     public boolean existsByNameInCity(String name, String city, String state) {
         return exists("SELECT 1 FROM department WHERE lower(name) = lower(?) " +
                       "AND lower(city) = lower(?) AND upper(state) = upper(?)", name, city, state);
     }
 
-    /** O e-mail é o destino do encaminhamento: único no sistema inteiro. */
     @Override
     public boolean existsByEmail(String email) {
         return exists("SELECT 1 FROM department WHERE lower(email) = lower(?)", email);
     }
-
-    // ---- helpers ----
 
     private List<Department> query(String sql, String... params) {
         List<Department> departments = new ArrayList<>();

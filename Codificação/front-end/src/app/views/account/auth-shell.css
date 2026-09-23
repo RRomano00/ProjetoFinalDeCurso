@@ -1,9 +1,3 @@
-/* ============================================================================
-   Base comum das telas de conta (entrar, criar conta, recuperar senha).
-   Um só arquivo: as três telas não podem divergir entre si.
-   O cidadão chega a um balcão público — daí o campo azul de placa municipal
-   ao fundo e a ficha branca à frente.
-   ========================================================================= */
 
 .auth-wrapper {
   min-height: 100vh;
@@ -11,7 +5,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2rem 1.5rem 5.5rem;   /* folga inferior: controle de acessibilidade flutua ali */
+  padding: 2rem 1.5rem 5.5rem;
 }
 
 .auth-card {
@@ -25,7 +19,6 @@
 
 .auth-logo { text-align: center; margin-bottom: 1.75rem; }
 
-/* A marca é a placa: campo azul, fio branco interno, tipo em branco. */
 .logo-icon {
   display: inline-flex;
   align-items: center;
@@ -39,10 +32,6 @@
   margin-bottom: 0.875rem;
 }
 
-/* A arte da marca já traz o nome e a linha de apoio: entra no lugar da placa e
-   do título, e é o que identifica a tela de entrada e a de cadastro.
-   O fundo branco some contra o cartão no tema claro; existe para o tema escuro,
-   onde a arte é azul-marinho e ficaria escura sobre escuro. */
 .logo-full {
   display: block;
   width: min(230px, 75%);
@@ -54,9 +43,9 @@
   box-sizing: border-box;
 }
 
-/* RF18: o tema escuro inverte a página inteira e re-inverte as imagens, para a
-   arte manter as cores reais. A placa é CSS, então inverte junto — preto aqui é
-   o branco que chega à tela. */
+/* O tema escuro inverte a página inteira e re-inverte as imagens, para a arte
+   manter as cores reais. A placa é CSS, então inverte junto: preto aqui é o
+   branco que chega à tela. */
 html.dark-theme .logo-full { background: #000; }
 
 .auth-logo h1 {
@@ -126,7 +115,6 @@ html.dark-theme .logo-full { background: #000; }
 
 .btn-full { width: 100%; padding: 0.75rem; font-size: 0.9375rem; margin-top: 0.25rem; }
 
-/* Erro: diz o que aconteceu, sem se desculpar. */
 .error-msg {
   background: var(--st-refused-bg);
   color: var(--st-refused);
@@ -152,7 +140,6 @@ html.dark-theme .logo-full { background: #000; }
 }
 .auth-links a:hover { text-decoration: underline; }
 
-/* Campo de código (MFA, recuperação): mesmo tratamento estampado do protocolo. */
 .totp-input {
   text-align: center;
   font-family: var(--mono);

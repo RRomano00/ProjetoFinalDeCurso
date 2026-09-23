@@ -1,11 +1,5 @@
 package br.com.faitec.falacidade.domain.dto.auth;
 
-/**
- * Retornado pelo setup do app autenticador (Meu Perfil).
- *   qrCodeUri → escaneado pelo Google Authenticator / Authy
- *   secret    → entrada manual caso a câmera não funcione
- *   message   → instrução para exibir ao usuário
- */
 public class MfaSetupResponseDto {
     private String qrCodeUri;
     private String secret;

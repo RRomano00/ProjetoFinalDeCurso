@@ -25,10 +25,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.*;
 
-/**
- * RF22/RF25: o administrador municipal edita os setores do seu município — e
- * nem alcança os de outro, nem manda o seu para fora do seu alcance.
- */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("Alcance da edição de departamentos")
 class DepartmentUpdateScopeTest {

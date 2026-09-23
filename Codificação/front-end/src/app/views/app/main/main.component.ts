@@ -5,20 +5,19 @@ import { AuthenticationService } from '../../../services/security/authentication
 import { ToastrService } from 'ngx-toastr';
 import { InstallService } from '../../../services/local/install.service';
 import { SessionWatchService } from '../../../services/security/session-watch.service';
+import { InstallInviteComponent } from '../../../shared/install-invite.component';
 
 @Component({
   selector: 'app-main',
-  imports: [RouterModule, CommonModule],
+  imports: [RouterModule, CommonModule, InstallInviteComponent],
   templateUrl: './main.component.html',
   styleUrl: './main.component.css'
 })
 export class MainComponent implements OnInit {
   fullname = '';
   role     = '';
-  sidebarCollapsed = false;   
+  sidebarCollapsed = false;
   userMenuOpen = false;
-  /** Some o convite sem esperar o localStorage voltar na próxima verificação. */
-  conviteDispensado = false;
 
   get isAdmin()      { return this.auth.isAdmin(); }
   get isSuperAdmin() { return this.auth.isSuperAdmin(); }
@@ -41,25 +40,8 @@ export class MainComponent implements OnInit {
               public session: SessionWatchService) {}
 
   async instalarApp() {
-    this.conviteDispensado = true;          // some o convite enquanto o diálogo abre
     const instrucao = await this.install.instalar();
     if (instrucao) this.toastr.info(instrucao, 'Instalar o aplicativo', { timeOut: 9000 });
-  }
-
-  /**
-   * Convite de instalação. O navegador não abre mais a faixa nativa sozinho —
-   * quem quiser instalar precisa achar o item no menu dele. O diálogo do
-   * navegador só abre a partir de um gesto do usuário, então o caminho é este:
-   * a aplicação convida, a pessoa toca e aí o navegador assume.
-   */
-  get mostrarConvite(): boolean {
-    return !this.conviteDispensado && this.install.convidar;
-  }
-
-  /** "Agora não": o convite não volta; o item do menu lateral continua lá. */
-  dispensarConvite() {
-    this.conviteDispensado = true;
-    this.install.dispensar();
   }
 
   ngOnInit() {
@@ -69,7 +51,6 @@ export class MainComponent implements OnInit {
     this.session.start();
   }
 
-  /** Sessão derrubada por um login em outro aparelho: só resta entrar de novo. */
   entrarNovamente() {
     this.session.ended.set(false);
     this.router.navigate(['/account/sign-in']);
@@ -91,7 +72,6 @@ export class MainComponent implements OnInit {
     }
   }
 
-  // Fecha o menu do usuário ao clicar fora dele
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent) {
     const target = event.target as HTMLElement;

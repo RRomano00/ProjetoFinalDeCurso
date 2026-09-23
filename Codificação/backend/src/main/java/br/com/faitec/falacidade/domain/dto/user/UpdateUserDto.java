@@ -2,7 +2,6 @@ package br.com.faitec.falacidade.domain.dto.user;
 
 import br.com.faitec.falacidade.domain.UserModel;
 
-/** Payload de atualização de perfil — PUT /api/user/{id}. */
 public class UpdateUserDto {
     private int id;
     private String fullname, phoneNumber, street, neighborhood, number, cep, city, state;

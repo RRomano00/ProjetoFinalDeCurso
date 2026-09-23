@@ -3,34 +3,16 @@ import { HttpClient } from '@angular/common/http';
 import { FormGroup } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 
-/** Unidade da federação: sigla usada no cadastro e nome para a sugestão. */
 export interface FederativeUnit {
   uf: string;
   name: string;
 }
 
-/**
- * Municípios sugeridos para a UF corrente. O objeto é estável e tem a lista
- * trocada dentro dele, então o template pode iterar `options.list` sem
- * reatribuição no componente.
- */
 export interface CityOptions {
   list: string[];
-  /** Falso enquanto não houver UF válida: é o que trava o campo de município. */
   ready: boolean;
 }
 
-/**
- * UF e municípios para os campos de cadastro.
- *
- * As 27 unidades da federação são fixas e ficam aqui — não vale uma chamada de
- * rede para uma lista que não muda. Os municípios vêm da API pública de
- * localidades do IBGE, uma vez por UF, e ficam em memória durante a sessão.
- *
- * Nada disso é obrigatório para o cadastro funcionar: os campos são de texto
- * livre e a lista apenas autocompleta. Se o IBGE estiver fora do ar, a pessoa
- * digita o município e segue.
- */
 @Injectable({ providedIn: 'root' })
 export class LocalityService {
 
@@ -53,12 +35,10 @@ export class LocalityService {
     { uf: 'TO', name: 'Tocantins' }
   ];
 
-  /** Municípios já buscados, por UF. */
   private readonly cache = new Map<string, string[]>();
 
   constructor(private http: HttpClient) {}
 
-  /** Aceita "MG", "mg" ou "Minas Gerais" e devolve a sigla, ou null. */
   normalizeUf(value: string | null | undefined): string | null {
     const v = (value || '').trim();
     if (!v) return null;
@@ -69,14 +49,6 @@ export class LocalityService {
     return byName ? byName.uf : null;
   }
 
-  /**
-   * Liga o campo de município ao de UF: as sugestões só existem depois de uma
-   * UF válida, e até lá o município fica somente-leitura.
-   *
-   * Trava com `readonly`, não com `disable()`: um controle desabilitado sai do
-   * `form.value`, e um perfil salvo com a UF em branco apagaria o município que
-   * já estava gravado.
-   */
   bindCityToUf(form: FormGroup, ufControl = 'state', cityControl = 'city'): CityOptions {
     const uf   = form.get(ufControl);
     const city = form.get(cityControl);
@@ -87,9 +59,6 @@ export class LocalityService {
       const sigla = this.normalizeUf(value);
       options.ready = !!sigla;
       options.list  = sigla ? await this.cities(sigla) : [];
-      // Trocar de UF invalida o município digitado para a UF anterior. Só vale
-      // quando quem trocou foi a pessoa: na carga inicial o que está gravado
-      // fica como está, ainda que a grafia divirja da lista do IBGE.
       if (userChanged && sigla && city.value && options.list.length
           && !options.list.some(c => c.localeCompare(city.value, 'pt-BR', { sensitivity: 'base' }) === 0)) {
         city.setValue('', { emitEvent: false });
@@ -97,14 +66,10 @@ export class LocalityService {
     };
 
     uf.valueChanges.subscribe(v => apply(v, true));
-    apply(uf.value, false);   // estado inicial: perfil já carregado ou UF padrão do formulário
+    apply(uf.value, false);
     return options;
   }
 
-  /**
-   * Municípios da UF, em ordem alfabética. Devolve lista vazia quando a UF é
-   * inválida ou o serviço do IBGE não responde — o campo continua utilizável.
-   */
   async cities(uf: string | null | undefined): Promise<string[]> {
     const sigla = this.normalizeUf(uf);
     if (!sigla) return [];

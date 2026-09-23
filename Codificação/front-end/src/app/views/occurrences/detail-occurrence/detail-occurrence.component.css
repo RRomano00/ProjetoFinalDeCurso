@@ -14,7 +14,6 @@
   color: var(--ink-mute);
 }
 
-/* ── Voltar é navegação, não uma ação de mesmo peso que as da ficha ── */
 .btn-back {
   align-self: flex-start;
   padding: 0.25rem 0;
@@ -40,7 +39,6 @@
 }
 .btn-secondary:hover { background: var(--surface-2); border-color: var(--plate-line); }
 
-/* ── Ficha do registro ── */
 .detail-card {
   background: var(--surface);
   border: 1px solid var(--line);
@@ -48,9 +46,6 @@
   overflow: hidden;
 }
 
-/* ── Identidade do registro ──
-   A placa esmaltada é o único elemento alto da tela: ela dá ao protocolo a
-   mesma presença que a placa azul dá ao nome da rua. O resto fica quieto. */
 .record-head {
   padding: 1.5rem;
   border-bottom: 1px solid var(--line);
@@ -69,7 +64,7 @@
   padding: 0.3125rem 0.75rem;
   background: var(--plate);
   border-radius: 3px;
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.3);   /* filete do esmalte */
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.3);
   font-family: var(--mono);
   font-size: 0.8125rem;
   font-weight: 600;
@@ -78,7 +73,6 @@
   color: #fff;
 }
 
-/* O título é a manchete do registro — não um campo rotulado no meio da ficha. */
 .record-title {
   margin: 0.875rem 0 0;
   font-size: 1.75rem;
@@ -90,8 +84,6 @@
   overflow-wrap: anywhere;
 }
 
-/* Categoria, prioridade, data e autor são atributos do mesmo tipo:
-   mesma grade, mesmo peso — em vez de duas pílulas e uma frase cinza. */
 .record-facts {
   display: grid;
   grid-template-columns: max-content 1fr;
@@ -101,7 +93,6 @@
 }
 .record-facts dt { font-size: 0.8125rem; color: var(--ink-mute); }
 .record-facts dd { margin: 0; font-size: 0.875rem; color: var(--ink); }
-/* O nome lidera; o e-mail vem atrás, mais leve, e quebra sem estourar o cartão. */
 .record-author { overflow-wrap: anywhere; }
 .record-author-mail { color: var(--ink-mute); }
 
@@ -130,7 +121,6 @@
   border: 1px solid;
 }
 
-/* ── Status: mesma convenção do mapa e da listagem ── */
 .badge {
   display: inline-flex;
   align-items: center;
@@ -158,12 +148,6 @@
   color: var(--ink-mute);
 }
 
-/* ── RF16: apoios ── */
-/* .btn-support agora é do sistema (styles.css): um controle, quatro telas. */
-
-/* ── Campos da ficha ──
-   O rótulo é hierarquia por peso, não etiqueta em caixa alta nem barra
-   colorida: repetida em cada bloco, a barra deixava de informar qualquer coisa. */
 .detail-section {
   padding: 1.125rem 1.5rem;
   border-bottom: 1px solid var(--line-soft);
@@ -200,8 +184,6 @@
 
 .occurrence-photo {
   max-width: 100%;
-  /* Sem teto, um retrato em pé empurra o resto da ficha para fora da tela.
-     Limita a altura preservando a proporção — recortar esconderia a evidência. */
   max-height: 420px;
   width: auto;
   border-radius: var(--r-ctl);
@@ -217,7 +199,6 @@
   padding: 0.5rem 0.75rem;
 }
 
-/* RF07: galeria de fotos */
 .photo-gallery {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -225,8 +206,6 @@
 }
 .photo-gallery .occurrence-photo { width: 100%; height: 160px; object-fit: cover; }
 
-/* ── RN03/RF11: linha do tempo de status ──
-   Aqui a estrutura vertical é informação: o conteúdo É uma sequência. */
 .history-item {
   position: relative;
   display: flex;
@@ -250,10 +229,7 @@
 .history-date { font-size: 0.8125rem; color: var(--ink-mute); }
 .history-obs  { font-size: 0.875rem; color: var(--ink); line-height: 1.55; max-width: 62ch; }
 
-/* ── RF12: grupo de duplicatas ── */
 .group-hint { font-size: 0.8125rem !important; color: var(--ink-mute) !important; margin-bottom: 0.625rem !important; }
-/* A diferença que a legenda explica é de tamanho, não de cor: no mapa a cor
-   é o status. Por isso os dois pontos aqui são iguais, mudando só o corpo. */
 .map-legend {
   display: flex;
   flex-wrap: wrap;
@@ -302,7 +278,6 @@
   white-space: nowrap;
 }
 
-/* ── Ações da equipe ── */
 .detail-actions {
   padding: 1.25rem 1.5rem;
   background: var(--surface-2);
@@ -372,7 +347,6 @@
   color: var(--st-refused);
 }
 
-/* Mensagem da equipe ao cidadão */
 .staff-message {
   display: flex;
   flex-direction: column;
@@ -410,7 +384,6 @@
   box-shadow: 0 0 0 3px var(--st-refused-bg);
 }
 
-/* O botão acompanha o campo: enviar é a ação do texto que está ao lado. */
 .message-row {
   display: flex;
   align-items: flex-end;
@@ -419,8 +392,6 @@
 .message-row textarea { flex: 1; min-width: 0; }
 .message-row .btn-action { flex-shrink: 0; }
 
-/* Avançar o atendimento à esquerda, recusar à direita: decisões opostas
-   não ficam empilhadas uma sob a outra, onde se clica na errada. */
 .status-actions {
   display: flex;
   align-items: center;
@@ -455,7 +426,6 @@
 }
 .group-check input { width: 15px; height: 15px; cursor: pointer; accent-color: var(--st-pending); }
 
-/* Formulário de indeferimento */
 .reject-form {
   display: flex;
   flex-direction: column;
@@ -464,14 +434,10 @@
 }
 .reject-form-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
 
-/* ── RF11: convite a entrar para apoiar (flutua: recebe elevação) ── */
-
 @media (max-width: 560px) {
   .record-head, .detail-section, .detail-actions { padding-left: 1.125rem; padding-right: 1.125rem; }
   .btn-action, .concluded-label, .rejected-label { width: 100%; }
-  /* Manchete em corpo menor: 1.75rem em 390px consome quatro linhas. */
   .record-title { font-size: 1.375rem; max-width: none; }
-  /* Sem largura para duas colunas, rótulo sobe e o valor ganha a linha inteira. */
   .record-facts { grid-template-columns: 1fr; gap: 0.125rem; }
   .record-facts dt { margin-top: 0.625rem; }
   .record-facts dt:first-child { margin-top: 0; }
@@ -481,18 +447,9 @@
   .status-actions .btn-end { margin-left: 0; }
 }
 
-/* ── RF22: encaminhar ao departamento responsável ──
-   O painel flutua sobre a tela (é uma escolha que interrompe o trabalho), por
-   isso usa o raio de modal e elevação — os dois reservados, no sistema, ao que
-   não é parte da página. A lista rola dentro dele: escolher o setor não empurra
-   as demais ações da ficha para fora da vista. */
-/* Em fluxo, a coluna inteira é do painel; o botão continua do tamanho do rótulo. */
 .btn-forward { justify-content: flex-start; }
 
 .forward-panel {
-  /* Flutuava sobre a tela, mas a ficha recorta o que passa da borda
-     (.detail-card { overflow: hidden }) e o botão de confirmar sumia. Em fluxo,
-     o painel abre inteiro; a lista rola dentro dele e o empurrão é curto. */
   margin-top: 0.5rem;
   width: min(26rem, 100%);
   background: var(--surface);
@@ -540,8 +497,6 @@
   margin: 0;
   padding: 0.25rem;
   list-style: none;
-  /* Altura que deixa a quarta linha pela metade: o corte é o que avisa que a
-     lista continua. Fechada num número redondo de linhas, ela pareceria completa. */
   max-height: 13.25rem;
   overflow-y: auto;
 }
@@ -566,8 +521,6 @@
   color: var(--ink);
   line-height: 1.3;
 }
-/* O e-mail é o endereço de destino: mesmo tratamento de identificador que o
-   sistema dá ao protocolo. */
 .forward-option-mail {
   font-family: var(--mono);
   font-size: 0.75rem;
@@ -588,15 +541,12 @@
 }
 .btn-forward-confirm {
   width: 100%;
-  /* É a ação pela qual o painel existe: cheia, não a variante clara das demais. */
   background: var(--plate);
   border-color: var(--plate);
   color: #fff;
 }
 .btn-forward-confirm:hover:not(:disabled) { background: var(--plate-deep); border-color: var(--plate-deep); }
 .btn-forward-confirm:disabled { background: var(--surface); border-color: var(--line); color: var(--ink-faint); }
-/* O efeito da confirmação vem escrito com a própria pílula do estado que ela
-   produz: a cor já é o significado em todas as telas. */
 .forward-effect {
   display: flex;
   align-items: center;

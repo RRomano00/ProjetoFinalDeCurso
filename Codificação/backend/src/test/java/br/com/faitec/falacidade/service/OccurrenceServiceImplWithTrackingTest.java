@@ -40,10 +40,6 @@ class OccurrenceServiceImplWithTrackingTest {
                                         departmentService);
     }
 
-    // ================================================================
-    // Helpers
-    // ================================================================
-
     private Occurrence anonymousOccurrence() {
         Occurrence o = new Occurrence();
         o.setDescription("Maus tratos");
@@ -65,10 +61,6 @@ class OccurrenceServiceImplWithTrackingTest {
         o.setEmail("joao@email.com");
         return o;
     }
-
-    // ================================================================
-    // createOccurrence() – ocorrência ANÔNIMA
-    // ================================================================
 
     @Nested
     @DisplayName("createOccurrence() – anônima")
@@ -141,16 +133,11 @@ class OccurrenceServiceImplWithTrackingTest {
 
             ArgumentCaptor<Occurrence> captor = ArgumentCaptor.forClass(Occurrence.class);
             verify(occurrenceDao).add(captor.capture());
-            // O campo persistido deve ser o hash, nunca o código plain
             assertThat(captor.getValue().getAnonymousTrackingCodeHash())
                 .isEqualTo("sha256hash")
                 .isNotEqualTo("MYCODE12");
         }
     }
-
-    // ================================================================
-    // createOccurrence() – ocorrência IDENTIFICADA
-    // ================================================================
 
     @Nested
     @DisplayName("createOccurrence() – identificada")
@@ -201,10 +188,6 @@ class OccurrenceServiceImplWithTrackingTest {
         }
     }
 
-    // ================================================================
-    // createOccurrence() – validações
-    // ================================================================
-
     @Nested
     @DisplayName("createOccurrence() – validações")
     class CreateValidations {
@@ -236,10 +219,6 @@ class OccurrenceServiceImplWithTrackingTest {
         }
     }
 
-    // ================================================================
-    // findByAnonymousTrackingCode()
-    // ================================================================
-
     @Nested
     @DisplayName("findByAnonymousTrackingCode()")
     class FindByTrackingCode {
@@ -256,7 +235,6 @@ class OccurrenceServiceImplWithTrackingTest {
 
             assertThat(result).isSameAs(dto);
             verify(occurrenceDao).findByAnonymousTrackingCodeHash("sha256hash");
-            // DAO nunca recebe o código plain text
             verify(occurrenceDao, never()).findByAnonymousTrackingCodeHash("A3KP7NB2");
         }
 
@@ -296,10 +274,6 @@ class OccurrenceServiceImplWithTrackingTest {
         }
     }
 
-    // ================================================================
-    // Rate limiting diário (RF07 / RF08)
-    // ================================================================
-
     @Nested
     @DisplayName("Rate limiting (RF07/RF08)")
     class RateLimiting {
@@ -307,7 +281,6 @@ class OccurrenceServiceImplWithTrackingTest {
         @Test
         @DisplayName("RF08: bloqueia 4ª ocorrência anônima do mesmo IP no dia")
         void blocksAnonymousOverDailyLimit() {
-            // RNF17: a contagem diária é feita sobre o resumo SHA-256 do IP
             when(trackingCodeService.hash("1.2.3.4")).thenReturn("ipHash1234");
             when(occurrenceDao.countTodayAnonymousByIp("ipHash1234")).thenReturn(3);
 
@@ -346,9 +319,6 @@ class OccurrenceServiceImplWithTrackingTest {
         }
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // RF22: encaminhamento ao departamento responsável
-    // ─────────────────────────────────────────────────────────────────────────
     @Nested
     @DisplayName("forwardToDepartment()")
     class ForwardToDepartment {

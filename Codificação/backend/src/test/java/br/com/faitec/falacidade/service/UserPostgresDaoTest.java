@@ -18,10 +18,6 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-/**
- * Testa a DAO via mocking de Connection/PreparedStatement/ResultSet.
- * Não precisa de banco de dados real.
- */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UserPostgresDao")
 class UserPostgresDaoTest {
@@ -37,10 +33,6 @@ class UserPostgresDaoTest {
     void setUp() {
         sut = new UserPostgresDao(connection);
     }
-
-    // ================================================================
-    // add()
-    // ================================================================
 
     @Nested
     @DisplayName("add()")
@@ -59,15 +51,12 @@ class UserPostgresDaoTest {
             user.setFullname("Teste");
             user.setEmail("teste@email.com");
             user.setRole(UserModel.UserRole.CITIZEN);
-            user.setState("sp");          // guardado em maiúsculas pelo modelo
+            user.setState("sp");
             user.setAcceptsTerms(true);
 
             int id = sut.add(user);
 
             assertThat(id).isEqualTo(99);
-            // Layout do INSERT: 1=password, 2=fullname, 3=email, 4=date_of_birth, 5=phone,
-            // 6=street, 7=neighborhood, 8=number, 9=cep, 10=city, 11=state, 12=role,
-            // 13=is_active, 14=accepts_terms, 15=mfa_email_enabled
             verify(ps).setString(1, "$2a$HASH");
             verify(ps).setString(2, "Teste");
             verify(ps).setString(3, "teste@email.com");
@@ -97,10 +86,6 @@ class UserPostgresDaoTest {
         }
     }
 
-    // ================================================================
-    // remove()
-    // ================================================================
-
     @Nested
     @DisplayName("remove()")
     class Remove {
@@ -126,10 +111,6 @@ class UserPostgresDaoTest {
         }
     }
 
-    // ================================================================
-    // readById()
-    // ================================================================
-
     @Nested
     @DisplayName("readById()")
     class ReadById {
@@ -141,7 +122,6 @@ class UserPostgresDaoTest {
             when(ps.executeQuery()).thenReturn(rs);
             when(rs.next()).thenReturn(true);
 
-            // Mapeamento completo dos campos
             when(rs.getInt("id")).thenReturn(1);
             when(rs.getString("fullname")).thenReturn("João");
             when(rs.getString("email")).thenReturn("joao@email.com");
@@ -182,7 +162,7 @@ class UserPostgresDaoTest {
             when(connection.prepareStatement(contains("WHERE id"))).thenReturn(ps);
             when(ps.executeQuery()).thenReturn(rs);
             when(rs.next()).thenReturn(true);
-            when(rs.getString("role")).thenReturn("USER"); // valor legado
+            when(rs.getString("role")).thenReturn("USER");
             when(rs.getInt("id")).thenReturn(1);
             when(rs.getString("fullname")).thenReturn("X");
             when(rs.getString("email")).thenReturn("x@x.com");
@@ -205,10 +185,6 @@ class UserPostgresDaoTest {
         }
     }
 
-    // ================================================================
-    // readall()
-    // ================================================================
-
     @Nested
     @DisplayName("readall()")
     class Readall {
@@ -224,10 +200,6 @@ class UserPostgresDaoTest {
         }
     }
 
-    // ================================================================
-    // readByEmail()
-    // ================================================================
-
     @Nested
     @DisplayName("readByEmail()")
     class ReadByEmail {
@@ -242,10 +214,6 @@ class UserPostgresDaoTest {
             assertThat(sut.readByEmail("nao@existe.com")).isNull();
         }
     }
-
-    // ================================================================
-    // updatePassword()
-    // ================================================================
 
     @Nested
     @DisplayName("updatePassword()")
@@ -285,10 +253,6 @@ class UserPostgresDaoTest {
         }
     }
 
-    // ================================================================
-    // updateInformation()
-    // ================================================================
-
     @Nested
     @DisplayName("updateInformation()")
     class UpdateInformation {
@@ -310,7 +274,6 @@ class UserPostgresDaoTest {
 
             sut.updateInformation(1, u);
 
-            // 1=fullname … 7=city, 8=state, 9=id
             verify(ps).setString(1, "Maria");
             verify(ps).setString(7, "Franca");
             verify(ps).setString(8, "SP");
