@@ -16,7 +16,8 @@
 #   DOMINIO= ./subir.sh --celular   -> forca cloudflared, com URL aleatoria
 #   DOMINIO=outro.ngrok-free.dev ./subir.sh --celular   -> troca o dominio
 set -euo pipefail
-cd "$(dirname "$0")"
+AQUI=$(cd "$(dirname "$0")" && pwd)
+cd "$AQUI/.."                 # raiz do Codificacao: backend/ e front-end/ ficam aqui
 
 MODO=${1:-}
 PORTA=${PORTA:-4173}      # porta local do front
@@ -104,7 +105,7 @@ npm --prefix "$FRONT" run build >"$LOG/build.log" 2>&1 \
   || { erro "build do front falhou — veja $LOG/build.log"; tail -30 "$LOG/build.log" >&2; exit 1; }
 sucesso "build do front pronto"
 echo "== servindo $DIST na $PORTA (API no mesmo endereco, em /api)"
-bg front node servir.mjs "$DIST" "$PORTA" 127.0.0.1:8080
+bg front node "$AQUI/servir.mjs" "$DIST" "$PORTA" 127.0.0.1:8080
 espera front "$PORTA" 30
 sucesso "front no ar na $PORTA"
 

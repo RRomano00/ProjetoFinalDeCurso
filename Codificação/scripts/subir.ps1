@@ -15,7 +15,8 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-Set-Location $PSScriptRoot
+$Raiz = Split-Path $PSScriptRoot -Parent   # raiz do Codificacao: backend\ e front-end\ ficam aqui
+Set-Location $Raiz
 
 $Front = 'front-end'
 $Dist  = Join-Path $Front 'dist\fala-cidade\browser'
@@ -42,7 +43,7 @@ function PortaAtiva([int] $p) {
   try { $c.ConnectAsync('127.0.0.1', $p).Wait(1000) -and $c.Connected } catch { $false } finally { $c.Dispose() }
 }
 
-function Bg([string] $nome, [string] $exe, [string[]] $argumentos, [string] $dir = $PSScriptRoot) {
+function Bg([string] $nome, [string] $exe, [string[]] $argumentos, [string] $dir = $Raiz) {
   # saida e erro precisam de arquivos separados: o PowerShell recusa o mesmo para os dois
   $p = Start-Process -FilePath $exe -ArgumentList $argumentos -WorkingDirectory $dir `
          -NoNewWindow -PassThru `
@@ -103,7 +104,7 @@ try {
     Sucesso 'backend ja esta no ar na 8080'
   } else {
     Write-Host '== subindo backend (mvnw spring-boot:run)'
-    $b = Bg 'backend' (Join-Path $PSScriptRoot 'backend\mvnw.cmd') @('-q', 'spring-boot:run') (Join-Path $PSScriptRoot 'backend')
+    $b = Bg 'backend' (Join-Path $Raiz 'backend\mvnw.cmd') @('-q', 'spring-boot:run') (Join-Path $Raiz 'backend')
     Espera 'backend' 8080 180 $b
     Sucesso 'backend no ar na 8080'
   }
@@ -119,7 +120,7 @@ try {
   Sucesso 'build do front pronto'
 
   Write-Host "== servindo $Dist na $Porta (API no mesmo endereco, em /api)"
-  $f = Bg 'front' 'node' @('servir.mjs', $Dist, "$Porta", '127.0.0.1:8080')
+  $f = Bg 'front' 'node' @((Join-Path $PSScriptRoot 'servir.mjs'), $Dist, "$Porta", '127.0.0.1:8080')
   Espera 'front' $Porta 30 $f
   Sucesso "front no ar na $Porta"
 

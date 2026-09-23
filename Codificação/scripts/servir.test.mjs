@@ -5,6 +5,9 @@ import { spawn } from 'node:child_process';
 import { mkdtemp, writeFile, mkdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const SERVIR = fileURLToPath(new URL('./servir.mjs', import.meta.url));
 
 const PORTA = 4399, API = 4398;
 let servidor, backend, dist;
@@ -21,7 +24,7 @@ before(async () => {
 
   backend = spawn(process.execPath, ['-e',
     `require('http').createServer((q,s)=>{s.writeHead(200,{'Content-Type':'application/json'});s.end(JSON.stringify({url:q.url,metodo:q.method}))}).listen(${API})`]);
-  servidor = spawn(process.execPath, ['servir.mjs', dist, String(PORTA), `127.0.0.1:${API}`]);
+  servidor = spawn(process.execPath, [SERVIR, dist, String(PORTA), `127.0.0.1:${API}`]);
   for (let i = 0; i < 50; i++) {
     try { await pegar('/'); break; } catch { await new Promise(r => setTimeout(r, 100)); }
   }
