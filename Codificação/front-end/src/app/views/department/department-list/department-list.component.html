@@ -54,8 +54,8 @@
         <label for="dep-city">Município</label>
         <!-- Só recebe digitação depois da UF, como nas demais telas. -->
         <input id="dep-city" type="text" formControlName="city" list="dep-city-options"
-               [readOnly]="!cityOptions.ready" spellcheck="false" autocomplete="off"
-               [placeholder]="cityOptions.ready ? 'Santa Rita do Sapucaí' : 'Informe a UF primeiro'">
+               [readOnly]="!canChooseCity && !cityOptions.ready" spellcheck="false" autocomplete="off"
+               [placeholder]="!canChooseCity || cityOptions.ready ? 'Santa Rita do Sapucaí' : 'Informe a UF primeiro'">
         <datalist id="dep-city-options">
           <option *ngFor="let c of cityOptions.list" [value]="c"></option>
         </datalist>
@@ -63,7 +63,10 @@
               *ngIf="form.controls['city'].touched && form.controls['city'].hasError('required')">
           Informe o município do departamento.
         </span>
-        <span class="field-hint" *ngIf="!cityOptions.ready">Selecione a UF para ver os municípios.</span>
+        <span class="field-hint" *ngIf="!canChooseCity">
+          O setor é da sua prefeitura: o município vem da sua conta.
+        </span>
+        <span class="field-hint" *ngIf="canChooseCity && !cityOptions.ready">Selecione a UF para ver os municípios.</span>
       </div>
     </div>
 

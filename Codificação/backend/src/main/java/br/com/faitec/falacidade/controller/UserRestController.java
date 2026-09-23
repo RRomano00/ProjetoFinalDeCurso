@@ -16,6 +16,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/user")
@@ -116,6 +118,63 @@ public class UserRestController {
                                  target.getCity(), target.getState());
     }
 
+    /**
+     * Avisa o titular de que a sua conta foi alterada por outra pessoa, dizendo
+     * o que mudou e quem mudou. Toda alteração feita por terceiro passa por
+     * aqui — dados de perfil, perfil de acesso e ativação —, porque quem
+     * descobre a alteração pela consequência não tem como contestá-la a tempo.
+     *
+     * A falha no envio não desfaz a alteração: o mesmo critério já adotado no
+     * cadastro da equipe e no registro de ocorrência.
+     */
+    private void notifyAccountChange(UserModel target, List<String> alteracoes, UserModel requester) {
+        if (target == null || alteracoes.isEmpty()) return;
+        if (requester != null && requester.getId() == target.getId()) return;
+        if (target.getEmail() == null || target.getEmail().isBlank()) return;
+        try {
+            emailService.sendAccountChangedEmail(
+                target.getEmail(), target.getFullname(), alteracoes,
+                requester == null ? null : requester.getFullname(),
+                requester == null ? null : requester.getEmail());
+        } catch (Exception ignored) { }
+    }
+
+    /** O que mudou de fato, em linguagem de tela — campo em branco não é alteração. */
+    private List<String> diff(UserModel antes, UserModel depois) {
+        List<String> mudou = new ArrayList<>();
+        addChange(mudou, "Nome",        antes.getFullname(),     depois.getFullname());
+        addChange(mudou, "Telefone",    antes.getPhoneNumber(),  depois.getPhoneNumber());
+        addChange(mudou, "CEP",         antes.getCep(),          depois.getCep());
+        addChange(mudou, "Logradouro",  antes.getStreet(),       depois.getStreet());
+        addChange(mudou, "Número",      antes.getNumber(),       depois.getNumber());
+        addChange(mudou, "Bairro",      antes.getNeighborhood(), depois.getNeighborhood());
+        addChange(mudou, "Município",   municipality(antes),     municipality(depois));
+        return mudou;
+    }
+
+    private void addChange(List<String> destino, String rotulo, String antes, String depois) {
+        String a = antes  == null ? "" : antes.trim();
+        String d = depois == null ? "" : depois.trim();
+        if (d.isEmpty() || a.equals(d)) return;
+        destino.add(rotulo + ": " + (a.isEmpty() ? "(em branco)" : a) + " \u2192 " + d);
+    }
+
+    private String municipality(UserModel user) {
+        if (user.getCity() == null || user.getCity().isBlank()) return "";
+        return user.getState() == null || user.getState().isBlank()
+            ? user.getCity() : user.getCity() + "/" + user.getState();
+    }
+
+    private String perfil(UserModel.UserRole role) {
+        if (role == null) return "não definido";
+        return switch (role) {
+            case SUPER_ADMIN    -> "Super Administrador";
+            case ADMINISTRATOR  -> "Administrador";
+            case EMPLOYEE       -> "Funcionário";
+            case CITIZEN        -> "Cidadão";
+        };
+    }
+
     /** E-mail duplicado: 409 com o motivo, para a tela dizer o que houve. */
     private ResponseEntity<java.util.Map<String, String>> conflict(IllegalStateException e) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
@@ -145,8 +204,10 @@ public class UserRestController {
         Boolean active = body.get("active");
         if (active == null) return ResponseEntity.badRequest().build();
         UserModel requester = getAuthenticatedUser(auth);
-        if (!canManage(requester, userService.findById(id))) return ResponseEntity.status(403).build();
+        UserModel target = userService.findById(id);
+        if (!canManage(requester, target)) return ResponseEntity.status(403).build();
         userService.setActive(id, active);
+        notifyAccountChange(target, List.of(active ? "Conta reativada" : "Conta inativada"), requester);
         return ResponseEntity.noContent().build();
     }
 
@@ -171,11 +232,14 @@ public class UserRestController {
         // Mudar o próprio perfil é se promover — ou se trancar para fora da tela.
         if (requester.getId() == id)
             return forbidden("Você não pode alterar o seu próprio perfil.");
-        if (!canManage(requester, userService.findById(id))) return ResponseEntity.status(403).build();
+        UserModel target = userService.findById(id);
+        if (!canManage(requester, target)) return ResponseEntity.status(403).build();
         if (role == UserModel.UserRole.SUPER_ADMIN && !requester.isSuperAdmin())
             return forbidden("Apenas o Super Administrador nomeia Super Administradores.");
 
         userService.setRole(id, role);
+        notifyAccountChange(target,
+            List.of("Perfil: " + perfil(target.getRole()) + " \u2192 " + perfil(role)), requester);
         return ResponseEntity.noContent().build();
     }
 
@@ -251,13 +315,33 @@ public class UserRestController {
 
     /** RF04: atualiza os dados de perfil — só o próprio usuário ou um Administrador. */
     @PutMapping("/{id}")
-    public ResponseEntity<Void> update(@PathVariable int id, @RequestBody UpdateUserDto data,
-                                       Authentication auth) {
+    public ResponseEntity<?> update(@PathVariable int id, @RequestBody UpdateUserDto data,
+                                    Authentication auth) {
         UserModel requester = getAuthenticatedUser(auth);
         if (requester == null) return ResponseEntity.status(401).build();
-        if (requester.getId() != id && !canManage(requester, userService.findById(id)))
+        UserModel target = requester.getId() == id ? requester : userService.findById(id);
+        if (requester.getId() != id && !canManage(requester, target))
             return ResponseEntity.status(403).build();
-        userService.update(id, data.toUserModel());
+        if (target == null) return ResponseEntity.notFound().build();
+
+        UserModel changes = data.toUserModel();
+
+        // RF25: para a equipe o município não é dado de endereço, é a jurisdição
+        // — define quais ocorrências a conta enxerga e onde ela pode cadastrar
+        // setores. Trocá-lo é transferir a pessoa de prefeitura, decisão que não
+        // cabe nem a ela mesma nem ao administrador do município de origem.
+        if (target.isStaff() && !requester.isSuperAdmin()) {
+            boolean informou = changes.getCity() != null && !changes.getCity().isBlank();
+            if (informou && !Municipality.same(target.getCity(), target.getState(),
+                                               changes.getCity(), changes.getState()))
+                return forbidden("Apenas o Super Administrador altera o município de uma conta da administração.");
+            changes.setCity(target.getCity());
+            changes.setState(target.getState());
+        }
+
+        List<String> alteracoes = diff(target, changes);
+        userService.update(id, changes);
+        if (requester.getId() != id) notifyAccountChange(target, alteracoes, requester);
         return ResponseEntity.noContent().build();
     }
 
