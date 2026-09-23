@@ -319,50 +319,50 @@
         <mxCell id="password_reset_token.created_at" value="created_at : timestamp" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" vertex="1" parent="password_reset_token">
           <mxGeometry y="126" width="260" height="20" as="geometry" />
         </mxCell>
-        <mxCell id="rel1" value="N:1" style="edgeStyle=entityRelationEdgeStyle;rounded=0;html=1;endArrow=ERoneToMany;endFill=0;startArrow=ERone;startFill=0;strokeColor=#1F4E79;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="city.id" target="user.city_id">
+        <mxCell id="rel1" value="N:1" style="edgeStyle=entityRelationEdgeStyle;rounded=0;html=1;endArrow=ERoneToMany;endFill=0;startArrow=ERone;startFill=0;strokeColor=#1F4E79;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="city.id" target="user.city_id">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="rel2" value="N:1" style="edgeStyle=entityRelationEdgeStyle;rounded=0;html=1;endArrow=ERoneToMany;endFill=0;startArrow=ERone;startFill=0;strokeColor=#1F4E79;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="department.id" target="user.department_id">
+        <mxCell id="rel2" value="N:1" style="edgeStyle=entityRelationEdgeStyle;rounded=0;html=1;endArrow=ERoneToMany;endFill=0;startArrow=ERone;startFill=0;strokeColor=#1F4E79;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="department.id" target="user.department_id">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="rel3" value="N:1" style="edgeStyle=entityRelationEdgeStyle;rounded=0;html=1;endArrow=ERoneToMany;endFill=0;startArrow=ERone;startFill=0;strokeColor=#1F4E79;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="department.id" target="classification.department_id">
+        <mxCell id="rel3" value="N:1" style="edgeStyle=entityRelationEdgeStyle;rounded=0;html=1;endArrow=ERoneToMany;endFill=0;startArrow=ERone;startFill=0;strokeColor=#1F4E79;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="department.id" target="classification.department_id">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="rel4" value="N:1" style="edgeStyle=entityRelationEdgeStyle;rounded=0;html=1;endArrow=ERoneToMany;endFill=0;startArrow=ERone;startFill=0;strokeColor=#1F4E79;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="city.id" target="occurrence.city_id">
+        <mxCell id="rel4" value="N:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=ERoneToMany;endFill=0;startArrow=ERone;startFill=0;strokeColor=#1F4E79;jettySize=auto;orthogonalLoop=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="city.id" target="occurrence.city_id">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="310" y="700" /><mxPoint x="665" y="700" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="rel5" value="N:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=ERoneToMany;endFill=0;startArrow=ERone;startFill=0;strokeColor=#1F4E79;jettySize=auto;orthogonalLoop=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="classification.id" target="occurrence.classification_id">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="320" y="718" /><mxPoint x="675" y="718" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="rel6" value="N:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=ERoneToMany;endFill=0;startArrow=ERone;startFill=0;strokeColor=#1F4E79;jettySize=auto;orthogonalLoop=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="department.id" target="occurrence.department_id">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="330" y="736" /><mxPoint x="685" y="736" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="rel7" value="N:1" style="edgeStyle=entityRelationEdgeStyle;rounded=0;html=1;endArrow=ERoneToMany;endFill=0;startArrow=ERone;startFill=0;strokeColor=#1F4E79;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="user.id" target="occurrence.user_id">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="rel5" value="N:1" style="edgeStyle=entityRelationEdgeStyle;rounded=0;html=1;endArrow=ERoneToMany;endFill=0;startArrow=ERone;startFill=0;strokeColor=#1F4E79;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="classification.id" target="occurrence.classification_id">
+        <mxCell id="rel8" value="N:1" style="edgeStyle=entityRelationEdgeStyle;rounded=0;html=1;endArrow=ERoneToMany;endFill=0;startArrow=ERone;startFill=0;strokeColor=#1F4E79;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="occurrence.id" target="occurrence.group_id">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="968" y="300" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="rel9" value="N:1" style="edgeStyle=entityRelationEdgeStyle;rounded=0;html=1;endArrow=ERoneToMany;endFill=0;startArrow=ERone;startFill=0;strokeColor=#1F4E79;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="occurrence.id" target="occurrence_history.occurrence_id">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="rel6" value="N:1" style="edgeStyle=entityRelationEdgeStyle;rounded=0;html=1;endArrow=ERoneToMany;endFill=0;startArrow=ERone;startFill=0;strokeColor=#1F4E79;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="department.id" target="occurrence.department_id">
+        <mxCell id="rel10" value="N:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=ERoneToMany;endFill=0;startArrow=ERone;startFill=0;strokeColor=#1F4E79;jettySize=auto;orthogonalLoop=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="user.id" target="occurrence_history.changed_by">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="630" y="754" /><mxPoint x="975" y="754" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="rel11" value="N:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=ERoneToMany;endFill=0;startArrow=ERone;startFill=0;strokeColor=#1F4E79;jettySize=auto;orthogonalLoop=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="department.id" target="occurrence_history.department_id">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="340" y="772" /><mxPoint x="990" y="772" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="rel12" value="N:1" style="edgeStyle=entityRelationEdgeStyle;rounded=0;html=1;endArrow=ERoneToMany;endFill=0;startArrow=ERone;startFill=0;strokeColor=#1F4E79;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="occurrence.id" target="occurrence_media.occurrence_id">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="rel7" value="N:1" style="edgeStyle=entityRelationEdgeStyle;rounded=0;html=1;endArrow=ERoneToMany;endFill=0;startArrow=ERone;startFill=0;strokeColor=#1F4E79;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="user.id" target="occurrence.user_id">
+        <mxCell id="rel13" value="N:1" style="edgeStyle=entityRelationEdgeStyle;rounded=0;html=1;endArrow=ERoneToMany;endFill=0;startArrow=ERone;startFill=0;strokeColor=#1F4E79;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="occurrence.id" target="occurrence_support.occurrence_id">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="rel8" value="N:1" style="edgeStyle=entityRelationEdgeStyle;rounded=0;html=1;endArrow=ERoneToMany;endFill=0;startArrow=ERone;startFill=0;strokeColor=#1F4E79;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="occurrence.id" target="occurrence.group_id">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="rel14" value="N:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=ERoneToMany;endFill=0;startArrow=ERone;startFill=0;strokeColor=#1F4E79;jettySize=auto;orthogonalLoop=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="user.id" target="occurrence_support.citizen_id">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="640" y="790" /><mxPoint x="1005" y="790" /></Array></mxGeometry>
         </mxCell>
-        <mxCell id="rel9" value="N:1" style="edgeStyle=entityRelationEdgeStyle;rounded=0;html=1;endArrow=ERoneToMany;endFill=0;startArrow=ERone;startFill=0;strokeColor=#1F4E79;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="occurrence.id" target="occurrence_history.occurrence_id">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="rel10" value="N:1" style="edgeStyle=entityRelationEdgeStyle;rounded=0;html=1;endArrow=ERoneToMany;endFill=0;startArrow=ERone;startFill=0;strokeColor=#1F4E79;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="user.id" target="occurrence_history.changed_by">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="rel11" value="N:1" style="edgeStyle=entityRelationEdgeStyle;rounded=0;html=1;endArrow=ERoneToMany;endFill=0;startArrow=ERone;startFill=0;strokeColor=#1F4E79;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="department.id" target="occurrence_history.department_id">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="rel12" value="N:1" style="edgeStyle=entityRelationEdgeStyle;rounded=0;html=1;endArrow=ERoneToMany;endFill=0;startArrow=ERone;startFill=0;strokeColor=#1F4E79;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="occurrence.id" target="occurrence_media.occurrence_id">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="rel13" value="N:1" style="edgeStyle=entityRelationEdgeStyle;rounded=0;html=1;endArrow=ERoneToMany;endFill=0;startArrow=ERone;startFill=0;strokeColor=#1F4E79;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="occurrence.id" target="occurrence_support.occurrence_id">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="rel14" value="N:1" style="edgeStyle=entityRelationEdgeStyle;rounded=0;html=1;endArrow=ERoneToMany;endFill=0;startArrow=ERone;startFill=0;strokeColor=#1F4E79;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="user.id" target="occurrence_support.citizen_id">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="rel15" value="N:1" style="edgeStyle=entityRelationEdgeStyle;rounded=0;html=1;endArrow=ERoneToMany;endFill=0;startArrow=ERone;startFill=0;strokeColor=#1F4E79;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="user.id" target="password_reset_token.user_id">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="rel15" value="N:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=ERoneToMany;endFill=0;startArrow=ERone;startFill=0;strokeColor=#1F4E79;jettySize=auto;orthogonalLoop=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="user.id" target="password_reset_token.user_id">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="650" y="808" /><mxPoint x="1020" y="808" /></Array></mxGeometry>
         </mxCell>
       </root>
     </mxGraphModel>
