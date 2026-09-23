@@ -236,6 +236,57 @@ public class EmailServiceImpl implements EmailService {
              withFooter(text), layout(content), "Falha ao enviar e-mail de boas-vindas da equipe");
     }
 
+    /**
+     * RF15/RF25: a conta foi alterada por outra pessoa. O corpo diz o que mudou,
+     * campo a campo, e por quem — sem isso a pessoa só descobre a mudança pela
+     * consequência (uma ocorrência que sumiu da lista, um acesso que deixou de
+     * funcionar) e não tem a quem recorrer.
+     */
+    @Override
+    @Async("emailExecutor")
+    public void sendAccountChangedEmail(String toEmail, String fullname, java.util.List<String> changes,
+                                        String changedByName, String changedByEmail) {
+        if (changes == null || changes.isEmpty()) return;
+        String name  = (fullname == null || fullname.isBlank()) ? "colega" : fullname;
+        String autor = (changedByName == null || changedByName.isBlank())
+                     ? "um administrador" : changedByName;
+        String autorContato = (changedByEmail == null || changedByEmail.isBlank())
+                            ? "" : " (" + changedByEmail + ")";
+
+        StringBuilder lista     = new StringBuilder();
+        StringBuilder listaHtml = new StringBuilder();
+        for (String change : changes) {
+            lista.append("- ").append(change).append("\n");
+            listaHtml.append("  <li style='margin-bottom:6px;'>").append(esc(change)).append("</li>");
+        }
+
+        String text =
+            "Olá, " + name + "!\n\n" +
+            "Os dados da sua conta no Fala, Cidade! foram alterados por " + autor + autorContato + ".\n\n" +
+            "O que mudou:\n" + lista + "\n" +
+            "Se você não reconhece esta alteração, responda a este e-mail ou procure a " +
+            "administração do seu município.";
+
+        String content =
+            "<h2 style='margin:0 0 16px; font-size:20px; color:#111;'>Sua conta foi alterada</h2>" +
+            "<p style='font-size:15px; color:#333;'>Olá, <strong>" + esc(name) + "</strong>!</p>" +
+            "<p style='font-size:15px; color:#333;'>Os dados da sua conta foram alterados por " +
+            "<strong>" + esc(autor) + "</strong>" + esc(autorContato) + ".</p>" +
+
+            "<div style='background:#eef4fb; border-radius:8px; padding:14px 16px; margin:20px 0;'>" +
+            "  <p style='font-size:13px; color:#777; margin:0 0 8px;'>O que mudou</p>" +
+            "  <ul style='font-size:14px; color:#333; line-height:1.6; margin:0; padding-left:18px;'>" +
+                 listaHtml + "</ul>" +
+            "</div>" +
+
+            "<p style='font-size:13px; color:#777; margin:0;'>" +
+            "Se você não reconhece esta alteração, responda a este e-mail ou procure a " +
+            "administração do seu município.</p>";
+
+        send(toEmail, changedByEmail, "Fala, Cidade! – Sua conta foi alterada",
+             withFooter(text), layout(content), "Falha ao enviar aviso de alteração de conta");
+    }
+
     /** Confirma o registro da ocorrência e agradece o comprometimento com a cidade. */
     @Override
     @Async("emailExecutor")

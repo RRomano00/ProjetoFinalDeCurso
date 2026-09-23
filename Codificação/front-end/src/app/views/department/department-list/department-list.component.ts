@@ -85,15 +85,26 @@ export class DepartmentListComponent implements OnInit {
     await Promise.all([this.load(), this.loadMyCity()]);
   }
 
-  /** Município de quem está cadastrando: o servidor só aceita esse, para o funcionário. */
+  /**
+   * Município de quem está cadastrando: o servidor só aceita esse, para a
+   * equipe — o setor é destino de encaminhamento da própria prefeitura. Por
+   * isso o campo vem preenchido e bloqueado; só o Super Administrador, que não
+   * tem município, escolhe.
+   */
   private async loadMyCity() {
+    if (this.canChooseCity) return;
     const id = localStorage.getItem('id');
     if (!id) return;
     try {
       const me: any = await this.userReadService.findById(id);
       if (me?.city) this.form.patchValue({ state: me.state || '', city: me.city });
     } catch { /* sem preenchimento prévio: a pessoa informa o município */ }
+    this.form.get('state')!.disable();
+    this.form.get('city')!.disable();
   }
+
+  /** RF25: sem município próprio, o Super Administrador cadastra em qualquer um. */
+  get canChooseCity() { return this.auth.isSuperAdmin(); }
 
   private async load() {
     this.loading = true;
@@ -134,7 +145,8 @@ export class DepartmentListComponent implements OnInit {
     this.formOpen = false;
     this.editingId = null;
     // Mantém o município: quem cadastra vários setores é sempre do mesmo lugar.
-    this.form.reset({ state: this.form.value.state, city: this.form.value.city });
+    const { state, city } = this.form.getRawValue();
+    this.form.reset({ state, city });
   }
 
   /**
@@ -147,10 +159,13 @@ export class DepartmentListComponent implements OnInit {
    * do encaminhamento: não se repete em lugar nenhum.
    */
   private duplicateField(): 'name' | 'email' | null {
-    const name  = (this.form.value.name  || '').trim().toLowerCase();
-    const email = (this.form.value.email || '').trim().toLowerCase();
-    const city  = (this.form.value.city  || '').trim().toLowerCase();
-    const state = (this.form.value.state || '').trim().toUpperCase();
+    // getRawValue, e não value: o município fica desabilitado para a equipe e
+    // controle desabilitado não entra em form.value.
+    const bruto = this.form.getRawValue();
+    const name  = (bruto.name  || '').trim().toLowerCase();
+    const email = (bruto.email || '').trim().toLowerCase();
+    const city  = (bruto.city  || '').trim().toLowerCase();
+    const state = (bruto.state || '').trim().toUpperCase();
 
     const mesmoMunicipio = (d: any) =>
       d.city?.trim().toLowerCase() === city && d.state?.trim().toUpperCase() === state;
@@ -176,9 +191,10 @@ export class DepartmentListComponent implements OnInit {
     }
 
     this.saving = true;
+    const bruto = this.form.getRawValue();
     const dados: [string, string, string, string] = [
-      this.form.value.name.trim(), this.form.value.email.trim(),
-      this.form.value.city.trim(), this.locality.normalizeUf(this.form.value.state) ?? ''];
+      bruto.name.trim(), bruto.email.trim(),
+      bruto.city.trim(), this.locality.normalizeUf(bruto.state) ?? ''];
     try {
       const saved = this.editingId == null
         ? await this.departmentService.create(...dados)

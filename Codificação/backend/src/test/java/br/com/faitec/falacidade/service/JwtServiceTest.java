@@ -36,7 +36,8 @@ class JwtServiceTest {
             "João Silva",
             UserModel.UserRole.CITIZEN,
             "joao@email.com",
-            42
+            42,
+            "sessao-1"
         );
     }
 
@@ -66,7 +67,7 @@ class JwtServiceTest {
             // O 'iat' do JWT tem precisão de segundos — espera > 1s garante timestamps distintos
             Thread.sleep(1100);
             String token2 = sut.generateToken(
-                userDetails, "João Silva", UserModel.UserRole.CITIZEN, "joao@email.com", 42);
+                userDetails, "João Silva", UserModel.UserRole.CITIZEN, "joao@email.com", 42, "sessao-1");
             assertThat(token).isNotEqualTo(token2);
         }
     }

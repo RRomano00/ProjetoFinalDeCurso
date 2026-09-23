@@ -50,8 +50,9 @@ public interface OccurrenceService extends ReadService<GetOccurrenceDto> {
      * EM_ANDAMENTO e registra o trâmite no histórico. Se o e-mail não sair, o
      * estado não muda: não se registra um encaminhamento que não aconteceu.
      *
-     * @return o nome do departamento para o qual seguiu a ocorrência
-     * @throws IllegalArgumentException ocorrência ou departamento inexistentes
+     * @return quais departamentos receberam a ocorrência e quais não receberam
+     * @throws IllegalArgumentException ocorrência ou algum departamento inexistente
      */
-    String forwardToDepartment(int occurrenceId, int departmentId, int changedBy);
+    br.com.faitec.falacidade.domain.dto.occurrence.ForwardResultDto forwardToDepartment(
+            int occurrenceId, java.util.List<Integer> departmentIds, int changedBy);
 }

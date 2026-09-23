@@ -59,12 +59,25 @@ public class JwtService {
         return email.equals(userDetails.getUsername()) && !isTokenExpired(token);
     }
 
+    /** Identificação da sessão gravada no token; null nos emitidos antes da sessão única. */
+    public String getSessionIdFromToken(String token) {
+        return getClaimFromToken(token, claims -> claims.get("sid", String.class));
+    }
+
+    public Integer getUserIdFromToken(String token) {
+        return getClaimFromToken(token, claims -> claims.get("id", Integer.class));
+    }
+
     public String generateToken(UserDetails userDetails, String fullname,
-                                 UserModel.UserRole role, String email, int id) {
+                                 UserModel.UserRole role, String email, int id,
+                                 String sessionId) {
         Map<String, Object> claims = new HashMap<>();
         // O id vai no token porque a tela Meu Perfil precisa dele para carregar e
         // salvar os próprios dados (GET/PUT /api/user/{id}).
         claims.put("id",       id);
+        // Sessão única: o filtro recusa o token cujo sid já foi substituído por
+        // um login posterior da mesma conta.
+        claims.put("sid",      sessionId);
         claims.put("email",    email);
         claims.put("fullname", fullname);
         claims.put("role",     role.name());

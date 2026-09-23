@@ -15,6 +15,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import br.com.faitec.falacidade.domain.Department;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
@@ -372,9 +373,10 @@ class OccurrenceServiceImplWithTrackingTest {
             when(occurrenceDao.readById(10)).thenReturn(ocorrencia());
             when(departmentService.findById(3)).thenReturn(departamento());
 
-            String nome = sut.forwardToDepartment(10, 3, 5);
+            var resultado = sut.forwardToDepartment(10, List.of(3), 5);
 
-            assertThat(nome).isEqualTo("Secretaria de Obras");
+            assertThat(resultado.enviados()).containsExactly("Secretaria de Obras");
+            assertThat(resultado.falharam()).isEmpty();
             verify(emailService).sendOccurrenceForwardEmail(
                 eq("obras@prefeitura.exemplo.br"), eq("Secretaria de Obras"), any());
             verify(occurrenceDao).updateStatus(eq(10), eq("EM_ANDAMENTO"), eq(5),
@@ -387,7 +389,7 @@ class OccurrenceServiceImplWithTrackingTest {
             when(occurrenceDao.readById(10)).thenReturn(ocorrencia());
             when(departmentService.findById(3)).thenReturn(departamento());
 
-            sut.forwardToDepartment(10, 3, 5);
+            sut.forwardToDepartment(10, List.of(3), 5);
 
             ArgumentCaptor<String> nota = ArgumentCaptor.forClass(String.class);
             verify(occurrenceDao).updateStatus(anyInt(), anyString(), anyInt(), nota.capture(), eq(3));
@@ -396,30 +398,66 @@ class OccurrenceServiceImplWithTrackingTest {
         }
 
         @Test
-        @DisplayName("falha no envio do e-mail não altera a ocorrência")
+        @DisplayName("falha no envio do e-mail não registra o encaminhamento daquele destino")
         void keepsOccurrenceUntouchedWhenEmailFails() {
             when(occurrenceDao.readById(10)).thenReturn(ocorrencia());
             when(departmentService.findById(3)).thenReturn(departamento());
             doThrow(new RuntimeException("SMTP fora do ar"))
                 .when(emailService).sendOccurrenceForwardEmail(anyString(), anyString(), any());
 
-            assertThatThrownBy(() -> sut.forwardToDepartment(10, 3, 5))
-                .isInstanceOf(RuntimeException.class);
+            var resultado = sut.forwardToDepartment(10, List.of(3), 5);
 
+            assertThat(resultado.enviados()).isEmpty();
+            assertThat(resultado.falharam()).containsExactly("Secretaria de Obras");
             verify(occurrenceDao, never()).updateStatus(anyInt(), anyString(), anyInt(), anyString(), any());
+        }
+
+        @Test
+        @DisplayName("encaminha a vários departamentos: um e-mail e um registro para cada")
+        void forwardsToSeveralDepartments() {
+            when(occurrenceDao.readById(10)).thenReturn(ocorrencia());
+            when(departmentService.findById(3)).thenReturn(departamento());
+            Department iluminacao = new Department();
+            iluminacao.setId(4);
+            iluminacao.setName("Secretaria de Iluminação");
+            iluminacao.setEmail("luz@prefeitura.exemplo.br");
+            when(departmentService.findById(4)).thenReturn(iluminacao);
+
+            var resultado = sut.forwardToDepartment(10, List.of(3, 4), 5);
+
+            assertThat(resultado.enviados())
+                .containsExactly("Secretaria de Obras", "Secretaria de Iluminação");
+            verify(emailService).sendOccurrenceForwardEmail(
+                eq("obras@prefeitura.exemplo.br"), eq("Secretaria de Obras"), any());
+            verify(emailService).sendOccurrenceForwardEmail(
+                eq("luz@prefeitura.exemplo.br"), eq("Secretaria de Iluminação"), any());
+            verify(occurrenceDao).updateStatus(eq(10), eq("EM_ANDAMENTO"), eq(5), anyString(), eq(3));
+            verify(occurrenceDao).updateStatus(eq(10), eq("EM_ANDAMENTO"), eq(5), anyString(), eq(4));
+        }
+
+        @Test
+        @DisplayName("o mesmo departamento repetido na lista recebe uma vez só")
+        void ignoresRepeatedDepartment() {
+            when(occurrenceDao.readById(10)).thenReturn(ocorrencia());
+            when(departmentService.findById(3)).thenReturn(departamento());
+
+            var resultado = sut.forwardToDepartment(10, List.of(3, 3, 3), 5);
+
+            assertThat(resultado.enviados()).containsExactly("Secretaria de Obras");
+            verify(emailService, times(1)).sendOccurrenceForwardEmail(anyString(), anyString(), any());
         }
 
         @Test
         @DisplayName("recusa ocorrência ou departamento inexistentes, sem enviar e-mail")
         void rejectsUnknownOccurrenceOrDepartment() {
             when(occurrenceDao.readById(99)).thenReturn(null);
-            assertThatThrownBy(() -> sut.forwardToDepartment(99, 3, 5))
+            assertThatThrownBy(() -> sut.forwardToDepartment(99, List.of(3), 5))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Ocorrência");
 
             when(occurrenceDao.readById(10)).thenReturn(ocorrencia());
             when(departmentService.findById(77)).thenReturn(null);
-            assertThatThrownBy(() -> sut.forwardToDepartment(10, 77, 5))
+            assertThatThrownBy(() -> sut.forwardToDepartment(10, List.of(77), 5))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Departamento");
 

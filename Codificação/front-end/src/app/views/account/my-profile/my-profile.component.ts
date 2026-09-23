@@ -11,6 +11,7 @@ import { MfaService } from '../../../services/security/mfa.service';
 import { ToastrService } from 'ngx-toastr';
 import { PasswordRevealDirective } from '../../../shared/password-reveal.directive';
 import { LocalityService, CityOptions } from '../../../services/local/locality.service';
+import { AuthenticationService } from '../../../services/security/authentication.service';
 
 @Component({
   selector: 'app-my-profile',
@@ -85,10 +86,18 @@ export class MyProfileComponent {
     private mfaService: MfaService,
     private toastr: ToastrService,
     private router: Router,
-    private locality: LocalityService
+    private locality: LocalityService,
+    private auth: AuthenticationService
   ) {
     this.initializeForm();
   }
+
+  /**
+   * RF25: para a equipe o município não é endereço, é a jurisdição — define
+   * quais ocorrências a conta atende e onde ela cadastra setores. Quem quiser
+   * mudá-lo pede ao Super Administrador; o back-end recusa do mesmo jeito.
+   */
+  get municipalityLocked(): boolean { return this.auth.isStaff(); }
 
   ngOnInit(): void {
     this.user.fullname = localStorage.getItem('fullname') || '';
@@ -361,6 +370,11 @@ export class MyProfileComponent {
     this.units = this.locality.units;
     // O município só aceita digitação depois da UF (regra igual no cadastro).
     this.cityOptions = this.locality.bindCityToUf(this.profileForm);
+
+    if (this.municipalityLocked) {
+      this.profileForm.get('state')!.disable();
+      this.profileForm.get('city')!.disable();
+    }
   }
 
   validatePasswords(): boolean {

@@ -4,6 +4,7 @@ import br.com.faitec.falacidade.domain.UserModel;
 import br.com.faitec.falacidade.domain.dto.auth.AuthenticationDto;
 import br.com.faitec.falacidade.domain.dto.auth.LoginResponseDto;
 import br.com.faitec.falacidade.domain.dto.auth.MfaVerifyDto;
+import br.com.faitec.falacidade.implementation.service.authentication.ActiveSessionStore;
 import br.com.faitec.falacidade.implementation.service.authentication.jwt.JwtService;
 import br.com.faitec.falacidade.implementation.service.mfa.EmailMfaCodeStore;
 import br.com.faitec.falacidade.implementation.service.mfa.MfaTokenStore;
@@ -38,6 +39,7 @@ public class JwtAuthenticationRestController {
     private final UserService           userService;
     private final EmailService          emailService;
     private final EmailMfaCodeStore     emailMfaCodeStore;
+    private final ActiveSessionStore    activeSessions;
 
     /**
      * Contas dispensadas do 2FA obrigatório de Funcionário/Administrador. A conta de
@@ -53,7 +55,8 @@ public class JwtAuthenticationRestController {
             AuthenticationService authenticationService, JwtService jwtService,
             UserDetailsService userDetailsService, MfaService mfaService,
             MfaTokenStore mfaTokenStore, UserService userService,
-            EmailService emailService, EmailMfaCodeStore emailMfaCodeStore) {
+            EmailService emailService, EmailMfaCodeStore emailMfaCodeStore,
+            ActiveSessionStore activeSessions) {
         this.authenticationService = authenticationService;
         this.jwtService            = jwtService;
         this.userDetailsService    = userDetailsService;
@@ -62,6 +65,7 @@ public class JwtAuthenticationRestController {
         this.userService           = userService;
         this.emailService          = emailService;
         this.emailMfaCodeStore     = emailMfaCodeStore;
+        this.activeSessions        = activeSessions;
     }
 
     @PostMapping
@@ -135,6 +139,16 @@ public class JwtAuthenticationRestController {
         return ResponseEntity.ok(LoginResponseDto.withJwt(generateJwt(user)));
     }
 
+    /**
+     * Pulso da sessão: responde 200 enquanto o token vale. Quando a mesma conta
+     * entra em outro aparelho, o JwtRequestFilter recusa este GET com 401 e
+     * SESSION_SUPERSEDED — é assim que a tela parada descobre que foi derrubada.
+     */
+    @GetMapping("/session")
+    public ResponseEntity<Void> session() {
+        return ResponseEntity.ok().build();
+    }
+
     private boolean isMfaExempt(String email) {
         return Arrays.stream(mfaExemptEmails.split(","))
             .map(String::trim).filter(e -> !e.isEmpty())
@@ -148,7 +162,11 @@ public class JwtAuthenticationRestController {
 
     private String generateJwt(UserModel user) {
         UserDetails ud = userDetailsService.loadUserByUsername(user.getEmail());
-        String jwt = jwtService.generateToken(ud, user.getFullname(), user.getRole(), user.getEmail(), user.getId());
+        // Uma conta, uma sessão: este login passa a ser o único válido e os tokens
+        // emitidos antes dele deixam de ser aceitos.
+        String sessionId = activeSessions.open(user.getId());
+        String jwt = jwtService.generateToken(ud, user.getFullname(), user.getRole(),
+                                              user.getEmail(), user.getId(), sessionId);
         if (jwt == null || jwt.isEmpty())
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Falha ao gerar token");
         return jwt;

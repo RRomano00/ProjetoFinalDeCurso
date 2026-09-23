@@ -35,10 +35,15 @@ public class DepartmentRestController {
     }
 
     /**
-     * Lista os setores. Sem parâmetros, devolve os do município de quem consulta
-     * (o Super Administrador vê todos). Com city/state, devolve os daquele município —
-     * é assim que o leque de encaminhamento pede os setores do endereço da
-     * ocorrência, que pode ser outro município.
+     * Lista os setores do município de quem consulta. O filtro city/state é do
+     * Super Administrador, que não tem município próprio e precisa alcançar
+     * qualquer um.
+     *
+     * Para a equipe o parâmetro é ignorado de propósito: a ocorrência que ela
+     * encaminha é sempre do seu município (RN07, conferido em
+     * OccurrenceRestController), então o único efeito de honrar o filtro seria
+     * deixar qualquer funcionário enxergar os setores de outra prefeitura
+     * trocando a consulta na barra de endereços.
      */
     @GetMapping
     public ResponseEntity<List<Department>> getAll(
@@ -46,11 +51,12 @@ public class DepartmentRestController {
             @RequestParam(required = false) String state,
             Authentication auth) {
 
-        if (city != null && !city.isBlank() && state != null && !state.isBlank())
-            return ResponseEntity.ok(departmentService.findAllByCity(city, state));
-
         UserModel user = currentUser(auth);
-        if (isSuperAdmin(user)) return ResponseEntity.ok(departmentService.findAll());
+
+        if (isSuperAdmin(user))
+            return ResponseEntity.ok(city != null && !city.isBlank() && state != null && !state.isBlank()
+                ? departmentService.findAllByCity(city, state)
+                : departmentService.findAll());
 
         return ResponseEntity.ok(user == null
             ? List.of()

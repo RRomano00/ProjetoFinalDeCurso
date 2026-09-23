@@ -33,6 +33,14 @@ public interface EmailService {
     void sendOccurrenceForwardEmail(String toEmail, String departmentName,
                                     br.com.faitec.falacidade.domain.dto.occurrence.GetOccurrenceDto occurrence);
 
+    /**
+     * Avisa o titular de que a sua conta foi alterada por outra pessoa, com a
+     * relação do que mudou e a identificação de quem mudou. A alteração feita
+     * pelo próprio titular não passa por aqui — ele acabou de fazê-la.
+     */
+    void sendAccountChangedEmail(String toEmail, String fullname, java.util.List<String> changes,
+                                 String changedByName, String changedByEmail);
+
     /** Notifica o autor sobre a mudança de status da ocorrência (com mensagem opcional do funcionário). */
     void sendStatusChangeEmail(String toEmail, String fullname, String protocol,
                                String newStatus, String message);

@@ -4,6 +4,7 @@ import br.com.faitec.falacidade.controller.JwtAuthenticationRestController;
 import br.com.faitec.falacidade.domain.UserModel;
 import br.com.faitec.falacidade.domain.dto.auth.AuthenticationDto;
 import br.com.faitec.falacidade.domain.dto.auth.LoginResponseDto;
+import br.com.faitec.falacidade.implementation.service.authentication.ActiveSessionStore;
 import br.com.faitec.falacidade.implementation.service.authentication.jwt.JwtService;
 import br.com.faitec.falacidade.implementation.service.mfa.EmailMfaCodeStore;
 import br.com.faitec.falacidade.implementation.service.mfa.MfaTokenStore;
@@ -50,11 +51,12 @@ class JwtAuthenticationRestControllerMfaTest {
     @BeforeEach
     void setUp() {
         sut = new JwtAuthenticationRestController(authenticationService, jwtService, userDetailsService,
-            mfaService, new MfaTokenStore(), userService, emailService, new EmailMfaCodeStore());
+            mfaService, new MfaTokenStore(), userService, emailService, new EmailMfaCodeStore(),
+            new ActiveSessionStore());
         ReflectionTestUtils.setField(sut, "mfaExemptEmails", "admin@falacidade.com");
         when(userDetailsService.loadUserByUsername(anyString()))
             .thenReturn(new User("x", "y", List.of()));
-        when(jwtService.generateToken(any(), any(), any(), anyString(), anyInt())).thenReturn("jwt-fake");
+        when(jwtService.generateToken(any(), any(), any(), anyString(), anyInt(), anyString())).thenReturn("jwt-fake");
     }
 
     private LoginResponseDto login(String email, UserModel.UserRole role) {

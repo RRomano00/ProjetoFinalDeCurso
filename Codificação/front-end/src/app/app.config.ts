@@ -7,13 +7,6 @@ import { routes } from './app.routes';
 import { authInterceptor } from './services/security/auth.interceptor';
 import { provideServiceWorker } from '@angular/service-worker';
 
-/**
- * Publicar uma versão nova troca o nome dos arquivos carregados sob demanda. A
- * página que já estava aberta pede um pedaço que não existe mais, e a tela
- * simplesmente não abre — foi o “Failed to fetch dynamically imported module”.
- * Recarregar uma vez resolve; a marca de sessão impede laço quando a falha for
- * de rede, e ela é liberada assim que a aplicação se mantém de pé.
- */
 class ChunkReloadErrorHandler implements ErrorHandler {
   private static readonly MARCA = 'chunk-reload';
 
@@ -42,13 +35,9 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
     { provide: ErrorHandler, useClass: ChunkReloadErrorHandler },
-    // Cada tela vive num arquivo separado, baixado só quando alguém abre ela.
-    // Isso deixava a primeira troca de tela travada esperando a rede. Com o
-    // preload, o restante das telas desce em segundo plano logo depois da
-    // primeira navegação — quando a pessoa clica, o arquivo já está aqui.
+
     provideRouter(routes, withPreloading(PreloadAllModules)),
     provideAnimationsAsync(),
-    // Interceptor funcional — injeta Bearer token em todos os requests
     provideHttpClient(withInterceptors([authInterceptor])),
     provideToastr({
       timeOut: 3000,
@@ -56,7 +45,7 @@ export const appConfig: ApplicationConfig = {
       preventDuplicates: true,
     }), provideServiceWorker('ngsw-worker.js', {
             enabled: !isDevMode(),
-            registrationStrategy: 'registerWhenStable:30000'
+            registrationStrategy: 'registerWithDelay:3000'
           }),
   ]
 };

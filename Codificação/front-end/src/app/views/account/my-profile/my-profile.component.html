@@ -73,7 +73,11 @@
               <datalist id="profile-city-options">
                 <option *ngFor="let c of cityOptions.list" [value]="c"></option>
               </datalist>
-              <span class="field-hint" *ngIf="!cityOptions.ready">Selecione a UF para ver os municípios.</span>
+              <span class="field-hint" *ngIf="municipalityLocked">
+                O município da sua conta define quais ocorrências você atende. Apenas o
+                Super Administrador pode alterá-lo.
+              </span>
+              <span class="field-hint" *ngIf="!municipalityLocked && !cityOptions.ready">Selecione a UF para ver os municípios.</span>
               <span class="field-error" *ngIf="profileForm.controls['city'].touched && profileForm.controls['city'].invalid">O município é obrigatório</span>
             </div>
           </div>

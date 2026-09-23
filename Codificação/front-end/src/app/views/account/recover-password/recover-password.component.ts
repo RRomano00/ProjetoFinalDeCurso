@@ -48,7 +48,6 @@ export class RecoverPasswordComponent {
       this.toastr.success('Se o e-mail existir, enviamos um código de recuperação.');
       this.step = 'confirm';
     } catch {
-      // Por segurança, a resposta é sempre positiva mesmo se o e-mail não existir
       this.toastr.success('Se o e-mail existir, enviamos um código de recuperação.');
       this.step = 'confirm';
     } finally {

@@ -295,7 +295,7 @@ public class OccurrenceRestController {
     }
 
     /**
-     * RF22: encaminha a ocorrência ao departamento responsável.
+     * RF22: encaminha a ocorrência a um ou mais departamentos responsáveis.
      * O e-mail sai sem dados pessoais do autor, com as fotografias anexadas; em
      * seguida a ocorrência passa a Em andamento e o trâmite entra no histórico.
      */
@@ -305,16 +305,20 @@ public class OccurrenceRestController {
         ResponseEntity<Map<String, String>> denied = outOfJurisdiction(auth, id);
         if (denied != null) return denied;
         try {
-            String department = occurrenceService.forwardToDepartment(id, dto.getDepartmentId(), getUserId(auth));
+            var resultado = occurrenceService.forwardToDepartment(
+                    id, dto.getDepartmentIds(), getUserId(auth));
+            // Nenhum e-mail saiu: a ocorrência continua como estava.
+            if (resultado.nenhumEnviado()) {
+                return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(Map.of(
+                    "error", "Não foi possível enviar o e-mail aos departamentos. "
+                           + "A ocorrência não foi alterada."));
+            }
             return ResponseEntity.ok(Map.of(
-                "department", department,
-                "status", Occurrence.OccurrenceStatus.EM_ANDAMENTO.name()));
+                "departments", resultado.enviados(),
+                "failed",      resultado.falharam(),
+                "status",      Occurrence.OccurrenceStatus.EM_ANDAMENTO.name()));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
-        } catch (RuntimeException e) {
-            // falha no envio do e-mail: a ocorrência continua como estava
-            return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(Map.of(
-                "error", "Não foi possível enviar o e-mail ao departamento. A ocorrência não foi alterada."));
         }
     }
 
