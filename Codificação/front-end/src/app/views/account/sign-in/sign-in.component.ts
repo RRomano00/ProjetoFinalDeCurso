@@ -91,10 +91,16 @@ export class SignInComponent implements OnInit, OnDestroy {
           }
         }
       },
-      error: () => {
+      error: (e) => {
         this.loading = false;
-        this.isLoginIncorrect = true;
-        this.toastr.error('Email e/ou senha incorretos.');
+        if (e?.status === 401 || e?.status === 403) {
+          this.isLoginIncorrect = true;
+          this.toastr.error('Email e/ou senha incorretos.');
+        } else {
+          this.toastr.error(e?.status
+            ? `Nao foi possivel entrar agora (erro ${e.status}). Tente de novo em instantes.`
+            : 'Sem conexao com o servidor. Verifique a internet e tente de novo.');
+        }
       }
     });
   }

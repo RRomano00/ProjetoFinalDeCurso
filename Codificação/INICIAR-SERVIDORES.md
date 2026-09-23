@@ -9,13 +9,8 @@ Guia rápido para subir back-end + front-end, tanto no PC quanto no celular.
 ```bash
 cd Codificação
 ./subir.sh              # PC     -> http://localhost:4173 (com PWA/service worker)
-./subir.sh --celular    # celular -> abre os 2 túneis e imprime a URL
+./subir.sh --celular    # celular -> abre o túnel e imprime a URL
 ```
-
-O script sobe o backend (`mvnw spring-boot:run`), abre o túnel do backend, escreve a
-URL no `environment.ts`, roda o `npm run build`, serve o `dist` e abre o túnel do front.
-`Ctrl+C` derruba tudo e **restaura o `environment.ts` original**. Logs em `/tmp/falacidade/`.
-Se o backend já estiver rodando (IntelliJ), ele detecta e não sobe outro.
 
 **Endereço do celular (fixo)** — `./subir.sh --celular` já abre o front no domínio
 reservado no ngrok, que não muda entre execuções:
@@ -24,20 +19,25 @@ reservado no ngrok, que não muda entre execuções:
 https://duration-dismiss-pacifist.ngrok-free.dev
 ```
 
-Ele está no alto do `subir.sh`, na variável `DOMINIO`. Para trocar, reserve outro em
-*dashboard.ngrok.com → Domains* (o plano free dá 1 domínio permanente e é ele quem
-escolhe o nome) e edite a linha — ou passe na hora: `DOMINIO=outro.ngrok-free.dev
-./subir.sh --celular`. Para voltar ao Cloudflare, com URL aleatória: `DOMINIO=
-./subir.sh --celular`.
+---
 
-Na primeira visita o ngrok free mostra uma tela de aviso com o botão *Visit Site*; como o
-domínio é fixo, o cookie fica salvo e ela não volta a aparecer nesse navegador.
-Só o front usa domínio fixo — o túnel do backend continua aleatório, mas o script já o
-injeta sozinho no `environment.ts`. O CORS do backend aceita `*.ngrok-free.dev`,
-`*.ngrok-free.app` e `*.trycloudflare.com`.
-Outra porta local: `PORTA=8081 ./subir.sh`.
+## Atalho no Windows (sem WSL)
 
-Os passos manuais abaixo continuam válidos (Windows/IntelliJ, ou para depurar).
+```powershell
+cd Codificação
+.\subir.ps1              # PC     -> http://localhost:4173
+.\subir.ps1 -Celular     # celular -> mesmo domínio fixo do ngrok
+```
+
+Mesmo fluxo do `subir.sh`. Precisa de Java 21+, Node 20+, PostgreSQL e ngrok no PATH.
+Se o Windows barrar o script: `Set-ExecutionPolicy -Scope Process RemoteSigned`.
+Logs em `%TEMP%\falacidade\`. Prefira o PowerShell 7 — no 5.1 o `Ctrl+C` pode não
+derrubar o túnel, e túnel órfão segura o domínio do ngrok (plano free aceita uma sessão só).
+
+O domínio fixo é da **conta** do ngrok, não da máquina: mesmo authtoken, mesma URL no
+Windows e no Linux.
+
+Os passos manuais abaixo continuam válidos (IntelliJ, ou para depurar).
 
 ---
 
@@ -50,7 +50,8 @@ Os passos manuais abaixo continuam válidos (Windows/IntelliJ, ou para depurar).
    ```
 3. Acesse: **http://localhost:4200**
 
-> Confirme que `src/environments/environment.ts` aponta para `http://localhost:8080/api`.
+> O `environment.ts` aponta para `/api`, e quem repassa isso para a porta 8080 no
+> `ng serve` é o `front-end/proxy.conf.json` (já ligado no `angular.json`).
 > O modo `ng serve` **não** ativa o PWA/service worker — use a opção B para testar PWA.
 
 ---
@@ -62,33 +63,20 @@ A ordem importa: o backend precisa estar no ar **antes** de buildar o front.
 ### 1. Backend
 IntelliJ → **Run** (porta `8080`).
 
-### 2. Túnel do backend — Terminal 1
-```powershell
-npx cloudflared tunnel --url http://localhost:8080
-```
-Copie a URL gerada (ex.: `https://abc-def-123.trycloudflare.com`).
-
-### 3. Atualizar a URL da API
-Em `Codificação/front-end/src/environments/environment.ts`, cole a URL do passo 2:
-```ts
-api_endpoint: 'https://abc-def-123.trycloudflare.com/api',
-authentication_api_endpoint: 'https://abc-def-123.trycloudflare.com/api'
-```
-
-### 4. Build do front — Terminal 2 (dentro de `Codificação/front-end/`)
+### 2. Build do front — Terminal 1 (dentro de `Codificação/front-end/`)
 ```powershell
 npm run build
 ```
 Gera os arquivos em `dist/fala-cidade/browser/`.
 
-### 5. Servir o build — Terminal 2 (mesmo terminal, após o build)
+### 3. Servir o build — Terminal 1 (mesmo terminal, após o build; agora a partir de `Codificação/`)
 ```powershell
-npx serve -s dist/fala-cidade/browser -l 4173
+node servir.mjs front-end/dist/fala-cidade/browser 4173 127.0.0.1:8080
 ```
-- `-s` → modo **SPA**: faz as rotas do Angular funcionarem no refresh (sem erro 404)
-- `-l 4173` → porta 4173
+- entrega o build e manda `/api` para a porta 8080 — mesma origem, sem CORS
+- qualquer outra rota cai no `index.html`, para o refresh do Angular não dar 404
 
-### 6. Túnel do front — Terminal 3
+### 4. Túnel — Terminal 2
 ```powershell
 npx cloudflared tunnel --url http://127.0.0.1:4173
 ```
@@ -96,20 +84,9 @@ Abra **no celular** a URL que este comando gerar.
 
 ---
 
-## Resumo dos terminais (opção B)
-
-| Onde      | Comando |
-|-----------|---------|
-| IntelliJ  | Backend (Run) na porta 8080 |
-| Terminal 1| `npx cloudflared tunnel --url http://localhost:8080` |
-| Terminal 2| `npm run build` e depois `npx serve -s dist/fala-cidade/browser -l 4173` |
-| Terminal 3| `npx cloudflared tunnel --url http://127.0.0.1:4173` |
-
----
-
 ## Observações importantes
 
-- **As URLs do Cloudflare mudam toda vez** que você reinicia os túneis. Se isso acontecer, repita os passos 2 → 3 → 4 → 5 → 6 (nova URL no `environment.ts` + novo build).
-- O **CORS** já aceita `*.trycloudflare.com`, então o backend **não** precisa reiniciar quando só a URL do front muda — apenas quando a URL do **backend** muda.
-- Para ver mudanças novas no celular, recarregue a página (o service worker pode segurar a versão antiga — recarregue 2x ou use Ctrl+Shift+R no PC).
-- Sempre rode os comandos `npm run build` e `npx serve` **de dentro de `Codificação/front-end/`**.
+- **A URL do Cloudflare muda toda vez** que você reinicia o túnel, mas isso não obriga mais a rebuildar: o endereço da API não entra no bundle.
+- O **CORS** saiu do caminho — front e API estão na mesma origem.
+- Para ver mudanças novas no celular, recarregue a página. O app já recarrega sozinho quando o service worker termina de baixar uma versão nova; se quiser forçar, Ctrl+Shift+R no PC.
+- O `npm run build` roda de dentro de `Codificação/front-end/`; o `node servir.mjs`, de `Codificação/`.
