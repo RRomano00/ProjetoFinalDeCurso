@@ -1,5 +1,6 @@
 package br.com.faitec.falacidade.implementation.service.authentication.jwt;
 
+import br.com.faitec.falacidade.implementation.service.authentication.ActiveSessionStore;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -26,10 +27,13 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
+    private final ActiveSessionStore activeSessions;
 
-    public JwtRequestFilter(JwtService jwtService, UserDetailsService userDetailsService) {
+    public JwtRequestFilter(JwtService jwtService, UserDetailsService userDetailsService,
+                            ActiveSessionStore activeSessions) {
         this.jwtService = jwtService;
         this.userDetailsService = userDetailsService;
+        this.activeSessions = activeSessions;
     }
 
     @Override
@@ -45,6 +49,18 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             jwtToken = requestTokenHeader.substring(7);
             try {
                 email = jwtService.getEmailFromToken(jwtToken);
+                // Sessão única: a conta foi acessada em outro aparelho e este token
+                // deixou de valer. O login em si escapa da conferência — é por ele
+                // que a pessoa recupera o acesso.
+                if (!isLoginRequest(request)
+                        && activeSessions.superseded(jwtService.getUserIdFromToken(jwtToken),
+                                                     jwtService.getSessionIdFromToken(jwtToken))) {
+                    log.log(Level.INFO, "Sessão substituída por novo login: {0}", email);
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    response.setContentType("application/json;charset=UTF-8");
+                    response.getWriter().write("{\"reason\":\"SESSION_SUPERSEDED\"}");
+                    return;
+                }
             } catch (IllegalArgumentException e) {
                 log.log(Level.WARNING, "Não foi possível obter o token JWT");
             } catch (ExpiredJwtException e) {
@@ -67,5 +83,16 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    /**
+     * O POST do login (e o do segundo fator) é justamente o caminho de volta de
+     * quem foi derrubado: a tela ainda manda o token velho no cabeçalho e não
+     * pode ser barrada por ele. O GET /api/authenticate/session, ao contrário, é
+     * o pulso que precisa ser recusado para a tela saber que a sessão caiu.
+     */
+    private boolean isLoginRequest(HttpServletRequest request) {
+        return "POST".equals(request.getMethod())
+            && request.getRequestURI().startsWith("/api/authenticate");
     }
 }
