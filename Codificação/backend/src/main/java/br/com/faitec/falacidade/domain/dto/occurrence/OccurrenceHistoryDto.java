@@ -2,13 +2,12 @@ package br.com.faitec.falacidade.domain.dto.occurrence;
 
 import java.time.LocalDateTime;
 
-/** RN03/RF11: uma mudança de status da ocorrência (quem, quando, justificativa). */
 public class OccurrenceHistoryDto {
 
     private String oldStatus;
     private String newStatus;
     private String observation;
-    private String changedByName;   // exibido apenas para Funcionário/Administrador
+    private String changedByName;
     private LocalDateTime changedAt;
 
     public String getOldStatus() { return oldStatus; }

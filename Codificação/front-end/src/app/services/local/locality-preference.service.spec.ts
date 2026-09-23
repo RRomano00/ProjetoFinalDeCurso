@@ -4,11 +4,6 @@ import { LocalityPreferenceService } from './locality-preference.service';
 import { GeocodingService } from './geocoding.service';
 import { UserReadService } from '../user/user-read.service';
 
-/**
- * mapCenter() abre o mapa no município e NUNCA espera o aparelho: o GPS é
- * correção que cada tela aplica depois. Se voltar a perguntar aqui, nada quebra
- * visivelmente — a tela só fica parada segundos antes de desenhar.
- */
 describe('LocalityPreferenceService.mapCenter()', () => {
   let sut: LocalityPreferenceService;
   let geocoding: jasmine.SpyObj<GeocodingService>;

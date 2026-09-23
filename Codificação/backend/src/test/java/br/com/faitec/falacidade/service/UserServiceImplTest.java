@@ -27,10 +27,8 @@ class UserServiceImplTest {
     @Mock UserDao         userDao;
     @Mock PasswordEncoder passwordEncoder;
 
-    // Mockito vai injetar via construtor (userDao + passwordEncoder)
     @InjectMocks UserServiceImpl sut;
 
-    // Encoder real usado apenas para verificar o hash nos testes de encoding
     final BCryptPasswordEncoder realEncoder = new BCryptPasswordEncoder();
 
     private UserModel citizenWith(String email, String password) {

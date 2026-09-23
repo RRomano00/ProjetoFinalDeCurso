@@ -16,7 +16,6 @@ public class UserModel {
     private String number;
     private String cep;
     private String city;
-    /** UF de residência (duas letras), par do município. */
     private String state;
     private UserRole role;
     private boolean active;
@@ -24,25 +23,20 @@ public class UserModel {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    // ---- 2FA / TOTP (app autenticador) ----
     private boolean mfaEnabled;
     private String mfaSecret;
     private boolean mfaSetupDone;
 
-    // ---- 2FA por e-mail (código enviado ao e-mail cadastrado) ----
     private boolean mfaEmailEnabled;
 
     public UserModel() {}
 
     public enum UserRole {
-        /** Super Administrador: o único perfil sem recorte municipal (RF25). */
         SUPER_ADMIN,
         ADMINISTRATOR,
         EMPLOYEE,
         CITIZEN
     }
-
-    // ---- getters/setters ----
 
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
@@ -75,15 +69,8 @@ public class UserModel {
     public void setCep(String cep) { this.cep = cep; }
 
     public String getCity() { return city; }
-    /**
-     * O município é comparado por igualdade exata com o da ocorrência
-     * (WHERE o.city = ?), então um espaço nas pontas faz o funcionário não
-     * enxergar ocorrência nenhuma -- e os dois valores ficam idênticos na tela.
-     * Normaliza aqui, no ponto por onde todos os DTOs passam.
-     */
     public void setCity(String city) { this.city = city == null ? null : city.trim(); }
     public String getState() { return state; }
-    /** Guarda sempre em maiúsculas: a UF é comparada com os códigos do IBGE. */
     public void setState(String state) {
         this.state = state == null || state.isBlank() ? null : state.trim().toUpperCase();
     }
@@ -115,27 +102,18 @@ public class UserModel {
     public boolean isMfaEmailEnabled() { return mfaEmailEnabled; }
     public void setMfaEmailEnabled(boolean mfaEmailEnabled) { this.mfaEmailEnabled = mfaEmailEnabled; }
 
-    /** MFA por app autenticador ativo (secret confirmado). */
     public boolean isAppMfaActive() { return mfaSetupDone; }
-    /** MFA por e-mail ativo. */
     public boolean isEmailMfaActive() { return mfaEmailEnabled; }
 
-    /** Perfil nacional, sem recorte de município (RF25). */
     public boolean isSuperAdmin() { return role == UserRole.SUPER_ADMIN; }
 
-    /** Perfis da administração pública: atendem e administram um município. */
     public boolean isStaff() {
         return role == UserRole.SUPER_ADMIN || role == UserRole.ADMINISTRATOR || role == UserRole.EMPLOYEE;
     }
 
-    /**
-     * Retorna true se este usuário PRECISA passar pelo 2FA.
-     * SUPER_ADMIN, ADMINISTRATOR e EMPLOYEE: obrigatório sempre.
-     * CITIZEN: só se tiver ativado voluntariamente.
-     */
     public boolean requiresMfa() {
         if (isStaff()) {
-            return mfaSetupDone || mfaEmailEnabled; // obrigado a configurar pelo menos um método
+            return mfaSetupDone || mfaEmailEnabled;
         }
         return (mfaEnabled && mfaSetupDone) || mfaEmailEnabled;
     }

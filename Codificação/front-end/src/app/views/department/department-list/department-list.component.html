@@ -9,7 +9,6 @@
     </button>
   </div>
 
-  <!-- Cadastro: abre acima da lista, ao lado do que ele não pode duplicar -->
   <form class="new-department" *ngIf="formOpen" [formGroup]="form" (ngSubmit)="save()">
     <div class="new-department-fields">
       <div class="field-group">
@@ -52,7 +51,6 @@
 
       <div class="field-group">
         <label for="dep-city">Município</label>
-        <!-- Só recebe digitação depois da UF, como nas demais telas. -->
         <input id="dep-city" type="text" formControlName="city" list="dep-city-options"
                [readOnly]="!canChooseCity && !cityOptions.ready" spellcheck="false" autocomplete="off"
                [placeholder]="!canChooseCity || cityOptions.ready ? 'Santa Rita do Sapucaí' : 'Informe a UF primeiro'">
@@ -111,7 +109,6 @@
           <td class="cell-name">{{ d.name }}</td>
           <td class="cell-email">{{ d.email }}</td>
           <td class="cell-city">{{ d.city }}<span class="cell-uf" *ngIf="d.state"> — {{ d.state }}</span></td>
-          <!-- RF22/RF25: corrigir o setor é do administrador do município -->
           <td class="cell-actions" *ngIf="canEdit">
             <button type="button" class="btn-edit" (click)="edit(d)" [disabled]="saving">Editar</button>
           </td>

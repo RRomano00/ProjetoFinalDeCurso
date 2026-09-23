@@ -6,7 +6,6 @@ export interface ReverseAddress {
   street: string;
   neighborhood: string;
   city: string;
-  /** UF do ponto marcado; vazia quando o serviço não a informa. */
   state: string;
 }
 
@@ -14,7 +13,6 @@ export interface ReverseAddress {
 export class GeocodingService {
   constructor(private http: HttpClient) { }
 
-  /** Endereço -> coordenadas (geocoding direto). */
   async geocode(street: string, neighborhood: string, city: string): Promise<{ lat: number; lng: number } | null> {
     const query = encodeURIComponent(`${street}, ${neighborhood}, ${city}, Brasil`);
     const url = `https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1`;
@@ -27,14 +25,11 @@ export class GeocodingService {
         return { lat: parseFloat(results[0].lat), lng: parseFloat(results[0].lon) };
       }
     } catch (erro) {
-      // Cota do Nominatim (1 req/s) e indisponibilidade caem aqui: quem chamou
-      // trata o null, mas sem o registro não dá para saber qual dos dois foi.
       console.warn('[geocoding] consulta ao Nominatim falhou', erro);
     }
     return null;
   }
 
-  /** Coordenadas -> endereço (reverse geocoding). Usado ao clicar no mapa (RF09). */
   async reverseGeocode(lat: number, lng: number): Promise<ReverseAddress | null> {
     const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
     try {
@@ -43,8 +38,6 @@ export class GeocodingService {
       );
       const a = res?.address;
       if (!a) return null;
-      // A UF vem pelo código ISO ("BR-MG"), que é exato; o nome do estado
-      // ("Minas Gerais") fica como reserva e é convertido em sigla depois.
       const iso: string = a['ISO3166-2-lvl4'] || '';
       return {
         street:       a.road || a.pedestrian || a.residential || a.footway || a.path || '',
@@ -53,8 +46,6 @@ export class GeocodingService {
         state:        iso.includes('-') ? iso.split('-')[1] : (a.state || '')
       };
     } catch (erro) {
-      // Cota do Nominatim (1 req/s) e indisponibilidade caem aqui: quem chamou
-      // trata o null, mas sem o registro não dá para saber qual dos dois foi.
       console.warn('[geocoding] consulta ao Nominatim falhou', erro);
     }
     return null;

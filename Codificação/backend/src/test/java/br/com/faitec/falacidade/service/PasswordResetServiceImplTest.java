@@ -45,10 +45,6 @@ class PasswordResetServiceImplTest {
         ReflectionTestUtils.setField(sut, "expirationMinutes", 30);
     }
 
-    // ================================================================
-    // Helpers
-    // ================================================================
-
     private UserModel user(int id, String email) {
         UserModel u = new UserModel();
         u.setId(id);
@@ -79,10 +75,6 @@ class PasswordResetServiceImplTest {
         return t;
     }
 
-    // ================================================================
-    // requestReset()
-    // ================================================================
-
     @Nested
     @DisplayName("requestReset()")
     class RequestReset {
@@ -94,10 +86,8 @@ class PasswordResetServiceImplTest {
 
             sut.requestReset("joao@email.com");
 
-            // Deve limpar tokens antigos
             verify(tokenDao).deleteExpiredByUserId(1);
 
-            // Deve salvar novo token
             ArgumentCaptor<PasswordResetToken> tokenCaptor =
                 ArgumentCaptor.forClass(PasswordResetToken.class);
             verify(tokenDao).save(tokenCaptor.capture());
@@ -107,7 +97,6 @@ class PasswordResetServiceImplTest {
             assertThat(saved.getToken()).isNotBlank();
             assertThat(saved.getExpiresAt()).isAfter(LocalDateTime.now());
 
-            // Deve enviar por e-mail o mesmo código que a tela pede de volta
             ArgumentCaptor<String> codeCaptor = ArgumentCaptor.forClass(String.class);
             verify(emailService).sendPasswordResetEmail(
                 eq("joao@email.com"), codeCaptor.capture());
@@ -144,10 +133,6 @@ class PasswordResetServiceImplTest {
             assertThat(token1).isNotEqualTo(token2);
         }
     }
-
-    // ================================================================
-    // confirmReset()
-    // ================================================================
 
     @Nested
     @DisplayName("confirmReset()")

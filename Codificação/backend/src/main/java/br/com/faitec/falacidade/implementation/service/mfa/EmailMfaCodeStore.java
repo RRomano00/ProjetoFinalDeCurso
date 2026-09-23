@@ -5,21 +5,16 @@ import org.springframework.stereotype.Component;
 import java.security.SecureRandom;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * Armazena temporariamente os códigos de verificação enviados por e-mail (MFA por e-mail).
- * Mapeamento userId → {código de 6 dígitos, expiração}. Em memória, igual ao MfaTokenStore.
- */
 @Component
 public class EmailMfaCodeStore {
 
-    private static final long TTL_MS = 10 * 60 * 1000L; // 10 minutos
+    private static final long TTL_MS = 10 * 60 * 1000L;
     private static final SecureRandom RANDOM = new SecureRandom();
 
     private record Entry(String code, long expiresAt) {}
 
     private final ConcurrentHashMap<Integer, Entry> store = new ConcurrentHashMap<>();
 
-    /** Gera, armazena e retorna um novo código de 6 dígitos para o usuário. */
     public String generateCode(int userId) {
         evictExpired();
         String code = String.format("%06d", RANDOM.nextInt(1_000_000));
@@ -27,7 +22,6 @@ public class EmailMfaCodeStore {
         return code;
     }
 
-    /** Valida o código; em caso de sucesso, consome (remove) o código. */
     public boolean validate(int userId, String code) {
         Entry entry = store.get(userId);
         if (entry == null || System.currentTimeMillis() > entry.expiresAt()) {

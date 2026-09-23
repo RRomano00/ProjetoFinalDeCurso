@@ -8,11 +8,6 @@ import { Occurrence, OccurrenceHistory } from '../domain/model/occurrence';
 export class OccurrenceReadService {
   constructor(private http: HttpClient) { }
 
-  /**
-   * Ocorrências de quem está autenticado, por AUTORIA — independentemente do
-   * município. Quem mora em Santa Rita e registrou em Itajubá continua vendo o
-   * próprio registro, mesmo que a listagem geral seja filtrada por município.
-   */
   findMine(): Promise<Occurrence[]> {
     return firstValueFrom(
       this.http.get<Occurrence[]>(`${environment.api_endpoint}/occurrence/mine`)
@@ -31,14 +26,12 @@ export class OccurrenceReadService {
     return firstValueFrom(this.http.get<Occurrence>(`${environment.api_endpoint}/occurrence/protocol/${protocol}`));
   }
 
-  /** RN03/RF11: histórico de mudanças de status da ocorrência. */
   getHistory(id: number | string): Promise<OccurrenceHistory[]> {
     return firstValueFrom(this.http.get<OccurrenceHistory[]>(
       `${environment.api_endpoint}/occurrence/${id}/history`
     ));
   }
 
-  /** RF12: ocorrências do mesmo grupo de duplicatas (raiz + encadeadas). */
   getGroup(id: number | string): Promise<Occurrence[]> {
     return firstValueFrom(this.http.get<Occurrence[]>(
       `${environment.api_endpoint}/occurrence/${id}/group`

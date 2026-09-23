@@ -49,9 +49,6 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             jwtToken = requestTokenHeader.substring(7);
             try {
                 email = jwtService.getEmailFromToken(jwtToken);
-                // Sessão única: a conta foi acessada em outro aparelho e este token
-                // deixou de valer. O login em si escapa da conferência — é por ele
-                // que a pessoa recupera o acesso.
                 if (!isLoginRequest(request)
                         && activeSessions.superseded(jwtService.getUserIdFromToken(jwtToken),
                                                      jwtService.getSessionIdFromToken(jwtToken))) {
@@ -67,7 +64,6 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                 log.log(Level.INFO, "Token JWT expirado para o request: {0}", request.getRequestURI());
             }
         } else {
-            // Rotas públicas chegam sem token — não logar como warning para não poluir
             log.log(Level.FINE, "Request sem Bearer token: {0}", request.getRequestURI());
         }
 
@@ -86,10 +82,10 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     }
 
     /**
-     * O POST do login (e o do segundo fator) é justamente o caminho de volta de
-     * quem foi derrubado: a tela ainda manda o token velho no cabeçalho e não
-     * pode ser barrada por ele. O GET /api/authenticate/session, ao contrário, é
-     * o pulso que precisa ser recusado para a tela saber que a sessão caiu.
+     * O POST do login é o caminho de volta de quem foi derrubado: a tela ainda
+     * manda o token velho no cabeçalho e não pode ser barrada por ele. O GET
+     * /api/authenticate/session, ao contrário, precisa ser recusado — é o pulso
+     * pelo qual a tela descobre que a sessão caiu.
      */
     private boolean isLoginRequest(HttpServletRequest request) {
         return "POST".equals(request.getMethod())

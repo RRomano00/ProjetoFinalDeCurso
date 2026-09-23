@@ -18,7 +18,6 @@ export class SignUpComponent {
   loading = false;
   showTerms = false;
 
-  /** Sugestões dos campos de localidade: UF fixa, município conforme a UF. */
   units: { uf: string; name: string }[] = [];
   cityOptions: CityOptions = { list: [], ready: false };
 
@@ -44,8 +43,6 @@ export class SignUpComponent {
     });
 
     this.units = this.locality.units;
-    // O município só aceita digitação depois da UF, e a lista acompanha a UF
-    // escolhida (regra igual na ficha da ocorrência).
     this.cityOptions = this.locality.bindCityToUf(this.form);
   }
 
@@ -62,7 +59,6 @@ export class SignUpComponent {
     this.showTerms = false;
   }
 
-  /** Fecha o modal e já marca o aceite dos termos. */
   acceptTerms() {
     this.form.patchValue({ acceptsTerms: true });
     this.showTerms = false;
@@ -73,7 +69,6 @@ export class SignUpComponent {
     if (!this.passwordsMatch()) { this.toastr.error('As senhas não coincidem!'); return; }
 
     this.loading = true;
-    // Chama /api/user/register — cria CITIZEN (role hardcoded no back-end)
     this.userCreateService.registerCitizen({
       fullname:     this.form.value.fullname,
       email:        this.form.value.email,

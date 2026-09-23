@@ -40,11 +40,9 @@ public class JwtSecurityConfiguration {
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration cfg = new CorsConfiguration();
 
-        // Permitir explicitamente o Angular em desenvolvimento e em testes via túnel HTTPS.
-        // Usamos setAllowedOriginPatterns (em vez de setAllowedOrigins) porque ele aceita
-        // curingas — necessário para os túneis da Cloudflare (URL aleatória a cada execução)
-        // e ainda é compatível com setAllowCredentials(true). Em produção, trocar pelo
-        // domínio real do front-end.
+        // Padrões, e não origens exatas: os túneis HTTPS de teste sorteiam uma
+        // URL nova a cada execução. setAllowedOrigins com curinga é incompatível
+        // com setAllowCredentials(true); setAllowedOriginPatterns não é.
         cfg.setAllowedOriginPatterns(List.of(
             "http://localhost:4200",
             "http://localhost:4000",
@@ -57,16 +55,12 @@ public class JwtSecurityConfiguration {
 
         cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"));
 
-        // Permitir todos os headers incluindo Authorization (Bearer token)
         cfg.setAllowedHeaders(List.of("*"));
 
-        // Permite o browser ler o header Authorization na resposta
         cfg.setExposedHeaders(List.of("Authorization", "Location"));
 
-        // Necessário para requests com Authorization header
         cfg.setAllowCredentials(true);
 
-        // Cache do preflight OPTIONS por 1 hora
         cfg.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
@@ -91,8 +85,6 @@ public class JwtSecurityConfiguration {
                     "/api/user/password-reset/request",
                     "/api/user/password-reset/confirm").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/occurrence").permitAll()
-                // RF08/RF11: visitante (sem login) consulta ocorrências, protocolo, apoios e histórico
-                // (leitura apenas; dados do autor são mascarados no controller)
                 .requestMatchers(HttpMethod.GET, "/api/occurrence/mine").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/occurrence", "/api/occurrence/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/contact").permitAll()
@@ -107,24 +99,19 @@ public class JwtSecurityConfiguration {
                         UserModel.UserRole.EMPLOYEE.name(),
                         UserModel.UserRole.ADMINISTRATOR.name(),
                         UserModel.UserRole.SUPER_ADMIN.name())
-                // RF22: editar o setor é do administrador — o funcionário cadastra e consulta
                 .requestMatchers(HttpMethod.PUT, "/api/department/*")
                     .hasAnyRole(
                         UserModel.UserRole.ADMINISTRATOR.name(),
                         UserModel.UserRole.SUPER_ADMIN.name())
-                // RF22: departamentos e encaminhamento de ocorrência — equipe
                 .requestMatchers("/api/department/**", "/api/occurrence/*/forward")
                     .hasAnyRole(
                         UserModel.UserRole.EMPLOYEE.name(),
                         UserModel.UserRole.ADMINISTRATOR.name(),
                         UserModel.UserRole.SUPER_ADMIN.name())
-                // RF25: o Super Administrador cria qualquer perfil; o administrador
-                // municipal, apenas funcionários do seu município (trava no controller).
                 .requestMatchers(HttpMethod.POST, "/api/user/employee")
                     .hasAnyRole(
                         UserModel.UserRole.ADMINISTRATOR.name(),
                         UserModel.UserRole.SUPER_ADMIN.name())
-                // RF15: listagem e ativação/inativação de contas — administração
                 .requestMatchers(HttpMethod.GET, "/api/user")
                     .hasAnyRole(
                         UserModel.UserRole.ADMINISTRATOR.name(),
@@ -133,7 +120,6 @@ public class JwtSecurityConfiguration {
                     .hasAnyRole(
                         UserModel.UserRole.ADMINISTRATOR.name(),
                         UserModel.UserRole.SUPER_ADMIN.name())
-                // Auto-exclusão da própria conta (qualquer usuário autenticado) — RF06
                 .requestMatchers(HttpMethod.DELETE, "/api/user/account").authenticated()
                 .requestMatchers(HttpMethod.DELETE, "/api/user/**")
                     .hasAnyRole(

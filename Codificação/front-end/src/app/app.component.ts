@@ -10,21 +10,15 @@ import { CommonModule } from '@angular/common';
 })
 export class AppComponent implements OnInit {
 
-  // ── Acessibilidade (RF18): tema claro/escuro + tamanho de fonte ──
   isDark = false;
-  /** Tamanhos de fonte base disponíveis (px). O índice 2 (16px) é o padrão. */
   readonly fontSteps = [14, 15, 16, 17, 18, 19];
   readonly defaultFontIndex = 2;
   fontIndex = this.defaultFontIndex;
 
-  // O service worker continua cuidando do cache offline (ver app.config.ts); o
-  // que saiu foi o aviso de nova versão. A versão nova passa a valer no próximo
-  // carregamento da página, sem interromper quem está no meio de um formulário.
   ngOnInit(): void {
     this.restorePreferences();
   }
 
-  // ── Tema ──
   toggleTheme(): void {
     this.isDark = !this.isDark;
     this.applyTheme();
@@ -35,7 +29,6 @@ export class AppComponent implements OnInit {
     document.documentElement.classList.toggle('dark-theme', this.isDark);
   }
 
-  // ── Tamanho de fonte ──
   increaseFont(): void {
     if (this.fontIndex < this.fontSteps.length - 1) { this.fontIndex++; this.applyFont(); }
   }

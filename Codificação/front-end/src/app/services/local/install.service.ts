@@ -28,33 +28,25 @@ export class InstallService {
         || (navigator as unknown as { standalone?: boolean }).standalone === true;
   }
 
-  /** Marca da dispensa do convite; sobrevive ao logout, como as demais preferências. */
   private static readonly DISPENSA = 'install.dispensado';
 
   get disponivel(): boolean {
     return !this.instalado && (guardado !== null || this.ios);
   }
 
-  /** Convite automático: só enquanto a pessoa não tiver dito "agora não". */
   get convidar(): boolean {
     return this.disponivel && !this.dispensado;
   }
 
   private get dispensado(): boolean {
     try { return localStorage.getItem(InstallService.DISPENSA) === '1'; }
-    catch { return true; }   // armazenamento bloqueado: não insistir
+    catch { return true; }
   }
 
-  /** "Agora não": o convite some e o botão do menu continua disponível. */
   dispensar() {
-    try { localStorage.setItem(InstallService.DISPENSA, '1'); } catch { /* segue sem lembrar */ }
+    try { localStorage.setItem(InstallService.DISPENSA, '1'); } catch { }
   }
 
-  /**
-   * Abre o diálogo de instalação do navegador. No iPhone não existe diálogo a
-   * abrir, então devolve a instrução para quem chamou exibir.
-   * @returns a instrução do iPhone, ou null quando o navegador se encarregou.
-   */
   async instalar(): Promise<string | null> {
     if (this.ios || !guardado) {
       return 'No iPhone, toque em Compartilhar e depois em "Adicionar à Tela de Início".';

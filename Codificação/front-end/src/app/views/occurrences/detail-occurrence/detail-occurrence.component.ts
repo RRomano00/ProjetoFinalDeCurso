@@ -40,7 +40,6 @@ export class DetailOccurrenceComponent implements OnInit, OnDestroy {
 
   private map?: L.Map;
 
-
   supportCount = 0;
   supportedByMe = false;
   supporting = false;
@@ -56,11 +55,9 @@ export class DetailOccurrenceComponent implements OnInit, OnDestroy {
     'Serviço executado e finalizado.'
   ];
 
-  // ── RF22: encaminhamento ao departamento responsável ──
   departments: Department[] = [];
   departmentsLoading = false;
   forwardOpen = false;
-  /** A mesma ocorrência pode interessar a mais de um setor. */
   forwardSelectedIds = new Set<number>();
   forwarding = false;
 
@@ -90,7 +87,7 @@ export class DetailOccurrenceComponent implements OnInit, OnDestroy {
       this.occurrence = await this.occurrenceReadService.findById(id);
       this.loadSupportInfo(id);
       this.loadHistory(id);
-      await this.loadGroup(id);          // RF12: o mapa plota o grupo inteiro
+      await this.loadGroup(id);
       setTimeout(() => this.renderMap(), 0);
     } catch {
       this.toastr.error('Ocorrência não encontrada.');
@@ -103,7 +100,7 @@ export class DetailOccurrenceComponent implements OnInit, OnDestroy {
       const info = await this.occurrenceSupportService.getSupportInfo(id);
       this.supportCount  = info.count;
       this.supportedByMe = info.supportedByMe;
-    } catch { /* silencioso: apenas não mostra o contador */ }
+    } catch { }
   }
 
   private async loadHistory(id: string) {
@@ -120,11 +117,6 @@ export class DetailOccurrenceComponent implements OnInit, OnDestroy {
 
   goToLogin() { this.router.navigate(['/account/sign-in']); }
 
-  /**
-   * Apoia ou desfaz o apoio no mesmo botão. O estado vem do que o servidor
-   * devolve (`supportedByMe`), nunca de um palpite local: assim a tela não
-   * pode discordar do banco.
-   */
   async toggleSupport() {
     if (this.auth.isVisitor()) { this.showLoginPrompt = true; return; }
     if (!this.occurrence?.id || this.supporting) return;
@@ -160,8 +152,6 @@ export class DetailOccurrenceComponent implements OnInit, OnDestroy {
     }
 
     const hasPoint = lat != null && lng != null;
-    // Sem o ponto da ocorrência, o mapa abre no município/GPS de quem está
-    // lendo, e não sempre na mesma cidade.
     const fallback = hasPoint ? null : await this.locality.mapCenter();
     const center: [number, number] = hasPoint
       ? [lat as number, lng as number]
@@ -188,8 +178,6 @@ export class DetailOccurrenceComponent implements OnInit, OnDestroy {
 
       if (hasPoint) {
         points.push(center);
-        // O popup não abre sozinho: o marcador maior com halo já diz qual é o desta
-        // tela, e o balão aberto tapava justamente o mapa que se quer ver.
         L.marker(center, { icon: this.pointIcon(statusColor(o.status), true), zIndexOffset: 1000 })
           .addTo(this.map!)
           .bindPopup(occurrencePopup(o, { current: true }));
@@ -199,7 +187,6 @@ export class DetailOccurrenceComponent implements OnInit, OnDestroy {
     });
   }
 
-  /** O ponto da ocorrência aberta vem maior e com halo, para não sumir no grupo. */
   private pointIcon(color: string, current: boolean): L.DivIcon {
     const size = current ? 22 : 13;
     return L.divIcon({
@@ -211,19 +198,12 @@ export class DetailOccurrenceComponent implements OnInit, OnDestroy {
     });
   }
 
-  /**
-   * RF22: abre e fecha o leque de departamentos. A lista é buscada na primeira
-   * abertura e reaproveitada depois — ela muda pouco e a espera apareceria
-   * justamente no momento em que a pessoa quer escolher.
-   */
   async toggleForward() {
     this.forwardOpen = !this.forwardOpen;
     if (!this.forwardOpen || this.departments.length > 0) return;
 
     this.departmentsLoading = true;
     try {
-      // Os setores são os do município do ENDEREÇO da ocorrência, que pode ser
-      // outro que não o de quem está atendendo.
       this.departments = await this.departmentService.findAll(
         this.occurrence?.city, this.occurrence?.state);
     } catch {
@@ -243,11 +223,6 @@ export class DetailOccurrenceComponent implements OnInit, OnDestroy {
     if (!this.forwardSelectedIds.delete(id)) this.forwardSelectedIds.add(id);
   }
 
-  /**
-   * Encaminha aos departamentos escolhidos. O servidor envia um e-mail por
-   * destino — sem dados pessoais do autor e com as fotos anexadas — e registra
-   * um trâmite para cada um. Se nenhum e-mail sair, a ocorrência não muda.
-   */
   async confirmForward() {
     if (!this.occurrence?.id || this.forwardSelectedIds.size === 0 || this.forwarding) return;
 
@@ -257,7 +232,6 @@ export class DetailOccurrenceComponent implements OnInit, OnDestroy {
         String(this.occurrence.id), [...this.forwardSelectedIds]);
       this.occurrence!.status = 'EM_ANDAMENTO';
       this.toastr.success(`Ocorrência encaminhada para ${result.departments.join(', ')}.`);
-      // Um destino pode falhar sozinho: os demais já foram avisados e ficam.
       if (result.failed?.length) {
         this.toastr.warning(
           `Não foi possível avisar ${result.failed.join(', ')}. Tente encaminhar de novo a esses setores.`,
@@ -324,7 +298,6 @@ export class DetailOccurrenceComponent implements OnInit, OnDestroy {
     }
     this.updating = true;
     try {
-      // Reenvia o status atual: entra no histórico como mensagem e notifica o autor.
       await this.occurrenceEditService.updateStatus(
         String(this.occurrence.id), this.occurrence.status, this.staffMessage.trim(), this.applyToGroup);
       this.toastr.success('Resposta enviada ao cidadão.');
@@ -376,7 +349,6 @@ export class DetailOccurrenceComponent implements OnInit, OnDestroy {
 
   statusLabel = statusLabel;
 
-  /** Voltar de Concluída/Indeferida para Em Andamento é reabertura — o histórico diz isso. */
   historyLabel(h: OccurrenceHistory): string {
     const reaberta = h.newStatus === 'EM_ANDAMENTO'
       && (h.oldStatus === 'CONCLUIDA' || h.oldStatus === 'INDEFERIDA');

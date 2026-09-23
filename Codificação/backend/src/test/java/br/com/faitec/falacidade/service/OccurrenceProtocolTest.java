@@ -21,17 +21,11 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
-/**
- * O número de protocolo é o que o cidadão anota no papel e dita ao telefone.
- * Estes testes prendem as duas decisões que fazem isso funcionar: o formato
- * curto e o alfabeto sem os símbolos que se confundem à leitura.
- */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 @DisplayName("OccurrencePostgresDao — número de protocolo")
 class OccurrenceProtocolTest {
 
-    /** ABCDEFGHJKLMNPQRSTUVWXYZ23456789 — sem O, 0, I e 1. */
     private static final String FORMATO = "FC-\\d{2}-[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{5}";
 
     @Mock Connection        connection;
@@ -81,11 +75,10 @@ class OccurrenceProtocolTest {
     void evitaSimbolosAmbiguos() throws Exception {
         when(jaExiste.next()).thenReturn(false);
 
-        // O sorteio é aleatório: uma execução só não prova nada sobre o alfabeto.
         for (int i = 0; i < 300; i++) {
             Occurrence o = ocorrenciaAnonima();
             sut.add(o);
-            String sorteio = o.getProtocolNumber().substring(6);   // depois de "FC-AA-"
+            String sorteio = o.getProtocolNumber().substring(6);
             assertThat(sorteio).matches("[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{5}");
             assertThat(sorteio).doesNotContain("O").doesNotContain("0")
                                .doesNotContain("I").doesNotContain("1");
@@ -95,7 +88,6 @@ class OccurrenceProtocolTest {
     @Test
     @DisplayName("sorteia de novo quando o protocolo já está em uso")
     void sorteiaDeNovoEmColisao() throws Exception {
-        // A primeira conferência acha o código ocupado; a segunda, livre.
         when(jaExiste.next()).thenReturn(true, false);
 
         Occurrence o = ocorrenciaAnonima();

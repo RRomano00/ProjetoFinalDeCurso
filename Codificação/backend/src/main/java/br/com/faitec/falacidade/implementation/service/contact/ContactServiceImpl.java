@@ -13,7 +13,6 @@ public class ContactServiceImpl implements ContactService {
     private final ContactMessageDao contactMessageDao;
     private final EmailService emailService;
 
-    /** E-mail da equipe que recebe as mensagens do formulário de contato. */
     @Value("${app.contact-recipient:fala.cidade.faitec@gmail.com}")
     private String contactRecipient;
 
@@ -29,7 +28,6 @@ public class ContactServiceImpl implements ContactService {
         }
         contactMessageDao.save(message);
 
-        // Notifica a equipe por e-mail (envio assíncrono — não bloqueia/falha o salvamento).
         emailService.sendContactNotification(
             contactRecipient,
             message.getName(),

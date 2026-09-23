@@ -4,7 +4,6 @@ import br.com.faitec.falacidade.domain.Occurrence;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
-/** Payload para registrar uma ocorrência — POST /api/occurrence. */
 public class CreateOccurrenceDto {
 
     @NotBlank(message = "Título é obrigatório")
@@ -35,7 +34,6 @@ public class CreateOccurrenceDto {
     private String cloudinaryPublicId;
     private String urlMedia;
 
-    /** RF07: fotos anexadas (opcional; a 1ª vira a capa urlMedia). */
     private java.util.List<br.com.faitec.falacidade.domain.OccurrenceMedia> media;
 
     public Occurrence toOccurrence() {
@@ -49,7 +47,6 @@ public class CreateOccurrenceDto {
         o.setCloudinaryPublicId(cloudinaryPublicId);
         o.setUrlMedia(urlMedia);
         o.setMedia(media);
-        // A 1ª foto da lista vira a capa quando urlMedia não veio preenchido
         if (o.getUrlMedia() == null && media != null && !media.isEmpty()) {
             o.setUrlMedia(media.get(0).getUrl());
             o.setCloudinaryPublicId(media.get(0).getCloudinaryPublicId());

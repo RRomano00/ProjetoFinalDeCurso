@@ -4,7 +4,6 @@ public interface OccurrenceSupportDao {
 
     boolean addSupport(int occurrenceId, int citizenId);
 
-    /** Remove o apoio do cidadão. Retorna false se ele não apoiava. */
     boolean removeSupport(int occurrenceId, int citizenId);
 
     int countByOccurrence(int occurrenceId);

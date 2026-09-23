@@ -8,11 +8,6 @@ import { typeLabel, typeColor } from '../../../domain/occurrence-labels';
 
 export interface ChartBar          { label: string; value: number; color: string; pct: number; }
 export interface NeighborhoodStat  { neighborhood: string; total: number; pct: number; }
-/**
- * O token vira classe no elemento. Os nomes levam prefixo porque o Bootstrap é
- * global neste projeto e define .progress e .alert: um <li class="progress">
- * virava barra de progresso do Bootstrap, com o texto cortado dentro dela.
- */
 export interface StatusSlice       { label: string; value: number; pct: number; token: string; }
 export interface AgeBucket         { label: string; value: number; pct: number; token: string; }
 export interface SupportedItem     { id?: number; protocol: string; title: string; supports: number; }
@@ -36,7 +31,7 @@ export class StatisticsComponent implements OnInit {
 
   total = 0;
   pending = 0; inProgress = 0; resolved = 0; rejected = 0;
-  open = 0;                       // pendente + em andamento
+  open = 0;
   highPriorityOpen = 0;
   resolutionRate = 0;
   avgResolutionDays = '—';
@@ -59,8 +54,6 @@ export class StatisticsComponent implements OnInit {
     this.loading = false;
     this.recompute();
   }
-
-  // ── Filtros ───────────────────────────────────────────────────────────────
 
   get hasActiveFilters(): boolean {
     return !!(this.filterDateFrom || this.filterDateTo || this.filterNeighborhood || this.filterType);
@@ -94,8 +87,6 @@ export class StatisticsComponent implements OnInit {
     });
   }
 
-  // ── Cálculo ───────────────────────────────────────────────────────────────
-
   recompute() {
     const f = this.filtrar();
     const agora = Date.now();
@@ -122,7 +113,6 @@ export class StatisticsComponent implements OnInit {
     this.calcularTempoMedio(f);
     this.calcularFila(emAberto, agora);
 
-    // Ocorrências por tipo
     const porTipo: Record<string, number> = {};
     f.forEach(o => { const k = o.type ?? 'OUTROS_PROBLEMAS'; porTipo[k] = (porTipo[k] || 0) + 1; });
     const maiorTipo = Math.max(...Object.values(porTipo), 1);
@@ -130,14 +120,12 @@ export class StatisticsComponent implements OnInit {
       label: typeLabel(t), value: q, color: typeColor(t), pct: (q / maiorTipo) * 100,
     }));
 
-    // Bairros com mais registros
     const porBairro: Record<string, number> = {};
     f.forEach(o => { const b = o.neighborhood?.trim() || 'Não informado'; porBairro[b] = (porBairro[b] || 0) + 1; });
     const maiorBairro = Math.max(...Object.values(porBairro), 1);
     this.topNeighborhoods = Object.entries(porBairro).sort((a, b) => b[1] - a[1]).slice(0, 8)
       .map(([neighborhood, total]) => ({ neighborhood, total, pct: (total / maiorBairro) * 100 }));
 
-    // Em aberto com mais apoio da população: a fila que o bairro está cobrando
     this.mostSupported = emAberto
       .filter(o => (o.supportCount ?? 0) > 0)
       .sort((a, b) => (b.supportCount ?? 0) - (a.supportCount ?? 0))
@@ -150,7 +138,6 @@ export class StatisticsComponent implements OnInit {
       }));
   }
 
-  /** RF13: tempo médio entre o registro e a conclusão. */
   private calcularTempoMedio(f: Occurrence[]) {
     const concluidas = f.filter(o => o.status === 'CONCLUIDA' && o.createdAt && o.updatedAt);
     if (!concluidas.length) { this.avgResolutionDays = '—'; return; }
@@ -158,7 +145,6 @@ export class StatisticsComponent implements OnInit {
       s + (new Date(o.updatedAt!).getTime() - new Date(o.createdAt!).getTime()), 0);
     const dias = soma / concluidas.length / DIA;
     if (dias < 1) { this.avgResolutionDays = `${Math.max(1, Math.round(dias * 24))} h`; return; }
-    // Dia é unidade inteira: "26,4 dias" sugere uma precisão que a medida não tem.
     const inteiro = Math.round(dias);
     this.avgResolutionDays = `${inteiro} ${inteiro === 1 ? 'dia' : 'dias'}`;
   }

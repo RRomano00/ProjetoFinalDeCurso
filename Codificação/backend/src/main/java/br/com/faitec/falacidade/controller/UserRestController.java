@@ -55,14 +55,6 @@ public class UserRestController {
         return ResponseEntity.created(uri).build();
     }
 
-    /**
-     * RF25: cria contas da administração pública.
-     *
-     * O Super Administrador cria qualquer perfil, em qualquer município — é
-     * quem nomeia os Super Administradores e define o município de cada conta.
-     * O administrador municipal monta a equipe do seu próprio município,
-     * funcionários e outros administradores, e não alcança outra cidade.
-     */
     @PostMapping("/employee")
     public ResponseEntity<?> createStaff(@Valid @RequestBody CreateEmployeeDto dto, Authentication auth) {
         UserModel requester = getAuthenticatedUser(auth);
@@ -81,8 +73,6 @@ public class UserRestController {
                 return forbidden("Você só pode cadastrar contas do seu município.");
         } else if (entity.getRole() != UserModel.UserRole.SUPER_ADMIN
                 && (entity.getCity() == null || entity.getCity().isBlank())) {
-            // O município é o que delimita o trabalho do administrador e do
-            // funcionário; só o Super Administrador existe sem ele.
             return ResponseEntity.badRequest()
                 .body(java.util.Map.of("error", "Informe o município da conta."));
         }
@@ -90,7 +80,6 @@ public class UserRestController {
         try { id = userService.create(entity); }
         catch (IllegalStateException e) { return conflict(e); }
         if (id < 0) return ResponseEntity.badRequest().build();
-        // Mesmo tratamento do /register: a falha no e-mail não desfaz o cadastro.
         try {
             emailService.sendStaffWelcomeEmail(entity.getEmail(), entity.getFullname(),
                                                entity.getRole(), entity.getCity());
@@ -104,11 +93,6 @@ public class UserRestController {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(java.util.Map.of("error", motivo));
     }
 
-    /**
-     * RF25: quem pode administrar a conta alvo. O Super Administrador alcança
-     * todas; o administrador municipal, apenas as contas do seu município — e
-     * nunca a de um Super Administrador.
-     */
     private boolean canManage(UserModel requester, UserModel target) {
         if (requester == null || target == null) return false;
         if (requester.isSuperAdmin()) return true;
@@ -118,15 +102,6 @@ public class UserRestController {
                                  target.getCity(), target.getState());
     }
 
-    /**
-     * Avisa o titular de que a sua conta foi alterada por outra pessoa, dizendo
-     * o que mudou e quem mudou. Toda alteração feita por terceiro passa por
-     * aqui — dados de perfil, perfil de acesso e ativação —, porque quem
-     * descobre a alteração pela consequência não tem como contestá-la a tempo.
-     *
-     * A falha no envio não desfaz a alteração: o mesmo critério já adotado no
-     * cadastro da equipe e no registro de ocorrência.
-     */
     private void notifyAccountChange(UserModel target, List<String> alteracoes, UserModel requester) {
         if (target == null || alteracoes.isEmpty()) return;
         if (requester != null && requester.getId() == target.getId()) return;
@@ -139,7 +114,6 @@ public class UserRestController {
         } catch (Exception ignored) { }
     }
 
-    /** O que mudou de fato, em linguagem de tela — campo em branco não é alteração. */
     private List<String> diff(UserModel antes, UserModel depois) {
         List<String> mudou = new ArrayList<>();
         addChange(mudou, "Nome",        antes.getFullname(),     depois.getFullname());
@@ -152,6 +126,7 @@ public class UserRestController {
         return mudou;
     }
 
+    /** Campo vazio na entrada é campo não informado, nunca apagamento. */
     private void addChange(List<String> destino, String rotulo, String antes, String depois) {
         String a = antes  == null ? "" : antes.trim();
         String d = depois == null ? "" : depois.trim();
@@ -175,16 +150,11 @@ public class UserRestController {
         };
     }
 
-    /** E-mail duplicado: 409 com o motivo, para a tela dizer o que houve. */
     private ResponseEntity<java.util.Map<String, String>> conflict(IllegalStateException e) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
             .body(java.util.Map.of("error", e.getMessage()));
     }
 
-    /**
-     * RF15: lista as contas (inclusive inativas). O Super Administrador vê
-     * todas; o administrador municipal, apenas as do seu município (RF25).
-     */
     @GetMapping
     public ResponseEntity<java.util.List<UserModel>> getAll(Authentication auth) {
         UserModel requester = getAuthenticatedUser(auth);
@@ -196,7 +166,6 @@ public class UserRestController {
         return ResponseEntity.ok(users);
     }
 
-    /** RF15: ativa/inativa a conta do usuário, dentro do alcance de quem pede. */
     @PutMapping("/{id}/active")
     public ResponseEntity<Void> setActive(@PathVariable int id,
                                           @RequestBody java.util.Map<String, Boolean> body,
@@ -211,12 +180,6 @@ public class UserRestController {
         return ResponseEntity.noContent().build();
     }
 
-    /**
-     * RF25: troca o perfil da conta, dentro do alcance de quem pede.
-     *
-     * Endpoint próprio, e não um campo do PUT /api/user/{id}: aquele o próprio
-     * usuário chama para editar os seus dados, e perfil ali seria auto-promoção.
-     */
     @PutMapping("/{id}/role")
     public ResponseEntity<?> setRole(@PathVariable int id,
                                      @RequestBody java.util.Map<String, String> body,
@@ -229,7 +192,6 @@ public class UserRestController {
 
         UserModel requester = getAuthenticatedUser(auth);
         if (requester == null) return ResponseEntity.status(401).build();
-        // Mudar o próprio perfil é se promover — ou se trancar para fora da tela.
         if (requester.getId() == id)
             return forbidden("Você não pode alterar o seu próprio perfil.");
         UserModel target = userService.findById(id);
@@ -257,21 +219,14 @@ public class UserRestController {
         UserModel requester = getAuthenticatedUser(auth);
         UserModel target    = userService.findById(id);
         if (target == null) return ResponseEntity.noContent().build();
-        // O cidadão pode excluir a própria conta; a alheia, só quem a administra.
         if (requester == null || (requester.getId() != id && !canManage(requester, target)))
             return ResponseEntity.status(403).build();
-        // RF15: a conta alheia só sai do sistema depois de inativada — inativar
-        // primeiro é o passo que deixa o administrador voltar atrás.
         if (requester.getId() != id && target.isActive())
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
         userService.delete(id);
         return ResponseEntity.noContent().build();
     }
 
-    /**
-     * Envia um código ao e-mail para CONFIRMAR a exclusão da própria conta
-     * (apenas quando o usuário tem o MFA por e-mail ativo). RF06.
-     */
     @PostMapping("/account/delete-code")
     public ResponseEntity<Void> sendAccountDeletionCode(Authentication auth) {
         UserModel user = getAuthenticatedUser(auth);
@@ -282,11 +237,6 @@ public class UserRestController {
         return ResponseEntity.ok().build();
     }
 
-    /**
-     * Exclui a própria conta do usuário autenticado (RF06).
-     * Se o usuário tiver algum MFA ativo, exige o código do método ativo
-     * (TOTP do app ou código enviado ao e-mail — qualquer um que estiver ativo).
-     */
     @DeleteMapping("/account")
     public ResponseEntity<Void> deleteOwnAccount(@RequestBody MfaVerifyDto dto, Authentication auth) {
         UserModel user = getAuthenticatedUser(auth);
@@ -313,7 +263,6 @@ public class UserRestController {
         return userService.findByEmail(auth.getName());
     }
 
-    /** RF04: atualiza os dados de perfil — só o próprio usuário ou um Administrador. */
     @PutMapping("/{id}")
     public ResponseEntity<?> update(@PathVariable int id, @RequestBody UpdateUserDto data,
                                     Authentication auth) {
@@ -326,10 +275,9 @@ public class UserRestController {
 
         UserModel changes = data.toUserModel();
 
-        // RF25: para a equipe o município não é dado de endereço, é a jurisdição
-        // — define quais ocorrências a conta enxerga e onde ela pode cadastrar
-        // setores. Trocá-lo é transferir a pessoa de prefeitura, decisão que não
-        // cabe nem a ela mesma nem ao administrador do município de origem.
+        // Para a equipe o município é a jurisdição, não endereço: define quais
+        // ocorrências a conta enxerga. Município em branco vale como "não
+        // informado", e não como pedido de troca — a tela nem envia o campo.
         if (target.isStaff() && !requester.isSuperAdmin()) {
             boolean informou = changes.getCity() != null && !changes.getCity().isBlank();
             if (informou && !Municipality.same(target.getCity(), target.getState(),

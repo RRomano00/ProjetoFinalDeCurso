@@ -27,7 +27,6 @@ public class JwtService {
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
-    /** 10 horas de validade */
     private static final long EXPIRATION_MS = 1000L * 60 * 60 * 10;
 
     public String getEmailFromToken(String token) {
@@ -59,7 +58,6 @@ public class JwtService {
         return email.equals(userDetails.getUsername()) && !isTokenExpired(token);
     }
 
-    /** Identificação da sessão gravada no token; null nos emitidos antes da sessão única. */
     public String getSessionIdFromToken(String token) {
         return getClaimFromToken(token, claims -> claims.get("sid", String.class));
     }
@@ -72,11 +70,7 @@ public class JwtService {
                                  UserModel.UserRole role, String email, int id,
                                  String sessionId) {
         Map<String, Object> claims = new HashMap<>();
-        // O id vai no token porque a tela Meu Perfil precisa dele para carregar e
-        // salvar os próprios dados (GET/PUT /api/user/{id}).
         claims.put("id",       id);
-        // Sessão única: o filtro recusa o token cujo sid já foi substituído por
-        // um login posterior da mesma conta.
         claims.put("sid",      sessionId);
         claims.put("email",    email);
         claims.put("fullname", fullname);

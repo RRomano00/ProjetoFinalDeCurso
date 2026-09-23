@@ -54,17 +54,13 @@ public class OccurrenceServiceImpl implements OccurrenceService {
 
         String plainCode = null;
         if (entity.isAnonymous()) {
-            // RNF17: o endereço de rede é persistido e comparado apenas sob resumo
-            // SHA-256 — o IP em texto claro não chega ao banco de dados.
             String ipHash = clientIp == null ? null : trackingCodeService.hash(clientIp);
-            // RF08: limite de 3 ocorrências anônimas por IP por dia
             if (ipHash != null && occurrenceDao.countTodayAnonymousByIp(ipHash) >= MAX_ANONYMOUS_PER_DAY)
                 throw new IllegalStateException("Limite de " + MAX_ANONYMOUS_PER_DAY + " ocorrências anônimas por dia atingido");
             entity.setIpAddress(ipHash);
             plainCode = trackingCodeService.generateCode();
             entity.setAnonymousTrackingCodeHash(trackingCodeService.hash(plainCode));
         } else {
-            // RF07: limite de 5 ocorrências identificadas por usuário por dia
             if (!isBlank(entity.getEmail())
                     && occurrenceDao.countTodayByEmail(entity.getEmail()) >= MAX_IDENTIFIED_PER_DAY)
                 throw new IllegalStateException("Limite de " + MAX_IDENTIFIED_PER_DAY + " ocorrências por dia atingido");
@@ -200,7 +196,6 @@ public class OccurrenceServiceImpl implements OccurrenceService {
         }
     }
 
-    /** RF22: texto fixo do trâmite, exigido no histórico da ocorrência. */
     private static final String FORWARD_NOTE = "Ocorrência encaminhada para departamento responsável";
 
     @Override
@@ -209,8 +204,6 @@ public class OccurrenceServiceImpl implements OccurrenceService {
         GetOccurrenceDto occurrence = findById(occurrenceId);
         if (occurrence == null) throw new IllegalArgumentException("Ocorrência não encontrada");
 
-        // Todos os destinos são resolvidos antes de qualquer envio: assim um id
-        // inválido faz a operação inteira falhar sem ter mandado e-mail nenhum.
         List<Department> destinos = new ArrayList<>();
         for (Integer id : new LinkedHashSet<>(departmentIds)) {
             Department department = departmentService.findById(id);
@@ -222,10 +215,6 @@ public class OccurrenceServiceImpl implements OccurrenceService {
         List<String> falharam = new ArrayList<>();
         for (Department department : destinos) {
             try {
-                // O e-mail vem primeiro, e de forma síncrona: registrar o
-                // encaminhamento de uma mensagem que não saiu seria pior do que
-                // falhar. Cada destino é independente — um e-mail que saiu não
-                // pode ser desfeito porque o seguinte falhou.
                 emailService.sendOccurrenceForwardEmail(
                         department.getEmail(), department.getName(), occurrence);
                 occurrenceDao.updateStatus(occurrenceId,
@@ -237,8 +226,6 @@ public class OccurrenceServiceImpl implements OccurrenceService {
             }
         }
 
-        // O autor é avisado uma vez só: para ele o que mudou foi o estado da
-        // ocorrência, não quantos setores foram acionados.
         if (!enviados.isEmpty()) {
             notifyAuthor(occurrence, Occurrence.OccurrenceStatus.EM_ANDAMENTO.name(),
                          FORWARD_NOTE + " — " + String.join(", ", enviados) + ".");
@@ -251,7 +238,7 @@ public class OccurrenceServiceImpl implements OccurrenceService {
         try {
             emailService.sendStatusChangeEmail(o.getEmail(), o.getFullname(),
                 o.getProtocolNumber(), newStatus, message);
-        } catch (Exception ignored) { /* e-mail é melhor esforço */ }
+        } catch (Exception ignored) { }
     }
 
     private boolean isBlank(String s) { return s == null || s.isBlank(); }

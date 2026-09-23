@@ -17,11 +17,6 @@ import org.springframework.test.util.ReflectionTestUtils;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-/**
- * EmailServiceImpl envia e-mails HTML via MimeMessage + MimeMessageHelper.
- * O JavaMailSender é mockado; createMimeMessage() retorna um MimeMessage real
- * (sem Session) que o helper preenche e que validamos após o envio.
- */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("EmailServiceImpl")
 class EmailServiceImplTest {

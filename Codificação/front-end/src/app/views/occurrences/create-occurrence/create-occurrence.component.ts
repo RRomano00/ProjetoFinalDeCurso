@@ -31,42 +31,31 @@ L.Icon.Default.mergeOptions({
   styleUrl: './create-occurrence.component.css'
 })
 export class CreateOccurrenceComponent implements OnInit, AfterViewInit, OnDestroy {
-  /** UF e municípios do endereço da ocorrência. */
   units: { uf: string; name: string }[] = [];
   cityOptions: CityOptions = { list: [], ready: false };
 
-  /**
-   * Cobertura do município informado: null = ainda não se sabe, true = há equipe,
-   * false = município sem adesão. Só muda o aviso; nunca impede o registro.
-   */
   cityServed: boolean | null = null;
 
   form!: FormGroup;
   loading = false;
   trackingCode: string | null = null;
 
-  // Estado do mapa / geocodificação (RF09)
   geocodeStatus: 'idle' | 'loading' | 'success' | 'partial' | 'error' = 'idle';
-  /** Bússola em espera: as duas tentativas de leitura levam até 20 s. */
   locating = false;
   private map!: L.Map;
   private marker?: L.Marker;
 
-  // RF07/RF20: fotos anexadas (até MAX_PHOTOS; upload uma a uma)
   readonly MAX_PHOTOS = 3;
   photos: { url: string; cloudinaryPublicId: string; imageBlurred: boolean }[] = [];
   photoState: 'idle' | 'uploading' | 'rejected' | 'error' = 'idle';
   photoMessage = '';
 
-  // RF16: duplicatas próximas (50 m) do mesmo tipo
   nearbyDuplicates: Occurrence[] = [];
   checkingDuplicates = false;
   supportedIds = new Set<number>();
   supportingId: number | null = null;
-  /** RF08/RF11: visitante tentou apoiar → pede login. */
   showLoginPrompt = false;
 
-  // Categorias compartilhadas (domain/occurrence-labels)
   occurrenceTypes = OCCURRENCE_TYPES;
 
   constructor(
@@ -92,9 +81,6 @@ export class CreateOccurrenceComponent implements OnInit, AfterViewInit, OnDestr
       number:           [''],
       neighborhood:     ['', Validators.required],
       addressReference: [''],
-      // O município é o do ENDEREÇO da ocorrência, não o do cadastro de quem
-      // registra: quem mora em Santa Rita pode relatar um problema em Itajubá.
-      // A UF vem antes porque é ela que define a lista de municípios.
       state:            ['MG', Validators.required],
       city:             ['Santa Rita do Sapucaí', Validators.required],
       latitude:         [null],
@@ -102,22 +88,17 @@ export class CreateOccurrenceComponent implements OnInit, AfterViewInit, OnDestr
       anonymous:        [false]
     });
 
-    // RF08: visitante só registra como anônimo
     if (this.auth.isVisitor()) this.form.patchValue({ anonymous: true });
 
-    // RF16: mudou a categoria com local já marcado → verifica duplicatas de novo
     this.form.get('type')!.valueChanges.subscribe(() => this.checkDuplicates());
 
     this.units = this.locality.units;
     this.cityOptions = this.locality.bindCityToUf(this.form);
 
-    // Município completo (por digitação ou pelo mapa) → confere a cobertura.
     this.form.get('city')!.valueChanges.subscribe(() => this.checkCoverage());
     this.form.get('state')!.valueChanges.subscribe(() => this.checkCoverage());
     this.checkCoverage();
 
-    // RF09: o endereço digitado leva o mapa até lá. A pausa é porque cada tecla
-    // dispara valueChanges e o Nominatim aceita uma consulta por segundo.
     merge(this.form.get('street')!.valueChanges,
           this.form.get('neighborhood')!.valueChanges,
           this.form.get('city')!.valueChanges,
@@ -145,23 +126,12 @@ export class CreateOccurrenceComponent implements OnInit, AfterViewInit, OnDestr
     }).addTo(this.map);
     setTimeout(() => this.map.invalidateSize(), 100);
 
-    // Clique no mapa define a localização e preenche o endereço (RF09)
     this.map.on('click', (e: L.LeafletMouseEvent) => {
       this.ngZone.run(() => this.setLocation(e.latlng.lat, e.latlng.lng, true));
     });
   }
 
-  /**
-   * RF09: solicita autorização para capturar a localização atual via API de
-   * Geolocalização. Passa pelo serviço de município para usar as duas
-   * tentativas e o mesmo aviso de GPS desligado das demais telas; sem posição,
-   * a pessoa clica no mapa ou preenche o endereço à mão.
-   */
   async requestCurrentLocation(centrarNoMunicipio = false) {
-    // Na abertura da tela, primeiro o município de quem registra, que não
-    // depende do aparelho: o mapa já fica útil enquanto o navegador pergunta
-    // pela localização. No clique da bússola isso não vale — pular para o
-    // centro da cidade e só depois para a pessoa seria um solavanco à toa.
     if (centrarNoMunicipio) {
       const center = await this.localityPreference.mapCenter();
       if (center) this.ngZone.run(() => this.map.setView([center.lat, center.lng], center.zoom));
@@ -169,8 +139,6 @@ export class CreateOccurrenceComponent implements OnInit, AfterViewInit, OnDestr
 
     this.locating = true;
     try {
-      // O serviço já avisa o que fazer quando não vem posição: liberar a
-      // permissão no navegador, ou ligar o GPS do aparelho.
       const position = await this.localityPreference.position();
       if (!position) return;
       this.ngZone.run(() => {
@@ -183,20 +151,13 @@ export class CreateOccurrenceComponent implements OnInit, AfterViewInit, OnDestr
     }
   }
 
-  /**
-   * Leva o mapa ao endereço digitado — a vista, não o marcador: o geocodificador
-   * acerta a rua, não o número, e o ponto exato continua sendo o do clique (ou
-   * o do GPS), que é o que vai para o cadastro.
-   */
   private async centerOnTypedAddress() {
     if (!this.map) return;
     const { street, neighborhood, city, state } = this.form.value;
-    if (!city) return;   // sem município não há o que procurar
+    if (!city) return;
 
     const local = [city, state].filter(Boolean).join(', ');
     const busca = [street, neighborhood, local].filter(Boolean).join(' | ');
-    // Nem repete a mesma consulta, nem desfaz o que o próprio mapa preencheu:
-    // depois de um clique, voltar para o centro da rua afastaria do ponto certo.
     if (busca === this.lastCentered || busca === this.addressFromMap) return;
     this.lastCentered = busca;
 
@@ -204,14 +165,12 @@ export class CreateOccurrenceComponent implements OnInit, AfterViewInit, OnDestr
     if (coords) this.ngZone.run(() => this.map.setView([coords.lat, coords.lng], street ? 16 : 13));
   }
 
-  /** Última consulta enviada, e o endereço que veio do próprio mapa. */
   private lastCentered  = '';
   private addressFromMap = '';
 
-  /** Posiciona o marcador, grava lat/lng e (opcionalmente) preenche o endereço via reverse geocoding. */
   private async setLocation(lat: number, lng: number, fillAddress: boolean) {
     this.form.patchValue({ latitude: lat, longitude: lng });
-    this.checkDuplicates();   // RF16: novo local → verifica duplicatas próximas
+    this.checkDuplicates();
 
     if (this.marker) this.marker.setLatLng([lat, lng]);
     else this.marker = L.marker([lat, lng]).addTo(this.map);
@@ -222,9 +181,6 @@ export class CreateOccurrenceComponent implements OnInit, AfterViewInit, OnDestr
     const addr = await this.geocodingService.reverseGeocode(lat, lng);
     this.ngZone.run(() => {
       if (addr) {
-        // Preenche logradouro, bairro e município — NÃO o número (item 3, sempre manual)
-        // A UF entra antes do município: é ela que carrega a lista de
-        // sugestões, e o ponto marcado no mapa pode estar em outro estado.
         const uf = this.locality.normalizeUf(addr.state);
         if (uf && uf !== this.form.value.state) this.form.patchValue({ state: uf });
         this.form.patchValue({
@@ -236,32 +192,18 @@ export class CreateOccurrenceComponent implements OnInit, AfterViewInit, OnDestr
         this.addressFromMap =
           [v.street, v.neighborhood, [v.city, v.state].filter(Boolean).join(', ')]
             .filter(Boolean).join(' | ');
-        // Ponto sem logradouro (meio de quadra, praça, estrada) mantém a rua que
-        // já estava no formulário — apagar o que a pessoa digitou seria pior. Só
-        // que aí o endereço fica meio novo e meio velho, e antes isso passava
-        // como "endereço preenchido": agora o aviso pede a conferência da rua.
         this.geocodeStatus = addr.street ? 'success' : 'partial';
       } else {
-        // Sem resposta do Nominatim o formulário fica com o endereço anterior.
-        // Voltar para 'idle' escondia isso, e o endereço velho seguia para o
-        // cadastro como se fosse o do ponto marcado.
         this.geocodeStatus = 'error';
       }
     });
   }
 
-  /**
-   * Avisa quando o município ainda não tem equipe no sistema. O registro segue
-   * permitido: a ocorrência fica guardada e aparece para o administrador.
-   */
   private async checkCoverage() {
     const { city, state } = this.form.value;
     this.cityServed = await this.coverage.isServed(city, state);
   }
 
-  // ── RF16: duplicatas próximas + apoiar ────────────────────────────────────
-
-  /** Com local marcado E categoria escolhida, busca ocorrências abertas do mesmo tipo num raio de 50 m. */
   async checkDuplicates() {
     const { latitude, longitude, type } = this.form.value;
     if (latitude == null || longitude == null || !type) { this.nearbyDuplicates = []; return; }
@@ -282,12 +224,6 @@ export class CreateOccurrenceComponent implements OnInit, AfterViewInit, OnDestr
     return id != null && this.supportedIds.has(id);
   }
 
-  /**
-   * Apoia ou desfaz o apoio a uma duplicata, em vez de criar outra igual.
-   * O estado sai da resposta do servidor: antes o conjunto local começava vazio,
-   * então uma ocorrência que o usuário JÁ apoiava aparecia como "Apoiar" e o
-   * clique respondia "Apoio registrado" sem o banco mudar nada.
-   */
   async toggleSupportDuplicate(o: Occurrence) {
     if (this.auth.isVisitor()) { this.showLoginPrompt = true; return; }
     if (o.id == null || this.supportingId != null) return;
@@ -308,14 +244,11 @@ export class CreateOccurrenceComponent implements OnInit, AfterViewInit, OnDestr
     }
   }
 
-  /** Carrega os apoios que o usuário já tem, para o botão nascer com o estado certo. */
   private async loadMySupports() {
     if (this.auth.isVisitor()) return;
     try { this.supportedIds = new Set(await this.occurrenceSupportService.mySupports()); }
     catch { this.supportedIds = new Set(); }
   }
-
-  // ── Upload de foto (RF07/RF08/RF20) ──────────────────────────────────────
 
   async onPhotoSelected(event: Event) {
     const input = event.target as HTMLInputElement;
@@ -349,16 +282,14 @@ export class CreateOccurrenceComponent implements OnInit, AfterViewInit, OnDestr
       await this.pollUpload(uploadId);
     } catch (err: any) {
       this.photoState = 'error';
-      // 400 (não é imagem) e 429 (limite diário por IP) vêm com a mensagem do back-end.
       this.photoMessage = err?.error?.error || 'Falha ao enviar a foto. Tente novamente.';
     } finally {
       input.value = '';
     }
   }
 
-  /** Consulta o processamento até concluir e adiciona a foto à lista (RF07). */
   private async pollUpload(uploadId: string) {
-    for (let i = 0; i < 30; i++) {       // até ~30s
+    for (let i = 0; i < 30; i++) {
       try {
         const status = await this.occurrenceCreateService.getUploadStatus(uploadId);
         if (status?.state === 'DONE') {
@@ -370,7 +301,6 @@ export class CreateOccurrenceComponent implements OnInit, AfterViewInit, OnDestr
           this.photoState = 'idle';
           return;
         }
-        // PROCESSING → aguarda e tenta de novo
       } catch (err: any) {
         const body = err?.error;
         if (body?.state === 'REJECTED') {
@@ -439,7 +369,6 @@ export class CreateOccurrenceComponent implements OnInit, AfterViewInit, OnDestr
       }
     } catch (err: any) {
       this.loading = false;
-      // 429 traz o limite diário atingido e o horário em que ele é renovado.
       this.toastr.error(err?.error?.error || 'Erro ao registrar a ocorrência. Tente novamente.');
     }
   }

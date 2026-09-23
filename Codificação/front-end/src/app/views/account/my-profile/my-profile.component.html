@@ -5,7 +5,6 @@
   </div>
 
   <div class="profile-body">
-    <!-- User Info Card -->
     <div class="profile-card">
       <div class="card-section">
         <h2 class="section-title">
@@ -23,7 +22,6 @@
           </div>
         </div>
 
-        <!-- RF04: edição dos dados de perfil -->
         <form [formGroup]="profileForm" (ngSubmit)="saveProfile()" class="form-fields">
           <div class="field-group">
             <label>Nome completo</label>
@@ -90,7 +88,6 @@
       </div>
     </div>
 
-    <!-- Change Password Card -->
     <div class="profile-card">
       <div class="card-section">
         <h2 class="section-title">
@@ -133,7 +130,6 @@
       </div>
     </div>
 
-    <!-- 2FA / MFA Card -->
     <div class="profile-card">
       <div class="card-section">
         <h2 class="section-title">
@@ -146,7 +142,6 @@
         </p>
 
         <div class="mfa-methods" *ngIf="!loadingMfa">
-          <!-- E-mail -->
           <div class="mfa-row">
             <div class="mfa-info">
               <strong>MFA por e-mail</strong>
@@ -159,7 +154,6 @@
             </div>
           </div>
 
-          <!-- Form de ativação do e-mail (código enviado automaticamente ao e-mail) -->
           <div class="mfa-disable-form" *ngIf="enablingEmail">
             <p>Digite o código que enviamos ao seu e-mail para ativar.</p>
             <input type="text" [(ngModel)]="emailEnableCode" maxlength="6" inputmode="numeric"
@@ -173,7 +167,6 @@
             </div>
           </div>
 
-          <!-- Form de desativação do e-mail (código enviado automaticamente ao e-mail) -->
           <div class="mfa-disable-form" *ngIf="disablingEmail">
             <p>Digite o código que enviamos ao seu e-mail para desativar.</p>
             <input type="text" [(ngModel)]="emailDisableCode" maxlength="6" inputmode="numeric"
@@ -187,7 +180,6 @@
             </div>
           </div>
 
-          <!-- App autenticador -->
           <div class="mfa-row">
             <div class="mfa-info">
               <strong>Aplicativo autenticador</strong>
@@ -200,7 +192,6 @@
             </div>
           </div>
 
-          <!-- Form de desativação do app (exige código TOTP) -->
           <div class="mfa-disable-form" *ngIf="disablingApp">
             <p>Digite o código atual do seu aplicativo autenticador para desativar.</p>
             <input type="text" [(ngModel)]="appDisableCode" maxlength="6" inputmode="numeric"
@@ -214,7 +205,6 @@
             </div>
           </div>
 
-          <!-- Fluxo de QR Code -->
           <div class="qr-setup" *ngIf="showQr">
             <p>Escaneie o QR Code com seu aplicativo e digite o código gerado:</p>
             <img [src]="qrCodeImgUrl" alt="QR Code" class="qr-img" />
@@ -238,7 +228,6 @@
       </div>
     </div>
 
-    <!-- Zona de perigo: excluir conta (RF06) -->
     <div class="profile-card danger-card">
       <div class="card-section">
         <h2 class="section-title danger">
@@ -255,7 +244,6 @@
     </div>
   </div>
 
-  <!-- Confirmação da exclusão: mesma caixa da administração de contas -->
   <div class="modal-overlay" *ngIf="deletingAccount" (click)="cancelDeleteAccount()">
     <div class="modal-card" (click)="$event.stopPropagation()">
       <h2>Excluir conta</h2>

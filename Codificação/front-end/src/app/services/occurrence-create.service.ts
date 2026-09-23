@@ -21,7 +21,6 @@ export class OccurrenceCreateService {
     );
   }
 
-  /** Consulta o status do upload (PROCESSING / DONE / REJECTED / ERROR). */
   getUploadStatus(uploadId: string): Promise<any> {
     return firstValueFrom(
       this.http.get<any>(`${environment.api_endpoint}/occurrence/upload-status/${uploadId}`)

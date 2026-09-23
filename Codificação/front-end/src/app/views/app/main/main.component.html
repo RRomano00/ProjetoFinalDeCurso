@@ -1,7 +1,6 @@
 <div class="app-shell">
   <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
 
-  <!-- ===== Navbar ===== -->
   <header class="navbar">
     <div class="navbar-inner">
       <div class="navbar-brand">
@@ -73,9 +72,7 @@
     </div>
   </header>
 
-  <!-- ===== Corpo (sidebar + conteúdo) ===== -->
   <div class="app-body">
-    <!-- Fundo escuro do drawer no celular (só visível quando a sidebar está aberta) -->
     <div class="sidebar-overlay" *ngIf="!sidebarCollapsed" (click)="toggleSidebar()"></div>
 
     <aside class="sidebar" [class.collapsed]="sidebarCollapsed">
@@ -168,7 +165,6 @@
     </main>
   </div>
 
-  <!-- Instalar o aplicativo: o convite que o navegador deixou de dar sozinho. -->
   <div class="install-invite" *ngIf="mostrarConvite" role="region" aria-label="Instalar o aplicativo">
     <span class="install-invite-icon" aria-hidden="true">
       <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
@@ -187,7 +183,6 @@
     </div>
   </div>
 
-  <!-- Uma conta, uma sessão: o login em outro aparelho encerrou esta. -->
   <div class="modal-overlay" *ngIf="session.ended()">
     <div class="modal-card" role="alertdialog" aria-modal="true" aria-labelledby="sessao-encerrada-titulo">
       <h2 id="sessao-encerrada-titulo">Sessão encerrada</h2>

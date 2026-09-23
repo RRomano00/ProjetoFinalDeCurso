@@ -4,7 +4,6 @@ export interface UpdatePasswordDto {
     newPassword: string;
 }
 
-/** RF04: dados de perfil editáveis — PUT /api/user/{id}. */
 export interface UpdateProfileDto {
     id: number;
     fullname: string;
@@ -13,7 +12,6 @@ export interface UpdateProfileDto {
     neighborhood?: string;
     number?: string;
     cep?: string;
-    /** UF de residência (duas letras). */
     state?: string;
     city?: string;
 }

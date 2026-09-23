@@ -26,12 +26,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-/**
- * RF24 / RN07: a equipe só age sobre as ocorrências do próprio município — o do
- * ENDEREÇO da ocorrência, não o do cadastro de quem a registrou. O
- * administrador municipal também está sujeito a essa fronteira; só o Super
- * Administrador, que não tem município, a atravessa (RF25).
- */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("Jurisdição municipal nas ações da equipe")
 class OccurrenceJurisdictionTest {
@@ -129,7 +123,6 @@ class OccurrenceJurisdictionTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
         verify(occurrenceService).changeStatus(eq(10), eq("CONCLUIDA"), anyInt(), any(), anyBoolean());
-        // Nem precisou carregar a ocorrência para decidir.
         verify(occurrenceService, never()).findById(anyInt());
     }
 

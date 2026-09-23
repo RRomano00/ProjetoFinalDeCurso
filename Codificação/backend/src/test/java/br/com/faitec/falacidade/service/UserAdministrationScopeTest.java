@@ -30,11 +30,6 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.*;
 
-/**
- * RF25: o Super Administrador administra todas as contas e nomeia os
- * administradores municipais; o administrador municipal só alcança as contas do
- * seu próprio município, e não promove ninguém a administrador.
- */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("Alcance da administração de contas")
 class UserAdministrationScopeTest {
@@ -51,7 +46,6 @@ class UserAdministrationScopeTest {
     void setUp() {
         sut = new UserRestController(userService, passwordResetService, emailService,
                                      mfaService, emailMfaCodeStore);
-        // O controlador monta a URI do recurso criado a partir da requisição corrente.
         RequestContextHolder.setRequestAttributes(
             new ServletRequestAttributes(new MockHttpServletRequest()));
     }

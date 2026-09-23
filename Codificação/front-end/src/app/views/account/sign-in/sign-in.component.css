@@ -1,6 +1,4 @@
-/* Específico da tela de entrar — a base está em ../auth-shell.css */
 
-/* ── Escolha do método de verificação ── */
 .btn-method {
   display: flex;
   align-items: center;
@@ -44,7 +42,6 @@
 }
 .btn-link-back:hover { color: var(--plate); text-decoration: underline; }
 
-/* ── Verificação em duas etapas ── */
 .mfa-section {
   text-align: center;
   display: flex;
@@ -92,7 +89,6 @@
   word-break: break-all;
 }
 
-/* RF08/RF11: entrada sem conta */
 .btn-anonymous {
   display: inline-flex;
   align-items: center;

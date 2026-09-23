@@ -5,7 +5,6 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
-/** RF22: payload do cadastro de departamento — POST /api/department. */
 public class CreateDepartmentDto {
 
     @NotBlank(message = "Nome do departamento é obrigatório")

@@ -14,7 +14,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-/** RF22: cadastro de departamentos — nome e e-mail não podem repetir. */
 @ExtendWith(MockitoExtension.class)
 class DepartmentServiceImplTest {
 
@@ -83,7 +82,6 @@ class DepartmentServiceImplTest {
         @Test
         @DisplayName("aceita o mesmo nome em outro município")
         void acceptsSameNameInAnotherCity() {
-            // Cada prefeitura tem a sua Secretaria de Obras.
             when(departmentDao.existsByNameInCity("Secretaria de Obras", "Itajubá", "MG")).thenReturn(false);
             when(departmentDao.add(any())).thenReturn(12);
 

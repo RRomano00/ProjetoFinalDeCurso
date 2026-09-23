@@ -5,7 +5,6 @@
     <button (click)="back()" class="btn-back">← Ocorrências</button>
 
     <div class="detail-card">
-      <!-- Identidade do registro: a placa esmaltada leva o protocolo; o título é a manchete. -->
       <header class="record-head">
         <div class="record-id">
           <span class="protocol-plate">{{ occurrence.protocolNumber }}</span>
@@ -44,7 +43,6 @@
             <dt>Registrada por</dt>
             <dd class="record-author">
               {{ occurrence.fullname || occurrence.email }}
-              <!-- Sem nome não há o que parentetizar; autor apagado só tem o rótulo. -->
               <span class="record-author-mail" *ngIf="occurrence.fullname && occurrence.email">
                 ({{ occurrence.email }})
               </span>
@@ -56,7 +54,6 @@
           <span class="support-count" *ngIf="supportCount">
             {{ supportCount }} {{ supportCount === 1 ? 'pessoa apoia' : 'pessoas apoiam' }}
           </span>
-          <!-- Um botão só: apoia e desfaz. Ver .btn-support em styles.css. -->
           <button *ngIf="auth.canSupport()" type="button" class="btn-support"
                   [class.supported]="supportedByMe" [disabled]="supporting"
                   [attr.aria-label]="supportedByMe
@@ -90,7 +87,6 @@
 
       <div *ngIf="occurrence.media?.length || occurrence.urlMedia" class="detail-section">
         <h3>Foto{{ (occurrence.media?.length || 1) > 1 ? 's' : '' }}</h3>
-        <!-- RF07: galeria com todas as fotos anexadas -->
         <div class="photo-gallery" *ngIf="occurrence.media?.length; else singlePhoto">
           <img *ngFor="let m of occurrence.media" [src]="m.url" alt="Foto da ocorrência" class="occurrence-photo" />
         </div>
@@ -102,7 +98,6 @@
         </div>
       </div>
 
-      <!-- RN03/RF11: linha do tempo de status (inclui justificativa do indeferimento) -->
       <div *ngIf="history.length > 0" class="detail-section">
         <h3>Histórico</h3>
         <div class="history-item" *ngFor="let h of history">
@@ -118,7 +113,6 @@
         </div>
       </div>
 
-      <!-- RF12: encadeamento de duplicatas (visível para a equipe) -->
       <div *ngIf="auth.isStaff() && groupSize > 1" class="detail-section">
         <h3>Ocorrências agrupadas ({{ groupSize }})</h3>
         <p class="group-hint">Registros do mesmo problema num raio de 50 m, encadeados automaticamente.</p>
@@ -139,10 +133,8 @@
       <div *ngIf="auth.isStaff()" class="detail-actions">
         <h3>Ações</h3>
 
-        <!-- Mensagem ao cidadão: vai ao histórico e ao e-mail, com ou sem mudança de status -->
         <div class="staff-message">
           <label for="staffMsg">Mensagem ao cidadão</label>
-          <!-- Enviar fica encostado no campo: é a ação daquilo que se acabou de escrever -->
           <div class="message-row">
             <textarea id="staffMsg" [(ngModel)]="staffMessage" rows="2" maxlength="300"
                       placeholder="Escreva uma mensagem que será enviada por e-mail ao autor da ocorrência..."></textarea>
@@ -154,16 +146,12 @@
             <button type="button" class="preset-chip" *ngFor="let m of presetMessages"
                     (click)="applyPreset(m)">{{ m }}</button>
           </div>
-          <!-- RF12: aplicar a mudança a todo o grupo de duplicatas -->
           <label class="group-check" *ngIf="groupSize > 1">
             <input type="checkbox" [(ngModel)]="applyToGroup" />
             Aplicar a todas as {{ groupSize }} ocorrências agrupadas (os autores serão notificados)
           </label>
         </div>
 
-        <!-- RF22: encaminhar ao departamento responsável.
-             O botão declara as duas consequências no rótulo de confirmação: a
-             mensagem sai e a ocorrência passa a Em andamento. -->
         <div class="forward" *ngIf="occurrence.status !== 'CONCLUIDA'">
           <button type="button" class="btn-action btn-forward" (click)="toggleForward()"
                   [attr.aria-expanded]="forwardOpen" aria-controls="forward-panel">
@@ -187,7 +175,6 @@
               Nenhum departamento cadastrado. Cadastre em Administração &rsaquo; Departamentos.
             </p>
 
-            <!-- A lista rola dentro do painel: a escolha não empurra as ações da tela -->
             <ul class="forward-list" *ngIf="!departmentsLoading && departments.length > 0">
               <li *ngFor="let d of departments">
                 <label class="forward-option" [class.selected]="forwardSelectedIds.has(d.id!)">
@@ -222,7 +209,6 @@
           </div>
         </div>
 
-        <!-- Mudanças de status numa linha: avançar à esquerda, recusar à direita -->
         <div class="status-actions">
           <button *ngIf="occurrence.status === 'PENDENTE'"
                   (click)="updateToInProgress()" [disabled]="updating" class="btn-action">
@@ -235,7 +221,6 @@
           <span *ngIf="occurrence.status === 'CONCLUIDA'" class="concluded-label">✓ Ocorrência concluída</span>
           <span *ngIf="occurrence.status === 'INDEFERIDA'" class="rejected-label">✕ Ocorrência Indeferida</span>
 
-          <!-- Concluída ou indeferida por engano: volta para Em Andamento -->
           <button *ngIf="canReopen" (click)="reopen()" [disabled]="updating" class="btn-action">
             {{ updating ? 'Reabrindo...' : '↻ Reabrir Ocorrência' }}
           </button>
@@ -265,7 +250,6 @@
     </div>
   </div>
 
-  <!-- RF11: visitante tentou apoiar → precisa entrar -->
   <div class="login-prompt-overlay" *ngIf="showLoginPrompt" (click)="showLoginPrompt = false">
     <div class="login-prompt-card" (click)="$event.stopPropagation()">
       <h2>🤝 Quer apoiar esta ocorrência?</h2>

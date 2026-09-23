@@ -13,11 +13,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-/**
- * Envio de e-mails transacionais do sistema.
- * Todos usam o mesmo layout: marca no topo, conteúdo no cartão branco e
- * rodapé escuro com os contatos e o endereço.
- */
 @Service
 public class EmailServiceImpl implements EmailService {
 
@@ -36,7 +31,6 @@ public class EmailServiceImpl implements EmailService {
         this.mailSender = mailSender;
     }
 
-    /** Código de recuperação de senha (válido por 30 min). */
     @Override
     @Async("emailExecutor")
     public void sendPasswordResetEmail(String toEmail, String code) {
@@ -65,7 +59,6 @@ public class EmailServiceImpl implements EmailService {
              "Falha ao enviar e-mail de recuperação de senha");
     }
 
-    /** Código de verificação do login em duas etapas (válido por 10 min). */
     @Override
     @Async("emailExecutor")
     public void sendMfaCodeEmail(String toEmail, String code) {
@@ -87,7 +80,6 @@ public class EmailServiceImpl implements EmailService {
              "Falha ao enviar código de verificação por e-mail");
     }
 
-    /** Código para confirmar a desativação do MFA (com alerta de segurança). */
     @Override
     @Async("emailExecutor")
     public void sendMfaDeactivationEmail(String toEmail, String code) {
@@ -112,7 +104,6 @@ public class EmailServiceImpl implements EmailService {
              "Falha ao enviar código de desativação do MFA por e-mail");
     }
 
-    /** Notifica a equipe sobre mensagem do formulário de contato (Reply-To = cidadão). */
     @Override
     @Async("emailExecutor")
     public void sendContactNotification(String toEmail, String senderName, String senderEmail,
@@ -138,7 +129,6 @@ public class EmailServiceImpl implements EmailService {
              "Falha ao enviar notificação de contato por e-mail");
     }
 
-    /** E-mail de boas-vindas após o cadastro. */
     @Override
     @Async("emailExecutor")
     public void sendWelcomeEmail(String toEmail, String fullname) {
@@ -163,7 +153,6 @@ public class EmailServiceImpl implements EmailService {
              "Falha ao enviar e-mail de boas-vindas");
     }
 
-    /** Conta de Funcionário/Administrador criada por um administrador. */
     @Override
     @Async("emailExecutor")
     public void sendStaffWelcomeEmail(String toEmail, String fullname, UserModel.UserRole role, String city) {
@@ -236,12 +225,6 @@ public class EmailServiceImpl implements EmailService {
              withFooter(text), layout(content), "Falha ao enviar e-mail de boas-vindas da equipe");
     }
 
-    /**
-     * RF15/RF25: a conta foi alterada por outra pessoa. O corpo diz o que mudou,
-     * campo a campo, e por quem — sem isso a pessoa só descobre a mudança pela
-     * consequência (uma ocorrência que sumiu da lista, um acesso que deixou de
-     * funcionar) e não tem a quem recorrer.
-     */
     @Override
     @Async("emailExecutor")
     public void sendAccountChangedEmail(String toEmail, String fullname, java.util.List<String> changes,
@@ -287,7 +270,6 @@ public class EmailServiceImpl implements EmailService {
              withFooter(text), layout(content), "Falha ao enviar aviso de alteração de conta");
     }
 
-    /** Confirma o registro da ocorrência e agradece o comprometimento com a cidade. */
     @Override
     @Async("emailExecutor")
     public void sendOccurrenceCreatedEmail(String toEmail, String fullname, String protocol, String title) {
@@ -318,7 +300,6 @@ public class EmailServiceImpl implements EmailService {
              withFooter(text), layout(content), "Falha ao enviar e-mail de ocorrência registrada");
     }
 
-    /** Notifica o autor sobre a mudança de status (mensagem do funcionário é opcional). */
     @Override
     @Async("emailExecutor")
     public void sendStatusChangeEmail(String toEmail, String fullname, String protocol,
@@ -366,20 +347,12 @@ public class EmailServiceImpl implements EmailService {
              withFooter(text), layout(content), "Falha ao enviar e-mail de mudança de status");
     }
 
-
-    /**
-     * RF22: encaminhamento ao departamento responsável.
-     *
-     * O corpo carrega apenas o que descreve o problema — protocolo, categoria,
-     * prioridade, endereço, data e relato. Nome, e-mail e endereço de rede do
-     * autor ficam de fora, inclusive nas ocorrências identificadas: o
-     * departamento precisa do problema, não de quem o relatou (LGPD).
-     *
-     * Envio síncrono, ao contrário dos demais e-mails do sistema: quem
-     * encaminha precisa saber se a mensagem saiu antes de a ocorrência mudar
-     * de estado.
-     */
     @Override
+    /**
+     * Único envio síncrono: o funcionário precisa saber se o encaminhamento saiu
+     * antes de a ocorrência mudar de estado. Não se registra um encaminhamento
+     * que não aconteceu.
+     */
     public void sendOccurrenceForwardEmail(String toEmail, String departmentName,
                                            GetOccurrenceDto o) {
         String protocol = o.getProtocolNumber();
@@ -446,7 +419,6 @@ public class EmailServiceImpl implements EmailService {
             "Falha ao encaminhar a ocorrência ao departamento");
     }
 
-    /** Linha rótulo/valor do corpo do e-mail de encaminhamento. */
     private String row(String label, String value) {
         return "<p style='font-size:14px; color:#333; margin:0 0 6px;'>" +
                "<span style='color:#777;'>" + label + ":</span> " + esc(value) + "</p>";
@@ -463,11 +435,6 @@ public class EmailServiceImpl implements EmailService {
         return sb.length() == 0 ? "—" : sb.toString();
     }
 
-    /**
-     * Rótulos das enumerações como o cidadão e o servidor os leem na tela.
-     * O e-mail vai para fora do sistema, então não pode mostrar
-     * SINALIZACAO_OU_SEMAFORO_COM_DEFEITO nem "Media" sem acento.
-     */
     private static final java.util.Map<String, String> LABELS = java.util.Map.ofEntries(
         java.util.Map.entry("BURACO_NA_RUA_OU_CALCADA",              "Buraco na rua ou calçada"),
         java.util.Map.entry("POSTE_COM_LUZ_QUEIMADA",                "Poste com luz queimada"),
@@ -490,7 +457,6 @@ public class EmailServiceImpl implements EmailService {
         java.util.Map.entry("BAIXA", "Baixa")
     );
 
-    /** Rótulo da enumeração; sem correspondência, troca o sublinhado por espaço. */
     private String label(String enumName) {
         if (enumName == null || enumName.isBlank()) return "—";
         String known = LABELS.get(enumName);
@@ -501,19 +467,12 @@ public class EmailServiceImpl implements EmailService {
 
     private String nvl(String s) { return s == null || s.isBlank() ? "—" : s; }
 
-    /** Escapa o que vem do cidadão antes de entrar no HTML do e-mail. */
     private String esc(String s) {
         return s == null ? "" : s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
 
-    /** Fotografia baixada do serviço de mídias para seguir anexada. */
     private record Photo(String filename, byte[] bytes, String contentType) {}
 
-    /**
-     * Baixa as fotografias da ocorrência. As URLs já são as de entrega, com o
-     * desfoque de rostos e placas aplicado. Falha no download não impede o
-     * encaminhamento: o e-mail segue sem o anexo correspondente.
-     */
     private List<Photo> downloadPhotos(GetOccurrenceDto o) {
         java.util.LinkedHashSet<String> urls = new java.util.LinkedHashSet<>();
         if (o.getUrlMedia() != null && !o.getUrlMedia().isBlank()) urls.add(o.getUrlMedia());
@@ -536,12 +495,11 @@ public class EmailServiceImpl implements EmailService {
                 photos.add(new Photo("ocorrencia-" + o.getProtocolNumber() + "-" + i + "." + ext,
                                      response.body(), type));
                 i++;
-            } catch (Exception ignored) { /* anexo é melhor esforço */ }
+            } catch (Exception ignored) { }
         }
         return photos;
     }
 
-    /** Mesmo envio multipart dos outros e-mails, com as fotografias anexadas. */
     private void sendWithAttachments(String to, String subject, String text, String html,
                                      List<Photo> photos, String failureMessage) {
         try {
@@ -560,28 +518,21 @@ public class EmailServiceImpl implements EmailService {
         }
     }
 
-    // ── Layout padrão ───────────────────────────────────────────────────────
-
-
-    /** Envolve o conteúdo no layout padrão: marca no topo, cartão branco e rodapé escuro. */
     private String layout(String contentHtml) {
         return
             "<!DOCTYPE html><html lang='pt-BR'><head><meta charset='UTF-8'></head>" +
             "<body style='margin:0; padding:0; background:#f4f4f4; font-family:Arial, sans-serif;'>" +
             "<div style='max-width:560px; margin:0 auto; padding:24px 16px;'>" +
 
-            // Marca do sistema no topo
             "  <div style='padding:8px 4px 16px;'>" +
             "    <span style='font-size:24px; font-weight:800; color:" + BRAND_COLOR + ";'>Fala, Cidade!</span>" +
             "  </div>" +
 
-            // Cartão branco com o conteúdo
             "  <div style='background:#fff; border-radius:10px; padding:32px 28px;" +
             "       box-shadow:0 2px 8px rgba(0,0,0,0.08);'>" +
                  contentHtml +
             "  </div>" +
 
-            // Rodapé escuro com contatos e endereço
             "  <div style='background:#1a1a1a; border-radius:10px; padding:24px 28px; margin-top:16px;'>" +
             "    <p style='color:#fff; font-size:15px; font-weight:bold; margin:0 0 12px;'>" +
             "      Abraços,<br>Equipe Fala, Cidade!</p>" +
@@ -596,17 +547,12 @@ public class EmailServiceImpl implements EmailService {
             "</div></body></html>";
     }
 
-    /** Rodapé da versão texto puro (fallback). */
     private String withFooter(String text) {
         return text + "\n\n—\nEquipe Fala, Cidade!\n" +
                "Contato: " + contactEmail + "\n" + ADDRESS + "\n" +
                "Mensagem automática — não responda este e-mail.";
     }
 
-    /**
-     * Monta e envia um e-mail multipart UTF-8 (texto puro como fallback + HTML).
-     * replyTo é opcional; failureMessage vira a mensagem da exceção em caso de erro.
-     */
     private void send(String to, String replyTo, String subject,
                       String text, String html, String failureMessage) {
         try {

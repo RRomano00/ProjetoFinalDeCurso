@@ -10,14 +10,6 @@ const ICONE = (aberto: boolean) => `<svg xmlns="http://www.w3.org/2000/svg" widt
     : `<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>`)
   + `</svg>`;
 
-/**
- * Olho de mostrar/ocultar em todo campo de senha.
- *
- * O seletor pega qualquer `input[type=password]`, então o template não muda:
- * basta importar a diretiva no componente. O botão nasce aqui, com estilo
- * inline — elemento criado em tempo de execução não recebe o atributo de
- * encapsulamento do Angular e ficaria de fora do CSS do componente.
- */
 @Directive({ selector: 'input[type=password]' })
 export class PasswordRevealDirective implements OnInit {
 
@@ -27,13 +19,9 @@ export class PasswordRevealDirective implements OnInit {
     const input = this.el.nativeElement;
     const r = this.renderer;
 
-    // Ícones já posicionados na moldura do campo (o cadeado à esquerda) ficam
-    // atrás da caixa nova, que é posicionada e vem depois deles na árvore.
-    // O z-index os traz de volta — em elemento estático, como o rótulo, não faz nada.
     const parente = input.parentElement;
     if (parente) Array.from(parente.children).forEach(irmao => r.setStyle(irmao, 'z-index', '1'));
 
-    // Envolve o input para ancorar o botão, seja qual for o layout da tela.
     const caixa = r.createElement('span');
     r.setStyle(caixa, 'position', 'relative');
     r.setStyle(caixa, 'display', 'block');
@@ -42,8 +30,8 @@ export class PasswordRevealDirective implements OnInit {
     r.setStyle(input, 'padding-right', '2.5rem');
 
     const botao = r.createElement('button');
-    r.setAttribute(botao, 'type', 'button');   // dentro de <form>: não submete
-    r.setAttribute(botao, 'tabindex', '-1');   // fora do caminho do Tab
+    r.setAttribute(botao, 'type', 'button');
+    r.setAttribute(botao, 'tabindex', '-1');
     for (const [prop, valor] of Object.entries({
       position: 'absolute', right: '0.625rem', top: '50%', transform: 'translateY(-50%)',
       display: 'flex', padding: '0', border: 'none', background: 'none',

@@ -25,7 +25,7 @@ class ChunkReloadErrorHandler implements ErrorHandler {
           location.reload();
           return;
         }
-      } catch { /* armazenamento bloqueado: segue para o log */ }
+      } catch { }
     }
     console.error(erro);
   }

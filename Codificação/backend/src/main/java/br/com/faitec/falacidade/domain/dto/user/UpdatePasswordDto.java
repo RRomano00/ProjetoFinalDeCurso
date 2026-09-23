@@ -1,6 +1,5 @@
 package br.com.faitec.falacidade.domain.dto.user;
 
-/** Payload de troca de senha autenticada — PUT /api/user/update-password. */
 public class UpdatePasswordDto {
     private int    id;
     private String oldPassword;

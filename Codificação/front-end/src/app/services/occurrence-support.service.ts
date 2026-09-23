@@ -9,21 +9,18 @@ export interface SupportInfo {
   supportedByMe: boolean;
 }
 
-/** Detecção de duplicatas próximas (50 m) e apoio a ocorrências. */
 @Injectable({ providedIn: 'root' })
 export class OccurrenceSupportService {
   private base = `${environment.api_endpoint}/occurrence`;
 
   constructor(private http: HttpClient) {}
 
-  /** Ocorrências abertas do mesmo tipo num raio de 50 m do ponto. */
   findNearby(lat: number, lng: number, type: string): Promise<Occurrence[]> {
     return firstValueFrom(this.http.get<Occurrence[]>(
       `${this.base}/nearby?lat=${lat}&lon=${lng}&type=${type}`
     ));
   }
 
-  /** Total de apoios + se o usuário logado já apoiou. */
   getSupportInfo(id: number | string): Promise<SupportInfo> {
     return firstValueFrom(this.http.get<SupportInfo>(`${this.base}/${id}/support`));
   }
@@ -36,15 +33,10 @@ export class OccurrenceSupportService {
     return firstValueFrom(this.http.post<SupportInfo>(`${this.base}/${id}/support`, {}));
   }
 
-  /** Desfaz o apoio do usuário logado. O backend só remove o apoio dele. */
   unsupport(id: number | string): Promise<SupportInfo> {
     return firstValueFrom(this.http.delete<SupportInfo>(`${this.base}/${id}/support`));
   }
 
-  /**
-   * Liga ou desliga o apoio conforme o estado atual e devolve o que o servidor
-   * confirmou — é essa resposta que as telas usam, nunca um palpite local.
-   */
   toggle(id: number | string, apoiado: boolean): Promise<SupportInfo> {
     return apoiado ? this.unsupport(id) : this.support(id);
   }

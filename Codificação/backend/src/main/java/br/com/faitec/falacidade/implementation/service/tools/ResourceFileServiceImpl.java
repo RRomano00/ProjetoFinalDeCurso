@@ -21,8 +21,6 @@ public class ResourceFileServiceImpl implements ResourceFileService {
             throw new RuntimeException("Arquivo de recurso não encontrado: " + resourcePath);
         }
 
-        // BUGFIX: era String content = ""; content += line; dentro de loop → O(n²)
-        // Corrigido para StringBuilder
         StringBuilder sb = new StringBuilder();
         try (BufferedReader reader =
                      new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {

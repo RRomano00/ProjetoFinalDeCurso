@@ -16,7 +16,6 @@ class ResourceFileServiceImplTest {
     @Test
     @DisplayName("lê arquivo existente e retorna conteúdo não vazio")
     void readsExistingFile() throws IOException {
-        // Usa o próprio SQL de criação de tabelas como arquivo de teste
         String content = sut.read(
             "fala-cidade-db-scripts/FalaCidade_DDL_CriacaoTabelas.sql");
 
@@ -37,14 +36,12 @@ class ResourceFileServiceImplTest {
     void preservesLineBreaks() throws IOException {
         String content = sut.read(
             "fala-cidade-db-scripts/FalaCidade_DDL_CriacaoTabelas.sql");
-        // Um arquivo SQL com múltiplas linhas deve conter newlines
         assertThat(content).contains("\n");
     }
 
     @Test
     @DisplayName("não usa concatenação O(n²) – o método termina em tempo razoável para arquivos grandes")
     void performanceIsLinear() {
-        // Teste de fumaça: ler o arquivo 100 vezes deve ser rápido (< 2 segundos)
         assertThatCode(() -> {
             for (int i = 0; i < 100; i++) {
                 sut.read("fala-cidade-db-scripts/FalaCidade_DDL_CriacaoTabelas.sql");

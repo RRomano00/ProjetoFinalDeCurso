@@ -3,7 +3,6 @@ package br.com.faitec.falacidade.domain.dto.contact;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
-/** Payload do formulário de contato — POST /api/contact. */
 public class ContactMessageDto {
     @NotBlank private String name;
     @Email @NotBlank private String email;

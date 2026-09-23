@@ -2,7 +2,6 @@ import { Routes } from '@angular/router';
 import { authenticationGuard, staffGuard } from './services/security/guard/authentication.guard';
 
 export const routes: Routes = [
-  // ── Autenticação (público) ───────────────────────────────────────────────
   {
     path: 'account/sign-in',
     loadComponent: () =>
@@ -19,21 +18,18 @@ export const routes: Routes = [
       import('./views/account/recover-password/recover-password.component').then(m => m.RecoverPasswordComponent)
   },
 
-  // ── App principal (protegido por authenticationGuard) ────────────────────
   {
     path: '',
     loadComponent: () =>
       import('./views/app/main/main.component').then(m => m.MainComponent),
     canActivate: [authenticationGuard],
     children: [
-      // Home
       {
         path: '',
         loadComponent: () =>
           import('./views/app/home/home.component').then(m => m.HomeComponent)
       },
 
-      // Ocorrências
       {
         path: 'occurrence/list',
         loadComponent: () =>
@@ -60,7 +56,6 @@ export const routes: Routes = [
             .then(m => m.StatisticsComponent)
       },
 
-      // RF22: departamentos — destinos do encaminhamento (Funcionário/Administrador)
       {
         path: 'department/list',
         canActivate: [staffGuard],
@@ -69,13 +64,11 @@ export const routes: Routes = [
             .then(m => m.DepartmentListComponent)
       },
 
-      // Usuários
       {
         path: 'user/add',
         loadComponent: () =>
           import('./views/user/user-add/user-add.component').then(m => m.UserAddComponent)
       },
-      // RF15: gestão de usuários (Administrador)
       {
         path: 'user/list',
         loadComponent: () =>
@@ -87,14 +80,12 @@ export const routes: Routes = [
           import('./views/account/my-profile/my-profile.component').then(m => m.MyProfileComponent)
       },
 
-      // Ajuda
       {
         path: 'help',
         loadComponent: () =>
           import('./views/app/help/help.component').then(m => m.HelpComponent)
       },
 
-      // Contato (RF17)
       {
         path: 'contact',
         loadComponent: () =>
@@ -103,7 +94,6 @@ export const routes: Routes = [
     ]
   },
 
-  // 404
   {
     path: '**',
     loadComponent: () =>

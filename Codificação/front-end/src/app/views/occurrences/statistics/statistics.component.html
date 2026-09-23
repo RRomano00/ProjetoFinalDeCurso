@@ -7,7 +7,6 @@
     </div>
   </div>
 
-  <!-- Filtros da dashboard (data, localização e tipo) -->
   <div class="stats-filters">
     <div class="filter-field">
       <label for="f-de">De</label>
@@ -45,8 +44,6 @@
 
   <ng-container *ngIf="total > 0">
 
-    <!-- A carga do período, numa faixa só: os mesmos quatro números que antes
-         apareciam em quatro cartões, quatro mini-barras e uma rosca. -->
     <section class="load">
       <div class="load-head">
         <h2>Carga do período</h2>
@@ -104,8 +101,6 @@
         </a>
         </p>
 
-       
-
         <div class="queue-body" *ngIf="open > 0">
         <ol class="age-list">
           <li *ngFor="let b of ageBuckets">
@@ -115,7 +110,6 @@
           </li>
         </ol>
 
-        
         </div>
 
         <p class="panel-empty" *ngIf="open === 0">
@@ -151,7 +145,6 @@
         </ol>
       </section>
 
-      <!-- O que a população está cobrando: apoios nas que seguem em aberto -->
       <section class="panel">
         <div class="panel-head">
           <h2>Mais apoiadas</h2>

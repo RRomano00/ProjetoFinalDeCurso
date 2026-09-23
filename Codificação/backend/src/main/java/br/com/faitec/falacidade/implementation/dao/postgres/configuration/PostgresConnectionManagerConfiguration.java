@@ -20,7 +20,6 @@ public class PostgresConnectionManagerConfiguration {
     private static final Logger log =
         Logger.getLogger(PostgresConnectionManagerConfiguration.class.getName());
 
-    /** Senha das contas de demonstração quando FALACIDADE_SEED_PASSWORD não é informada. */
     private static final String DEFAULT_SEED_PASSWORD = "Admin@1234";
 
     @Value("${spring.datasource.base.url}")
@@ -41,15 +40,12 @@ public class PostgresConnectionManagerConfiguration {
     @Autowired
     private ResourceFileService resourceFileService;
 
-    // Pool único — mantido como campo para reutilização em getConnection()
     private HikariDataSource hikariDataSource;
 
     @Bean
     public DataSource dataSource() throws SQLException {
         validateDatabaseName(databaseName);
 
-        // Usa DriverManager diretamente para a conexão de admin (cria banco se não existir).
-        // Motivo: DataSourceBuilder cria um segundo HikariPool desnecessário só para isso.
         try (Connection adminConn = DriverManager.getConnection(
                 databaseBaseUrl, databaseUsername, databasePassword)) {
             createDatabaseIfNotExists(adminConn);
@@ -77,8 +73,6 @@ public class PostgresConnectionManagerConfiguration {
              ResultSet rs   = stmt.executeQuery(sql)) {
 
             if (rs.next() && rs.getInt("dbs") == 0) {
-                // OWNER usa o próprio usuário conectado (não fixa "postgres"),
-                // garantindo a criação em qualquer ambiente com permissão de CREATEDB.
                 stmt.executeUpdate(
                     "CREATE DATABASE " + databaseName +
                     " WITH OWNER = " + databaseUsername +
@@ -97,10 +91,6 @@ public class PostgresConnectionManagerConfiguration {
         }
     }
 
-    /**
-     * Expõe uma Connection do pool para os DAOs.
-     * Usa o hikariDataSource já criado — sem criar segundo pool.
-     */
     @Bean
     @DependsOn("dataSource")
     public Connection getConnection() throws SQLException {
@@ -110,10 +100,6 @@ public class PostgresConnectionManagerConfiguration {
         return hikariDataSource.getConnection();
     }
 
-    /**
-     * Executa o script de criação/migração de tabelas e o de população de dados.
-     * ON CONFLICT DO NOTHING garante idempotência — pode rodar várias vezes.
-     */
     @Bean
     @DependsOn("getConnection")
     public boolean createTablesAndInsertData() throws SQLException, IOException {
@@ -139,12 +125,6 @@ public class PostgresConnectionManagerConfiguration {
         return true;
     }
 
-    /**
-     * RNF17: o script DML não guarda credenciais. O marcador
-     * ${FALACIDADE_SEED_PASSWORD} é substituído pela variável de ambiente de
-     * mesmo nome; na ausência dela, vale a senha padrão das contas de
-     * demonstração, que deve ser alterada no primeiro acesso.
-     */
     private String resolveSeedPassword(String sql) {
         String password = System.getenv("FALACIDADE_SEED_PASSWORD");
         if (password == null || password.isBlank()) {

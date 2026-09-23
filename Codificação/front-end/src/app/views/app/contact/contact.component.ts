@@ -24,8 +24,6 @@ export class ContactComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    // Logado: nome/e-mail vêm da conta e não podem ser alterados.
-    // Visitante (RF08): campos livres para ele se identificar.
     const logged = this.auth.isAuthenticated();
     this.form = this.fb.group({
       name:    [{ value: localStorage.getItem('fullname') || '', disabled: logged }, [Validators.required, Validators.minLength(2)]],

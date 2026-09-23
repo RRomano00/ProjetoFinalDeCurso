@@ -9,7 +9,6 @@
 
     <form class="auth-form" [formGroup]="form" (ngSubmit)="create()">
 
-      <!-- Nome -->
       <div class="field-group">
         <label for="fullname">Nome Completo</label>
         <div class="input-wrapper">
@@ -32,7 +31,6 @@
         </span>
       </div>
 
-      <!-- E-mail -->
       <div class="field-group">
         <label for="email">E-mail</label>
         <div class="input-wrapper">
@@ -56,7 +54,6 @@
         </span>
       </div>
 
-      <!-- Data de nascimento -->
       <div class="field-group">
         <label for="dateOfBirth">Data de Nascimento</label>
         <div class="input-wrapper">
@@ -74,7 +71,6 @@
         </span>
       </div>
 
-      <!-- Telefone (opcional) -->
       <div class="field-group">
         <label for="phoneNumber">Telefone <span class="label-optional">(opcional)</span></label>
         <div class="input-wrapper">
@@ -91,7 +87,6 @@
         <span class="field-hint">Usamos apenas para contato sobre suas ocorrências.</span>
       </div>
 
-      <!-- UF e Município: a UF filtra as sugestões de município -->
       <div class="field-row">
         <div class="field-group field-uf">
           <label for="state">UF</label>
@@ -133,7 +128,6 @@
         </div>
       </div>
 
-      <!-- Senha -->
       <div class="field-group">
         <label for="password">Senha</label>
         <div class="input-wrapper">
@@ -152,7 +146,6 @@
         </span>
       </div>
 
-      <!-- Confirmar Senha -->
       <div class="field-group">
         <label for="repeatPassword">Confirmar Senha</label>
         <div class="input-wrapper">
@@ -171,7 +164,6 @@
         </span>
       </div>
 
-      <!-- Termos -->
       <div class="field-group checkbox-group">
         <label class="checkbox-label">
           <input type="checkbox" formControlName="acceptsTerms" />
@@ -183,7 +175,6 @@
         </span>
       </div>
 
-      <!-- MFA por e-mail (opcional) -->
       <div class="field-group checkbox-group">
         <label class="checkbox-label">
           <input type="checkbox" formControlName="mfaEmailEnabled" />
@@ -206,7 +197,6 @@
 
   </div>
 
-  <!-- Modal: Termos de Uso e Política de Privacidade -->
   @if (showTerms) {
     <div class="terms-overlay" (click)="closeTerms()">
       <div class="terms-modal" (click)="$event.stopPropagation()">

@@ -6,7 +6,6 @@ import { UserReadService } from '../../../services/user/user-read.service';
 import { AuthenticationService } from '../../../services/security/authentication.service';
 import { ToastrService } from 'ngx-toastr';
 
-/** RF15: painel do administrador para listar, ativar e inativar contas. */
 @Component({
   selector: 'app-user-list',
   imports: [CommonModule, RouterModule, FormsModule],
@@ -18,21 +17,17 @@ export class UserListComponent implements OnInit {
   loading = true;
   togglingId: number | null = null;
   deletingId: number | null = null;
-  /** Conta escolhida para exclusão — o modal fica aberto enquanto não for nula. */
   pendingDelete: any = null;
 
   myId = Number(localStorage.getItem('id') || 0);
 
-  // ── Filtros da listagem ──
   search       = '';
   filterRole   = '';
   filterCity   = '';
-  /** '' = todos, 'true' = ativos, 'false' = inativos (o valor do <select> é texto). */
   filterActive = '';
 
   readonly roleOptions = ['SUPER_ADMIN', 'ADMINISTRATOR', 'EMPLOYEE', 'CITIZEN'];
 
-  /** Municípios que existem na lista — não adianta oferecer o que não está aqui. */
   get cityOptions(): string[] {
     return [...new Set(this.users.map(u => u.city).filter(Boolean))]
       .sort((a, b) => a.localeCompare(b, 'pt-BR'));
@@ -64,18 +59,13 @@ export class UserListComponent implements OnInit {
     if (this.auth.isSuperAdmin()) this.assignableRoles.push('SUPER_ADMIN');
   }
 
-  /** RF25: só o Super Administrador nomeia outro Super. Montada uma vez, no
-      construtor — um array novo a cada ciclo recria as <option> e o <select>
-      perde a escolha. */
   assignableRoles: string[] = [];
 
-  /** Perfil escolhido em cada linha, enquanto não é salvo (id → perfil). */
   roleDraft: Record<number, string> = {};
   savingRoleId: number | null = null;
 
   roleOf(user: any): string { return this.roleDraft[user.id] ?? user.role; }
 
-  /** Salvar só aparece quando a escolha difere do que está gravado. */
   roleChanged(user: any): boolean { return this.roleOf(user) !== user.role; }
 
   async saveRole(user: any) {
@@ -85,7 +75,7 @@ export class UserListComponent implements OnInit {
       await this.userReadService.setRole(user.id, role);
       this.toastr.success(`Perfil de ${user.fullname} alterado para ${this.roleLabel(role)}.`);
       delete this.roleDraft[user.id];
-      await this.load();   // recarrega a lista: o alcance de quem pede pode ter mudado
+      await this.load();
     } catch (err: any) {
       this.toastr.error(err?.error?.error || 'Não foi possível alterar o perfil.');
     } finally {
@@ -116,7 +106,6 @@ export class UserListComponent implements OnInit {
     return map[role] || role;
   }
 
-  /** Ativa/inativa a conta (inativo não consegue mais entrar). */
   async toggleActive(user: any) {
     this.togglingId = user.id;
     try {
@@ -130,11 +119,6 @@ export class UserListComponent implements OnInit {
     }
   }
 
-  /**
-   * Excluir é irreversível, então a confirmação diz de quem é a conta. O
-   * confirm() do navegador carimba o domínio no título e não aceita texto
-   * próprio — por isso a caixa é da aplicação.
-   */
   askRemove(user: any) { this.pendingDelete = user; }
 
   async confirmRemove() {

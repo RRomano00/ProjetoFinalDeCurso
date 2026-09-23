@@ -21,12 +21,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
-/**
- * RF22/RF25: o setor é municipal. A equipe só enxerga os do seu município,
- * mesmo informando outro na consulta — a ocorrência que ela encaminha é sempre
- * do seu município (RN07), então o filtro só serviria para espiar a prefeitura
- * vizinha. O Super Administrador, sem município próprio, alcança todos.
- */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("Alcance da listagem de departamentos")
 class DepartmentListingScopeTest {
