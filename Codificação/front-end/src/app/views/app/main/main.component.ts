@@ -5,10 +5,11 @@ import { AuthenticationService } from '../../../services/security/authentication
 import { ToastrService } from 'ngx-toastr';
 import { InstallService } from '../../../services/local/install.service';
 import { SessionWatchService } from '../../../services/security/session-watch.service';
+import { InstallInviteComponent } from '../../../shared/install-invite.component';
 
 @Component({
   selector: 'app-main',
-  imports: [RouterModule, CommonModule],
+  imports: [RouterModule, CommonModule, InstallInviteComponent],
   templateUrl: './main.component.html',
   styleUrl: './main.component.css'
 })
@@ -17,7 +18,6 @@ export class MainComponent implements OnInit {
   role     = '';
   sidebarCollapsed = false;
   userMenuOpen = false;
-  conviteDispensado = false;
 
   get isAdmin()      { return this.auth.isAdmin(); }
   get isSuperAdmin() { return this.auth.isSuperAdmin(); }
@@ -40,18 +40,8 @@ export class MainComponent implements OnInit {
               public session: SessionWatchService) {}
 
   async instalarApp() {
-    this.conviteDispensado = true;
     const instrucao = await this.install.instalar();
     if (instrucao) this.toastr.info(instrucao, 'Instalar o aplicativo', { timeOut: 9000 });
-  }
-
-  get mostrarConvite(): boolean {
-    return !this.conviteDispensado && this.install.convidar;
-  }
-
-  dispensarConvite() {
-    this.conviteDispensado = true;
-    this.install.dispensar();
   }
 
   ngOnInit() {

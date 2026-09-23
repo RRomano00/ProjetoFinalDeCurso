@@ -6,13 +6,15 @@ import { AuthenticationService } from '../../../services/security/authentication
 import { LocalityPreferenceService } from '../../../services/local/locality-preference.service';
 import { ToastrService } from 'ngx-toastr';
 import { PasswordRevealDirective } from '../../../shared/password-reveal.directive';
+import { InstallInviteComponent } from '../../../shared/install-invite.component';
 
 type LoginStep = 'credentials' | 'mfa-select' | 'mfa-verify';
 type MfaMethod = 'APP' | 'EMAIL';
 
 @Component({
   selector: 'app-sign-in',
-  imports: [RouterModule, CommonModule, FormsModule, ReactiveFormsModule, PasswordRevealDirective],
+  imports: [RouterModule, CommonModule, FormsModule, ReactiveFormsModule, PasswordRevealDirective,
+            InstallInviteComponent],
   templateUrl: './sign-in.component.html',
   styleUrls: ['../auth-shell.css', './sign-in.component.css']
 })
