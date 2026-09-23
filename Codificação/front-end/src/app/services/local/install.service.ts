@@ -5,16 +5,22 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
-let guardado: BeforeInstallPromptEvent | null = null;
+type JanelaComPrompt = Window & { __instalarPrompt?: BeforeInstallPromptEvent | null };
+
+function guardado(): BeforeInstallPromptEvent | null {
+  return (window as JanelaComPrompt).__instalarPrompt ?? null;
+}
+
+function esquecer(): void {
+  (window as JanelaComPrompt).__instalarPrompt = null;
+}
 
 if (typeof window !== 'undefined') {
   window.addEventListener('beforeinstallprompt', evento => {
-    // Sem o preventDefault o Chrome mostra a própria faixa e descarta o evento,
-    // e aí não sobra nada para o botão da tela acionar.
     evento.preventDefault();
-    guardado = evento as BeforeInstallPromptEvent;
+    (window as JanelaComPrompt).__instalarPrompt = evento as BeforeInstallPromptEvent;
   });
-  window.addEventListener('appinstalled', () => { guardado = null; });
+  window.addEventListener('appinstalled', esquecer);
 }
 
 @Injectable({ providedIn: 'root' })
@@ -31,7 +37,7 @@ export class InstallService {
   private static readonly DISPENSA = 'install.dispensado';
 
   get disponivel(): boolean {
-    return !this.instalado && (guardado !== null || this.ios);
+    return !this.instalado && (guardado() !== null || this.ios);
   }
 
   get convidar(): boolean {
@@ -48,12 +54,13 @@ export class InstallService {
   }
 
   async instalar(): Promise<string | null> {
-    if (this.ios || !guardado) {
+    const prompt = guardado();
+    if (this.ios || !prompt) {
       return 'No iPhone, toque em Compartilhar e depois em "Adicionar à Tela de Início".';
     }
-    await guardado.prompt();
-    await guardado.userChoice;
-    guardado = null;
+    await prompt.prompt();
+    await prompt.userChoice;
+    esquecer();
     return null;
   }
 }
