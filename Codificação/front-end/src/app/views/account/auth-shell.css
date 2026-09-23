@@ -1,6 +1,6 @@
-
 .auth-wrapper {
   min-height: 100vh;
+  min-height: 100dvh;
   background: var(--plate);
   display: flex;
   align-items: center;
@@ -43,9 +43,6 @@
   box-sizing: border-box;
 }
 
-/* O tema escuro inverte a página inteira e re-inverte as imagens, para a arte
-   manter as cores reais. A placa é CSS, então inverte junto: preto aqui é o
-   branco que chega à tela. */
 html.dark-theme .logo-full { background: #000; }
 
 .auth-logo h1 {

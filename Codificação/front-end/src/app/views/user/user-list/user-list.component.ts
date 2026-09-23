@@ -10,7 +10,7 @@ import { ToastrService } from 'ngx-toastr';
   selector: 'app-user-list',
   imports: [CommonModule, RouterModule, FormsModule],
   templateUrl: './user-list.component.html',
-  styleUrl: './user-list.component.css'
+  styleUrls: ['./user-list.component.css', '../../table-cards.css']
 })
 export class UserListComponent implements OnInit {
   users: any[] = [];

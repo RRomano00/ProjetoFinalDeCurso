@@ -12,7 +12,7 @@ import { ToastrService } from 'ngx-toastr';
   selector: 'app-department-list',
   imports: [CommonModule, ReactiveFormsModule, FormsModule],
   templateUrl: './department-list.component.html',
-  styleUrl: './department-list.component.css'
+  styleUrls: ['./department-list.component.css', '../../table-cards.css']
 })
 export class DepartmentListComponent implements OnInit {
 
@@ -120,8 +120,6 @@ export class DepartmentListComponent implements OnInit {
   }
 
   private duplicateField(): 'name' | 'email' | null {
-    // getRawValue, e não value: o município fica desabilitado para a equipe, e
-    // controle desabilitado não entra em form.value.
     const bruto = this.form.getRawValue();
     const name  = (bruto.name  || '').trim().toLowerCase();
     const email = (bruto.email || '').trim().toLowerCase();
@@ -132,9 +130,6 @@ export class DepartmentListComponent implements OnInit {
       d.city?.trim().toLowerCase() === city && d.state?.trim().toUpperCase() === state;
     const outros = this.departments.filter(d => d.id !== this.editingId);
 
-    // O nome se repete entre municípios — cada prefeitura tem a sua Secretaria
-    // de Obras —, então só conflita dentro do mesmo município. O e-mail é o
-    // destino do encaminhamento: não se repete em lugar nenhum.
     if (outros.some(d => mesmoMunicipio(d) && d.name?.trim().toLowerCase() === name)) return 'name';
     if (outros.some(d => d.email?.trim().toLowerCase() === email)) return 'email';
     return null;

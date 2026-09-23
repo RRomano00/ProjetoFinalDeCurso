@@ -83,11 +83,6 @@ input, textarea, select, button { font-family: inherit; }
 ::-webkit-scrollbar-thumb { background: #c3ccd6; border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--ink-faint); }
 
-/* Inversão global de luminância — invert + hue-rotate mantém os tons das cores
-   de marca e cobre todas as telas de uma vez. Mídias, mapas e o controle de
-   acessibilidade são re-invertidos logo abaixo para voltarem às cores reais.
-   Consequência: fundo declarado em CSS inverte junto, então o que precisa
-   chegar branco na tela escura é declarado preto. */
 html.dark-theme {
   filter: invert(0.92) hue-rotate(180deg);
   background: #0e0e10;
@@ -275,7 +270,7 @@ html.dark-theme .a11y-controls {
 @media (max-width: 640px) {
   .filters { flex-direction: column; align-items: stretch; }
   .filter-input,
-  .filter-select { width: 100%; min-width: 0; flex: none; }
+  .filter-select { width: 100%; min-width: 0; flex: none; font-size: 1rem; }
 }
 
 .modal-overlay {
