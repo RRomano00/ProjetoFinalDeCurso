@@ -155,13 +155,13 @@ class OccurrenceJurisdictionTest {
             .thenReturn(staff("Santa Rita do Sapucaí", "MG"));
 
         ForwardOccurrenceDto dto = new ForwardOccurrenceDto();
-        dto.setDepartmentId(3);
+        dto.setDepartmentIds(java.util.List.of(3));
 
         ResponseEntity<?> response = sut.forward(10, dto,
             auth("carlos@prefeitura.com", UserModel.UserRole.EMPLOYEE));
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
-        verify(occurrenceService, never()).forwardToDepartment(anyInt(), anyInt(), anyInt());
+        verify(occurrenceService, never()).forwardToDepartment(anyInt(), any(), anyInt());
     }
 
     @Test

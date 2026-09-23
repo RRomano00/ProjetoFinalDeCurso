@@ -190,9 +190,9 @@
             <!-- A lista rola dentro do painel: a escolha não empurra as ações da tela -->
             <ul class="forward-list" *ngIf="!departmentsLoading && departments.length > 0">
               <li *ngFor="let d of departments">
-                <label class="forward-option" [class.selected]="forwardSelectedId === d.id">
-                  <input type="radio" name="department" [value]="d.id"
-                         [checked]="forwardSelectedId === d.id" (change)="selectDepartment(d.id)">
+                <label class="forward-option" [class.selected]="forwardSelectedIds.has(d.id!)">
+                  <input type="checkbox" name="department" [value]="d.id"
+                         [checked]="forwardSelectedIds.has(d.id!)" (change)="toggleDepartment(d.id!)">
                   <span class="forward-option-text">
                     <span class="forward-option-name">{{ d.name }}</span>
                     <span class="forward-option-mail">{{ d.email }}</span>
@@ -203,12 +203,16 @@
 
             <div class="forward-foot" *ngIf="departments.length > 0">
               <p class="forward-note">
+                Escolha quantos setores forem responsáveis: cada um recebe o seu e-mail.
                 Seguem o protocolo, a categoria, o endereço, o relato e as fotos.
                 Nenhum dado pessoal do autor é enviado.
               </p>
               <button type="button" class="btn-action btn-forward-confirm"
-                      [disabled]="forwardSelectedId == null || forwarding" (click)="confirmForward()">
-                {{ forwarding ? 'Encaminhando...' : 'Encaminhar e iniciar atendimento' }}
+                      [disabled]="forwardSelectedIds.size === 0 || forwarding" (click)="confirmForward()">
+                {{ forwarding ? 'Encaminhando...'
+                   : (forwardSelectedIds.size > 1
+                      ? 'Encaminhar aos ' + forwardSelectedIds.size + ' setores e iniciar atendimento'
+                      : 'Encaminhar e iniciar atendimento') }}
               </button>
               <p class="forward-effect">
                 A ocorrência passa a <span class="badge badge-em_andamento">Em Andamento</span>

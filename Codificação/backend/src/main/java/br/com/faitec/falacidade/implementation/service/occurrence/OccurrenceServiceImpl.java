@@ -3,6 +3,7 @@ package br.com.faitec.falacidade.implementation.service.occurrence;
 import br.com.faitec.falacidade.domain.Department;
 import br.com.faitec.falacidade.domain.Occurrence;
 import br.com.faitec.falacidade.domain.dto.occurrence.CreateOccurrenceResponseDto;
+import br.com.faitec.falacidade.domain.dto.occurrence.ForwardResultDto;
 import br.com.faitec.falacidade.domain.dto.occurrence.GetOccurrenceDto;
 import br.com.faitec.falacidade.implementation.service.tracking.AnonymousTrackingCodeService;
 import br.com.faitec.falacidade.port.dao.occurrence.OccurrenceDao;
@@ -12,6 +13,8 @@ import br.com.faitec.falacidade.port.service.department.DepartmentService;
 import br.com.faitec.falacidade.port.service.occurrence.OccurrenceService;
 import org.springframework.stereotype.Service;
 
+import java.util.LinkedHashSet;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -201,23 +204,46 @@ public class OccurrenceServiceImpl implements OccurrenceService {
     private static final String FORWARD_NOTE = "Ocorrência encaminhada para departamento responsável";
 
     @Override
-    public String forwardToDepartment(int occurrenceId, int departmentId, int changedBy) {
+    public ForwardResultDto forwardToDepartment(int occurrenceId, List<Integer> departmentIds,
+                                                int changedBy) {
         GetOccurrenceDto occurrence = findById(occurrenceId);
         if (occurrence == null) throw new IllegalArgumentException("Ocorrência não encontrada");
 
-        Department department = departmentService.findById(departmentId);
-        if (department == null) throw new IllegalArgumentException("Departamento não encontrado");
+        // Todos os destinos são resolvidos antes de qualquer envio: assim um id
+        // inválido faz a operação inteira falhar sem ter mandado e-mail nenhum.
+        List<Department> destinos = new ArrayList<>();
+        for (Integer id : new LinkedHashSet<>(departmentIds)) {
+            Department department = departmentService.findById(id);
+            if (department == null) throw new IllegalArgumentException("Departamento não encontrado");
+            destinos.add(department);
+        }
 
-        // O e-mail vem primeiro, e de forma síncrona: se ele falhar, a exceção sobe
-        // e a ocorrência continua como estava. Registrar o encaminhamento de uma
-        // mensagem que não saiu seria pior do que falhar.
-        emailService.sendOccurrenceForwardEmail(department.getEmail(), department.getName(), occurrence);
+        List<String> enviados = new ArrayList<>();
+        List<String> falharam = new ArrayList<>();
+        for (Department department : destinos) {
+            try {
+                // O e-mail vem primeiro, e de forma síncrona: registrar o
+                // encaminhamento de uma mensagem que não saiu seria pior do que
+                // falhar. Cada destino é independente — um e-mail que saiu não
+                // pode ser desfeito porque o seguinte falhou.
+                emailService.sendOccurrenceForwardEmail(
+                        department.getEmail(), department.getName(), occurrence);
+                occurrenceDao.updateStatus(occurrenceId,
+                        Occurrence.OccurrenceStatus.EM_ANDAMENTO.name(), changedBy,
+                        FORWARD_NOTE + " — " + department.getName() + ".", department.getId());
+                enviados.add(department.getName());
+            } catch (RuntimeException e) {
+                falharam.add(department.getName());
+            }
+        }
 
-        String note = FORWARD_NOTE + " — " + department.getName() + ".";
-        occurrenceDao.updateStatus(occurrenceId, Occurrence.OccurrenceStatus.EM_ANDAMENTO.name(),
-                                   changedBy, note, departmentId);
-        notifyAuthor(occurrence, Occurrence.OccurrenceStatus.EM_ANDAMENTO.name(), note);
-        return department.getName();
+        // O autor é avisado uma vez só: para ele o que mudou foi o estado da
+        // ocorrência, não quantos setores foram acionados.
+        if (!enviados.isEmpty()) {
+            notifyAuthor(occurrence, Occurrence.OccurrenceStatus.EM_ANDAMENTO.name(),
+                         FORWARD_NOTE + " — " + String.join(", ", enviados) + ".");
+        }
+        return new ForwardResultDto(enviados, falharam);
     }
 
     private void notifyAuthor(GetOccurrenceDto o, String newStatus, String message) {

@@ -60,7 +60,8 @@ export class DetailOccurrenceComponent implements OnInit, OnDestroy {
   departments: Department[] = [];
   departmentsLoading = false;
   forwardOpen = false;
-  forwardSelectedId: number | null = null;
+  /** A mesma ocorrência pode interessar a mais de um setor. */
+  forwardSelectedIds = new Set<number>();
   forwarding = false;
 
   group: Occurrence[] = [];
@@ -235,36 +236,39 @@ export class DetailOccurrenceComponent implements OnInit, OnDestroy {
 
   closeForward() {
     this.forwardOpen = false;
-    this.forwardSelectedId = null;
+    this.forwardSelectedIds.clear();
   }
 
-  selectDepartment(id: number) { this.forwardSelectedId = id; }
-
-  get selectedDepartment(): Department | undefined {
-    return this.departments.find(d => d.id === this.forwardSelectedId);
+  toggleDepartment(id: number) {
+    if (!this.forwardSelectedIds.delete(id)) this.forwardSelectedIds.add(id);
   }
 
   /**
-   * Encaminha ao departamento escolhido. O servidor envia o e-mail — sem dados
-   * pessoais do autor e com as fotos anexadas — e só então move a ocorrência
-   * para Em andamento e registra o trâmite. Se o e-mail não sair, nada muda.
+   * Encaminha aos departamentos escolhidos. O servidor envia um e-mail por
+   * destino — sem dados pessoais do autor e com as fotos anexadas — e registra
+   * um trâmite para cada um. Se nenhum e-mail sair, a ocorrência não muda.
    */
   async confirmForward() {
-    if (!this.occurrence?.id || this.forwardSelectedId == null || this.forwarding) return;
+    if (!this.occurrence?.id || this.forwardSelectedIds.size === 0 || this.forwarding) return;
 
-    const department = this.selectedDepartment;
     this.forwarding = true;
     try {
       const result = await this.occurrenceForwardService.forward(
-        String(this.occurrence.id), this.forwardSelectedId);
+        String(this.occurrence.id), [...this.forwardSelectedIds]);
       this.occurrence!.status = 'EM_ANDAMENTO';
-      this.toastr.success(`Ocorrência encaminhada para ${result.department}.`);
+      this.toastr.success(`Ocorrência encaminhada para ${result.departments.join(', ')}.`);
+      // Um destino pode falhar sozinho: os demais já foram avisados e ficam.
+      if (result.failed?.length) {
+        this.toastr.warning(
+          `Não foi possível avisar ${result.failed.join(', ')}. Tente encaminhar de novo a esses setores.`,
+          'Envio parcial', { timeOut: 9000 });
+      }
       this.closeForward();
       this.afterStatusChange();
     } catch (err: any) {
       if (err?.status === 502) {
         this.toastr.error(err.error?.error
-          || `Não foi possível enviar o e-mail para ${department?.name}. A ocorrência não foi alterada.`);
+          || 'Não foi possível enviar o e-mail aos departamentos. A ocorrência não foi alterada.');
       } else if (err?.status === 404) {
         this.toastr.error(err.error?.error || 'Departamento não encontrado.');
       } else {
