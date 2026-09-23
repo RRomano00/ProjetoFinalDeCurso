@@ -44,8 +44,8 @@
       <tbody>
         <tr *ngFor="let u of filtered" [class.inactive-row]="!u.active">
           <td class="cell-name">{{ u.fullname }}</td>
-          <td class="cell-email">{{ u.email }}</td>
-          <td class="cell-role">
+          <td class="cell-email" data-label="E-mail">{{ u.email }}</td>
+          <td class="cell-role" data-label="Perfil">
             <span *ngIf="u.id === myId" class="role-pill role-{{ u.role?.toLowerCase() }}">
               {{ roleLabel(u.role) }}
             </span>
@@ -61,8 +61,8 @@
               </button>
             </ng-container>
           </td>
-          <td>{{ u.city || '—' }}</td>
-          <td>
+          <td data-label="Município">{{ u.city || '—' }}</td>
+          <td data-label="Situação">
             <span class="status-pill" [class.on]="u.active">{{ u.active ? 'Ativo' : 'Inativo' }}</span>
           </td>
           <td class="cell-actions">

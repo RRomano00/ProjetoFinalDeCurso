@@ -107,8 +107,8 @@
       <tbody>
         <tr *ngFor="let d of filtered" [class.editing-row]="editingId === d.id">
           <td class="cell-name">{{ d.name }}</td>
-          <td class="cell-email">{{ d.email }}</td>
-          <td class="cell-city">{{ d.city }}<span class="cell-uf" *ngIf="d.state"> — {{ d.state }}</span></td>
+          <td class="cell-email" data-label="E-mail">{{ d.email }}</td>
+          <td class="cell-city" data-label="Município">{{ d.city }}<span class="cell-uf" *ngIf="d.state"> — {{ d.state }}</span></td>
           <td class="cell-actions" *ngIf="canEdit">
             <button type="button" class="btn-edit" (click)="edit(d)" [disabled]="saving">Editar</button>
           </td>

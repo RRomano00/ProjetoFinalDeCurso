@@ -1,0 +1,51 @@
+@media (max-width: 640px) {
+  .table-card {
+    background: none;
+    border: none;
+    overflow-x: visible;
+  }
+  .table-card thead { display: none; }
+  .table-card table,
+  .table-card tbody,
+  .table-card tr,
+  .table-card td { display: block; }
+
+  .table-card tr {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--r-card);
+    padding: 0.875rem 1rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .table-card td {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.375rem 0.75rem;
+    padding: 0.3125rem 0;
+    border: none;
+    overflow-wrap: anywhere;
+  }
+  .table-card td::before {
+    content: attr(data-label);
+    flex: none;
+    margin-right: auto; 
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--ink-faint);
+  }
+
+  .table-card td:first-child { font-size: 1rem; padding: 0 0 0.5rem; }
+  .table-card td:first-child::before,
+  .table-card td:not([data-label])::before { content: none; }
+
+  .table-card button,
+  .table-card select {
+    min-height: 2.5rem;
+    font-size: 1rem;
+  }
+  .table-card select { flex: 1; min-width: 0; }
+  .table-card .cell-actions { justify-content: flex-end; padding-top: 0.5rem; }
+  .table-card .cell-actions button { flex: 1; }
+}
