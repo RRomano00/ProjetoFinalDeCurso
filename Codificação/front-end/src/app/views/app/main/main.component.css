@@ -45,18 +45,27 @@
 }
 .menu-toggle:hover { background: var(--plate-wash); color: var(--plate); }
 
-/* A marca é uma placa de logradouro: campo azul, fio branco interno. */
+/* A marca: o emblema do logotipo, sem a tipografia — o nome já vem escrito ao
+   lado, em .brand-name. logo-marca.png é o emblema recortado da arte completa. */
 .brand-logo {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: block;
+  flex: none;
   width: 34px;
   height: 34px;
-  background: var(--plate);
-  border-radius: 3px;
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / .45);
-  color: #fff;
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: inset 0 0 0 1px var(--line);
+  overflow: hidden;
 }
+.brand-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* RF18: a placa é CSS e inverte com o tema; a arte é imagem e é re-invertida
+   para manter as cores reais. Preto aqui é o branco que chega à tela escura. */
+html.dark-theme .brand-logo { background: #000; }
 
 .brand-name {
   font-size: 1.0625rem;
@@ -165,7 +174,25 @@
 .sidebar.collapsed .nav-text,
 .sidebar.collapsed .nav-section-title { display: none; }
 .sidebar.collapsed .nav-item,
-.sidebar.collapsed .sidebar-logout { justify-content: center; padding-left: 0; padding-right: 0; }
+.sidebar.collapsed .sidebar-install {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  width: 100%;
+  padding: 0.5625rem 0.75rem;
+  margin-bottom: 0.25rem;
+  border: none;
+  border-radius: var(--r-ctl);
+  background: var(--plate-wash);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--plate);
+  cursor: pointer;
+}
+.sidebar-install:hover { background: var(--plate-line); }
+.sidebar.collapsed .sidebar-install { justify-content: center; padding-left: 0; padding-right: 0; }
+
+.sidebar-logout { justify-content: center; padding-left: 0; padding-right: 0; }
 .sidebar.collapsed .nav-section { margin-top: 0.5rem; padding-top: 0.5rem; }
 
 .sidebar-nav {
@@ -293,4 +320,92 @@
   .main-content { padding: 1rem 1rem 4.5rem; }
   .navbar-inner { padding: 0 0.875rem; }
   .brand-name { font-size: 0.9375rem; }
+}
+
+/* ===== Aviso de sessão encerrada (login em outro aparelho) =====
+   A caixa e o véu vêm do styles.css; aqui só o botão, que no sistema é
+   estilizado por componente. */
+.modal-card .btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.625rem 1.25rem;
+  background: var(--plate);
+  color: #fff;
+  border: none;
+  border-radius: var(--r-ctl);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.modal-card .btn-primary:hover { background: var(--plate-deep); }
+
+/* ===== Convite de instalação do aplicativo (PWA) =====
+   Faixa, e não caixa modal: instalar é oferta, não pedido de decisão — quem
+   ignorar continua usando a tela por baixo. Fica acima da barra inferior do
+   celular pela inset de área segura. */
+.install-invite {
+  position: fixed;
+  left: 1rem;
+  right: 1rem;
+  bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  z-index: 1900;   /* abaixo do aviso de sessão encerrada (2000) */
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  max-width: 34rem;
+  margin: 0 auto;
+  padding: 0.875rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-modal);
+  box-shadow: var(--lift-high);
+}
+
+.install-invite-icon {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--r-ctl);
+  background: var(--plate);
+  color: #fff;
+}
+
+.install-invite-text { display: flex; flex-direction: column; gap: 0.125rem; min-width: 0; flex: 1; }
+.install-invite-text strong { font-size: 0.9375rem; font-weight: 600; color: var(--ink); }
+.install-invite-text span   { font-size: 0.8125rem; color: var(--ink-mute); line-height: 1.4; }
+
+.install-invite-actions { display: flex; flex: none; align-items: center; gap: 0.375rem; }
+
+.install-invite .btn-primary {
+  padding: 0.5rem 1rem;
+  background: var(--plate);
+  color: #fff;
+  border: none;
+  border-radius: var(--r-ctl);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.install-invite .btn-primary:hover { background: var(--plate-deep); }
+
+.install-invite .btn-ghost {
+  padding: 0.5rem 0.75rem;
+  background: none;
+  border: none;
+  border-radius: var(--r-ctl);
+  font-size: 0.8125rem;
+  color: var(--ink-mute);
+  cursor: pointer;
+}
+.install-invite .btn-ghost:hover { background: var(--surface-2); color: var(--ink); }
+
+/* No celular o texto e os botões não cabem lado a lado. */
+@media (max-width: 560px) {
+  .install-invite { flex-wrap: wrap; }
+  .install-invite-actions { width: 100%; justify-content: flex-end; }
 }
