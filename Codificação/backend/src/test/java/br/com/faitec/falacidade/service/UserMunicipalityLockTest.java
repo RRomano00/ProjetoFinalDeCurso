@@ -4,6 +4,7 @@ import br.com.faitec.falacidade.controller.UserRestController;
 import br.com.faitec.falacidade.domain.UserModel;
 import br.com.faitec.falacidade.domain.dto.user.UpdateUserDto;
 import br.com.faitec.falacidade.implementation.service.mfa.EmailMfaCodeStore;
+import br.com.faitec.falacidade.implementation.service.mfa.SmsCodeSender;
 import br.com.faitec.falacidade.port.service.email.EmailService;
 import br.com.faitec.falacidade.port.service.mfa.MfaService;
 import br.com.faitec.falacidade.port.service.password.PasswordResetService;
@@ -34,13 +35,14 @@ class UserMunicipalityLockTest {
     @Mock EmailService         emailService;
     @Mock MfaService           mfaService;
     @Mock EmailMfaCodeStore    emailMfaCodeStore;
+    @Mock SmsCodeSender        smsCodeSender;
 
     UserRestController sut;
 
     @BeforeEach
     void setUp() {
         sut = new UserRestController(userService, passwordResetService, emailService,
-                                     mfaService, emailMfaCodeStore);
+                                     mfaService, emailMfaCodeStore, smsCodeSender);
     }
 
     private Authentication auth(String email) {

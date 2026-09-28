@@ -180,6 +180,69 @@
             </div>
           </div>
 
+          <ng-container *ngIf="smsAvailable || mfaSmsActive">
+            <div class="mfa-row">
+              <div class="mfa-info">
+                <strong>MFA por SMS</strong>
+                <small *ngIf="mfaSmsActive">Enviamos um código por SMS para <b>{{ smsPhoneMasked }}</b> a cada login.</small>
+                <small *ngIf="!mfaSmsActive">Receba o código de login por SMS no seu celular.</small>
+              </div>
+              <div class="mfa-actions">
+                <span class="mfa-badge" [class.on]="mfaSmsActive">{{ mfaSmsActive ? 'Ativo' : 'Inativo' }}</span>
+                <button class="btn-toggle" *ngIf="!mfaSmsActive && !enablingSms"
+                        [disabled]="savingMfa || !smsAvailable" (click)="startEnableSms()">Ativar</button>
+                <button class="btn-toggle" *ngIf="mfaSmsActive && !disablingSms"
+                        [disabled]="savingMfa || !smsAvailable" (click)="startDisableSms()">Desativar</button>
+              </div>
+            </div>
+
+            <div class="mfa-disable-form" *ngIf="enablingSms && !smsCodeSent">
+              <p>Confirme o número do celular que vai receber os códigos.</p>
+              <input type="tel" [(ngModel)]="smsPhone" placeholder="(35) 99999-9999"
+                     (keyup.enter)="savingMfa || sendSmsEnableCode()" class="form-input" />
+              <div class="qr-actions">
+                <button class="btn-secondary" (click)="cancelEnableSms()">Cancelar</button>
+                <button class="btn-primary" [disabled]="savingMfa || !smsPhone" (click)="sendSmsEnableCode()">
+                  Enviar código
+                </button>
+              </div>
+            </div>
+
+            <div class="mfa-disable-form" *ngIf="enablingSms && smsCodeSent">
+              <p>Digite o código que enviamos por SMS para {{ smsPhone }}.</p>
+              <input type="text" [(ngModel)]="smsEnableCode" maxlength="6" inputmode="numeric"
+                     (keyup.enter)="savingMfa || confirmEnableSms()"
+                     placeholder="000000" class="form-input qr-code-input" />
+              <div class="qr-actions">
+                <button class="btn-secondary" (click)="cancelEnableSms()">Cancelar</button>
+                <button class="btn-primary" [disabled]="savingMfa" (click)="confirmEnableSms()">
+                  Confirmar ativação
+                </button>
+              </div>
+              <button type="button" class="btn-resend" [disabled]="savingMfa || smsResendIn > 0"
+                      (click)="sendSmsEnableCode()">
+                {{ smsResendIn > 0 ? ('Reenviar código em ' + smsResendIn + 's') : 'Reenviar código' }}
+              </button>
+            </div>
+
+            <div class="mfa-disable-form" *ngIf="disablingSms">
+              <p>Digite o código que enviamos por SMS para desativar.</p>
+              <input type="text" [(ngModel)]="smsDisableCode" maxlength="6" inputmode="numeric"
+                     (keyup.enter)="savingMfa || confirmDisableSms()"
+                     placeholder="000000" class="form-input qr-code-input" />
+              <div class="qr-actions">
+                <button class="btn-secondary" (click)="cancelDisableSms()">Cancelar</button>
+                <button class="btn-primary" [disabled]="savingMfa" (click)="confirmDisableSms()">
+                  Confirmar desativação
+                </button>
+              </div>
+              <button type="button" class="btn-resend" [disabled]="savingMfa || smsResendIn > 0"
+                      (click)="resendSmsDisableCode()">
+                {{ smsResendIn > 0 ? ('Reenviar código em ' + smsResendIn + 's') : 'Reenviar código' }}
+              </button>
+            </div>
+          </ng-container>
+
           <div class="mfa-row">
             <div class="mfa-info">
               <strong>Aplicativo autenticador</strong>
@@ -253,7 +316,9 @@
       </p>
       <p *ngIf="deleteNeedsCode">
         Para confirmar, digite o código
-        {{ deleteUsesEmailCode ? 'enviado ao seu e-mail' : 'do seu aplicativo autenticador' }}.
+        {{ deleteCodeSource === 'EMAIL' ? 'enviado ao seu e-mail'
+         : deleteCodeSource === 'SMS' ? 'enviado por SMS para o seu celular'
+         : 'do seu aplicativo autenticador' }}.
       </p>
       <input *ngIf="deleteNeedsCode" type="text" [(ngModel)]="deleteCode" maxlength="6" inputmode="numeric"
              (keyup.enter)="deletingNow || confirmDeleteAccount()"

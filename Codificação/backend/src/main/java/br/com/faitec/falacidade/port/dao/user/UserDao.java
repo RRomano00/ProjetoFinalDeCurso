@@ -13,6 +13,8 @@ public interface UserDao extends CrudDao<UserModel>, ReadByEmailDao, UpdatePassw
 
     void setEmailMfa(int userId, boolean enabled);
 
+    void setSmsMfa(int userId, String phone);
+
     java.util.List<UserModel> readAllUsers();
 
     boolean existsStaffInCity(String city, String state);

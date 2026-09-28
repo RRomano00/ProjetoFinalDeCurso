@@ -15,10 +15,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   return handled.pipe(tap({
     error: (erro: unknown) => {
-      if (erro instanceof HttpErrorResponse && erro.status === 401
-          && (erro.error as { reason?: string })?.reason === 'SESSION_SUPERSEDED') {
-        session.end();
-      }
+      const reason = erro instanceof HttpErrorResponse && erro.status === 401
+        ? (erro.error as { reason?: string })?.reason : undefined;
+      if (reason === 'SESSION_SUPERSEDED' || reason === 'ACCOUNT_REMOVED') session.end(reason);
     }
   }));
 };

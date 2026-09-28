@@ -79,7 +79,8 @@ public class JwtSecurityConfiguration {
                 .requestMatchers(HttpMethod.POST, "/api/authenticate").permitAll()
                 .requestMatchers(HttpMethod.POST,
                     "/api/authenticate/mfa",
-                    "/api/authenticate/mfa/send-email").permitAll()
+                    "/api/authenticate/mfa/send-email",
+                    "/api/authenticate/mfa/send-sms").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/user/register").permitAll()
                 .requestMatchers(HttpMethod.POST,
                     "/api/user/password-reset/request",

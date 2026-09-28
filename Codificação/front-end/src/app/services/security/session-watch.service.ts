@@ -6,7 +6,7 @@ import { AuthenticationService } from './authentication.service';
 @Injectable({ providedIn: 'root' })
 export class SessionWatchService {
 
-  readonly ended = signal(false);
+  readonly ended = signal<'SESSION_SUPERSEDED' | 'ACCOUNT_REMOVED' | null>(null);
 
   private static readonly PULSE_MS = 30_000;
 
@@ -32,10 +32,10 @@ export class SessionWatchService {
     this.timer = undefined;
   }
 
-  end() {
+  end(reason: 'SESSION_SUPERSEDED' | 'ACCOUNT_REMOVED') {
     if (this.ended()) return;
     this.stop();
     this.auth.logout();
-    this.ended.set(true);
+    this.ended.set(reason);
   }
 }

@@ -238,6 +238,19 @@
 .qr-actions { display: flex; gap: 0.5rem; }
 .qr-actions .btn-primary, .qr-actions .btn-secondary { width: auto; }
 
+.btn-resend {
+  margin-top: 0.5rem;
+  padding: 0.25rem 0;
+  background: transparent;
+  border: none;
+  color: var(--plate);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-resend:disabled { color: var(--ink-faint); cursor: not-allowed; }
+.btn-resend:not(:disabled):hover { text-decoration: underline; }
+
 .danger-card { border-color: var(--st-refused-line); }
 .section-title.danger { color: var(--st-refused); border-left-color: var(--st-refused); }
 .section-title.danger svg { color: var(--st-refused); }

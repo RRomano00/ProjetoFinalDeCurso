@@ -145,6 +145,10 @@ ALTER TABLE "user" ADD COLUMN IF NOT EXISTS mfa_enabled       BOOLEAN      NOT N
 ALTER TABLE "user" ADD COLUMN IF NOT EXISTS mfa_secret        VARCHAR(255);
 ALTER TABLE "user" ADD COLUMN IF NOT EXISTS mfa_setup_done    BOOLEAN      NOT NULL DEFAULT FALSE;
 ALTER TABLE "user" ADD COLUMN IF NOT EXISTS mfa_email_enabled BOOLEAN      NOT NULL DEFAULT FALSE;
+-- Celular confirmado para o 2FA por SMS (NULL = desligado). Separado de
+-- phone_number porque o administrador edita o telefone do perfil, e isso não
+-- pode redirecionar o segundo fator de outra pessoa.
+ALTER TABLE "user" ADD COLUMN IF NOT EXISTS mfa_sms_phone VARCHAR(14);
 
 -- Fase 4: perfil Super Administrador (RF25). O administrador passou a ser
 -- municipal, e quem o nomeia — e define o município dele — é o Super

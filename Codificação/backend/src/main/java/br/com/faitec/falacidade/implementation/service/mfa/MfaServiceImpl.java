@@ -82,4 +82,9 @@ public class MfaServiceImpl implements MfaService {
     public void setEmailMfa(int userId, boolean enabled) {
         userDao.setEmailMfa(userId, enabled);
     }
+
+    @Override
+    public void setSmsMfa(int userId, String phone) {
+        userDao.setSmsMfa(userId, phone);
+    }
 }

@@ -209,6 +209,18 @@ public class UserPostgresDao implements UserDao {
     }
 
     @Override
+    public void setSmsMfa(int userId, String phone) {
+        String sql = "UPDATE \"user\" SET mfa_sms_phone=?, updated_at=NOW() WHERE id=?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            if (phone != null) ps.setString(1, phone); else ps.setNull(1, Types.VARCHAR);
+            ps.setInt(2, userId);
+            ps.execute();
+        } catch (SQLException e) {
+            throw new RuntimeException("Erro ao atualizar MFA por SMS", e);
+        }
+    }
+
+    @Override
     public boolean existsStaffInCity(String city, String state) {
         if (city == null || city.isBlank()) return false;
         String sql = "SELECT 1 FROM \"user\" WHERE is_active = true " +
@@ -326,6 +338,7 @@ public class UserPostgresDao implements UserDao {
         u.setMfaEnabled(rs.getBoolean("mfa_enabled"));
         u.setMfaSetupDone(rs.getBoolean("mfa_setup_done"));
         u.setMfaEmailEnabled(rs.getBoolean("mfa_email_enabled"));
+        u.setMfaSmsPhone(rs.getString("mfa_sms_phone"));
         String secret = rs.getString("mfa_secret");
         u.setMfaSecret(secret);
 

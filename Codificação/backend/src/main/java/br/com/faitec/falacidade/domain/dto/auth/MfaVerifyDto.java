@@ -12,10 +12,14 @@ public class MfaVerifyDto {
 
     private String method;
 
+    private String phone;
+
     public String getTotpCode()              { return totpCode; }
     public void   setTotpCode(String c)      { this.totpCode = c; }
     public String getMfaToken()              { return mfaToken; }
     public void   setMfaToken(String t)      { this.mfaToken = t; }
     public String getMethod()                { return method; }
     public void   setMethod(String m)        { this.method = m; }
+    public String getPhone()                 { return phone; }
+    public void   setPhone(String p)         { this.phone = p; }
 }

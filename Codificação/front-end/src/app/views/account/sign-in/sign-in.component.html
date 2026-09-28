@@ -62,21 +62,35 @@
         <h2>Verificação em Duas Etapas</h2>
         <p>Como você quer receber/validar o código de verificação?</p>
 
-        <button (click)="chooseMethod('APP')" [disabled]="loading" class="btn-method">
-          <span class="btn-method-icon">📱</span>
-          <span class="btn-method-text">
-            <strong>Aplicativo autenticador</strong>
-            <small>Use o código do Google Authenticator / Authy</small>
-          </span>
-        </button>
+        @if (mfaAppAvailable) {
+          <button (click)="chooseMethod('APP')" [disabled]="loading" class="btn-method">
+            <span class="btn-method-icon">📱</span>
+            <span class="btn-method-text">
+              <strong>Aplicativo autenticador</strong>
+              <small>Use o código do Google Authenticator / Authy</small>
+            </span>
+          </button>
+        }
 
-        <button (click)="chooseMethod('EMAIL')" [disabled]="loading" class="btn-method">
-          <span class="btn-method-icon">✉️</span>
-          <span class="btn-method-text">
-            <strong>E-mail</strong>
-            <small>{{ loading ? 'Enviando o código...' : 'Enviaremos um código para o seu e-mail' }}</small>
-          </span>
-        </button>
+        @if (mfaEmailAvailable) {
+          <button (click)="chooseMethod('EMAIL')" [disabled]="loading" class="btn-method">
+            <span class="btn-method-icon">✉️</span>
+            <span class="btn-method-text">
+              <strong>E-mail</strong>
+              <small>{{ loading && mfaMethod === 'EMAIL' ? 'Enviando o código...' : 'Enviaremos um código para o seu e-mail' }}</small>
+            </span>
+          </button>
+        }
+
+        @if (mfaSmsAvailable) {
+          <button (click)="chooseMethod('SMS')" [disabled]="loading" class="btn-method">
+            <span class="btn-method-icon">💬</span>
+            <span class="btn-method-text">
+              <strong>SMS</strong>
+              <small>{{ loading && mfaMethod === 'SMS' ? 'Enviando o código...' : 'Enviaremos um código por SMS para o seu celular' }}</small>
+            </span>
+          </button>
+        }
 
         <button (click)="backToLogin()" class="btn-link-back">← Voltar para o login</button>
       </div>
@@ -84,10 +98,11 @@
 
     @if (step === 'mfa-verify') {
       <div class="mfa-section">
-        <div class="mfa-icon">{{ mfaMethod === 'EMAIL' ? '✉️' : '🔐' }}</div>
+        <div class="mfa-icon">{{ mfaMethod === 'EMAIL' ? '✉️' : mfaMethod === 'SMS' ? '💬' : '🔐' }}</div>
         <h2>Verificação em Duas Etapas</h2>
         <p *ngIf="mfaMethod === 'EMAIL'">Digite o código de 6 dígitos que enviamos para o seu e-mail.</p>
         <p *ngIf="mfaMethod === 'APP'">Digite o código de 6 dígitos gerado pelo seu aplicativo autenticador.</p>
+        <p *ngIf="mfaMethod === 'SMS'">Digite o código de 6 dígitos que enviamos por SMS para o seu celular.</p>
 
         <p *ngIf="mfaError" class="error-msg">
           Código inválido ou expirado. Tente novamente.
@@ -105,7 +120,7 @@
           {{ loading ? 'Verificando...' : 'Confirmar' }}
         </button>
 
-        <button *ngIf="mfaMethod === 'EMAIL'"
+        <button *ngIf="mfaMethod !== 'APP'"
                 (click)="resendCode()" [disabled]="resendCountdown > 0" class="btn-resend">
           {{ resendCountdown > 0 ? ('Reenviar código em ' + resendCountdown + 's') : 'Reenviar código' }}
         </button>

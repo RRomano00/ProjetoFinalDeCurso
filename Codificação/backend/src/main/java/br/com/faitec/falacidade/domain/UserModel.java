@@ -28,6 +28,7 @@ public class UserModel {
     private boolean mfaSetupDone;
 
     private boolean mfaEmailEnabled;
+    private String mfaSmsPhone;
 
     public UserModel() {}
 
@@ -104,6 +105,15 @@ public class UserModel {
 
     public boolean isAppMfaActive() { return mfaSetupDone; }
     public boolean isEmailMfaActive() { return mfaEmailEnabled; }
+
+    public String getMfaSmsPhone() { return mfaSmsPhone; }
+    public void setMfaSmsPhone(String mfaSmsPhone) { this.mfaSmsPhone = mfaSmsPhone; }
+
+    public boolean isSmsMfaActive() { return mfaSmsPhone != null; }
+
+    public int activeMfaCount() {
+        return (isAppMfaActive() ? 1 : 0) + (isEmailMfaActive() ? 1 : 0) + (isSmsMfaActive() ? 1 : 0);
+    }
 
     public boolean isSuperAdmin() { return role == UserRole.SUPER_ADMIN; }
 

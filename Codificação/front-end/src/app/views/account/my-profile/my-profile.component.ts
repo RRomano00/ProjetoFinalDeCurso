@@ -33,6 +33,17 @@ export class MyProfileComponent {
 
   mfaAppActive = false;
   mfaEmailActive = false;
+  mfaSmsActive = false;
+  smsAvailable = false;
+  smsPhoneMasked = '';
+  enablingSms = false;
+  smsCodeSent = false;
+  smsResendIn = 0;
+  private smsResendTimer?: ReturnType<typeof setInterval>;
+  smsPhone = '';
+  smsEnableCode = '';
+  disablingSms = false;
+  smsDisableCode = '';
   userRole = '';
   loadingMfa = true;
   showQr = false;
@@ -50,15 +61,22 @@ export class MyProfileComponent {
   deleteCode = '';
   deletingNow = false;
 
-  get deleteNeedsCode(): boolean { return this.mfaAppActive || this.mfaEmailActive; }
-  get deleteUsesEmailCode(): boolean { return this.mfaEmailActive && !this.mfaAppActive; }
+  get deleteNeedsCode(): boolean { return this.activeMfaCount > 0; }
+  // Mesma prioridade do backend: app, depois e-mail, depois SMS.
+  get deleteCodeSource(): 'APP' | 'EMAIL' | 'SMS' | null {
+    if (this.mfaAppActive) return 'APP';
+    if (this.mfaEmailActive) return 'EMAIL';
+    // Com o SMS desligado no servidor, o código de exclusão vai por e-mail.
+    if (this.mfaSmsActive) return this.smsAvailable ? 'SMS' : 'EMAIL';
+    return null;
+  }
 
   get isStaff(): boolean {
     return this.userRole === 'SUPER_ADMIN'
         || this.userRole === 'ADMINISTRATOR' || this.userRole === 'EMPLOYEE';
   }
   get activeMfaCount(): number {
-    return (this.mfaEmailActive ? 1 : 0) + (this.mfaAppActive ? 1 : 0);
+    return (this.mfaEmailActive ? 1 : 0) + (this.mfaAppActive ? 1 : 0) + (this.mfaSmsActive ? 1 : 0);
   }
   private blocksLastMfaRemoval(): boolean {
     if (this.isStaff && this.activeMfaCount <= 1) {
@@ -138,6 +156,9 @@ export class MyProfileComponent {
       const s = await this.mfaService.status();
       this.mfaAppActive = !!s.appActive;
       this.mfaEmailActive = !!s.emailActive;
+      this.mfaSmsActive   = !!s.smsActive;
+      this.smsAvailable   = !!s.smsAvailable;
+      this.smsPhoneMasked = s.smsPhone || '';
       this.userRole = s.role || '';
     } catch {
     } finally {
@@ -251,6 +272,109 @@ export class MyProfileComponent {
       this.savingMfa = false;
     }
   }
+  private smsSendError(err: any) {
+    if (err?.status === 400) this.toastr.error('Celular inválido. Informe DDD e número de celular (com o 9).');
+    else if (err?.status === 429) this.toastr.warning('Aguarde um minuto para pedir outro código.');
+    else if (err?.status === 502) this.toastr.error('Não foi possível enviar o SMS agora. Tente de novo em instantes.');
+    else if (err?.status === 503) this.toastr.error('O envio por SMS está indisponível no momento.');
+    else this.toastr.error('Não foi possível enviar o código por SMS.');
+  }
+
+  startEnableSms() {
+    this.enablingSms = true;
+    this.smsCodeSent = false;
+    this.smsEnableCode = '';
+    this.smsPhone = this.profileForm?.value?.phoneNumber || '';
+  }
+  cancelEnableSms() { this.enablingSms = false; this.smsCodeSent = false; this.smsEnableCode = ''; }
+
+  // O backend só aceita novo SMS depois de 60 s; a contagem mostra quando o reenvio libera.
+  private startSmsResendCountdown() {
+    clearInterval(this.smsResendTimer);
+    this.smsResendIn = 60;
+    this.smsResendTimer = setInterval(() => {
+      if (--this.smsResendIn <= 0) clearInterval(this.smsResendTimer);
+    }, 1000);
+  }
+
+  ngOnDestroy() { clearInterval(this.smsResendTimer); }
+
+  async sendSmsEnableCode() {
+    this.savingMfa = true;
+    try {
+      await this.mfaService.sendSmsEnableCode(this.smsPhone);
+      this.smsCodeSent = true;
+      this.startSmsResendCountdown();
+      this.toastr.info('Enviamos um código por SMS para o seu celular.');
+    } catch (err: any) {
+      // 429: já existe um código enviado há pouco; dá para usá-lo.
+      if (err?.status === 429) { this.smsCodeSent = true; this.startSmsResendCountdown(); }
+      this.smsSendError(err);
+    } finally {
+      this.savingMfa = false;
+    }
+  }
+
+  async confirmEnableSms() {
+    if (!/^\d{6}$/.test(this.smsEnableCode)) {
+      this.toastr.warning('Digite o código de 6 dígitos enviado por SMS.');
+      return;
+    }
+    this.savingMfa = true;
+    try {
+      await this.mfaService.enableSms(this.smsPhone, this.smsEnableCode);
+      this.toastr.success('MFA por SMS ativado.');
+      this.cancelEnableSms();
+      await this.loadMfaStatus();
+    } catch (err: any) {
+      if (err?.status === 401) this.toastr.error('Código inválido ou expirado.');
+      else this.toastr.error('Não foi possível ativar o MFA por SMS.');
+    } finally {
+      this.savingMfa = false;
+    }
+  }
+
+  async startDisableSms() {
+    if (this.blocksLastMfaRemoval()) return;
+    this.disablingSms = true;
+    this.smsDisableCode = '';
+    await this.resendSmsDisableCode();
+  }
+
+  async resendSmsDisableCode() {
+    this.savingMfa = true;
+    try {
+      await this.mfaService.sendSmsDisableCode();
+      this.startSmsResendCountdown();
+      this.toastr.info('Enviamos um código por SMS para o seu celular.');
+    } catch (err: any) {
+      if (err?.status === 429) this.startSmsResendCountdown();
+      else this.disablingSms = false;
+      this.smsSendError(err);
+    } finally {
+      this.savingMfa = false;
+    }
+  }
+  cancelDisableSms() { this.disablingSms = false; this.smsDisableCode = ''; }
+
+  async confirmDisableSms() {
+    if (!/^\d{6}$/.test(this.smsDisableCode)) {
+      this.toastr.warning('Digite o código de 6 dígitos enviado por SMS.');
+      return;
+    }
+    this.savingMfa = true;
+    try {
+      await this.mfaService.disableSms(this.smsDisableCode);
+      this.toastr.success('MFA por SMS desativado.');
+      this.disablingSms = false;
+      await this.loadMfaStatus();
+    } catch (err: any) {
+      this.handleDisableError(err);
+    } finally {
+      this.savingMfa = false;
+    }
+  }
+
 
   startDisableApp() {
     if (this.blocksLastMfaRemoval()) return;
@@ -290,14 +414,16 @@ export class MyProfileComponent {
   async startDeleteAccount() {
     this.deletingAccount = true;
     this.deleteCode = '';
-    if (this.deleteUsesEmailCode) {
+    if (this.deleteCodeSource === 'EMAIL' || this.deleteCodeSource === 'SMS') {
       this.deletingNow = true;
       try {
         await this.mfaService.sendAccountDeletionCode();
-        this.toastr.info('Enviamos um código para o seu e-mail.');
-      } catch {
-        this.toastr.error('Não foi possível enviar o código.');
-        this.deletingAccount = false;
+        this.toastr.info(this.deleteCodeSource === 'SMS'
+          ? 'Enviamos um código por SMS para o seu celular.' : 'Enviamos um código para o seu e-mail.');
+      } catch (err: any) {
+        this.toastr.error(err?.status === 429 ? 'Aguarde um minuto para pedir outro código.'
+                                              : 'Não foi possível enviar o código.');
+        if (err?.status !== 429) this.deletingAccount = false;
       } finally {
         this.deletingNow = false;
       }

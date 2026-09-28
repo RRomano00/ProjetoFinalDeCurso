@@ -11,6 +11,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -53,9 +54,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                         && activeSessions.superseded(jwtService.getUserIdFromToken(jwtToken),
                                                      jwtService.getSessionIdFromToken(jwtToken))) {
                     log.log(Level.INFO, "Sessão substituída por novo login: {0}", email);
-                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                    response.setContentType("application/json;charset=UTF-8");
-                    response.getWriter().write("{\"reason\":\"SESSION_SUPERSEDED\"}");
+                    reject(response, "SESSION_SUPERSEDED");
                     return;
                 }
             } catch (IllegalArgumentException e) {
@@ -68,7 +67,15 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         }
 
         if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = this.userDetailsService.loadUserByUsername(email);
+            UserDetails userDetails;
+            // Conta excluída ou inativada com o token ainda válido: derruba a
+            // sessão. No login o token velho só é ignorado.
+            try { userDetails = this.userDetailsService.loadUserByUsername(email); }
+            catch (UsernameNotFoundException e) {
+                if (isLoginRequest(request)) { filterChain.doFilter(request, response); return; }
+                reject(response, "ACCOUNT_REMOVED");
+                return;
+            }
             if (jwtService.validToken(jwtToken, userDetails)) {
                 UsernamePasswordAuthenticationToken authToken =
                     new UsernamePasswordAuthenticationToken(
@@ -79,6 +86,12 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private void reject(HttpServletResponse response, String reason) throws IOException {
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setContentType("application/json;charset=UTF-8");
+        response.getWriter().write("{\"reason\":\"" + reason + "\"}");
     }
 
     /**
