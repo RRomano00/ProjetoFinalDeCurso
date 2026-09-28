@@ -7,6 +7,7 @@ import { UserReadService } from '../../../services/user/user-read.service';
 import { AuthenticationService } from '../../../services/security/authentication.service';
 import { Department } from '../../../domain/model/department';
 import { ToastrService } from 'ngx-toastr';
+import { persistFilters } from '../../../shared/persist-filters';
 
 @Component({
   selector: 'app-department-list',
@@ -63,6 +64,7 @@ export class DepartmentListComponent implements OnInit {
     });
     this.units = this.locality.units;
     this.cityOptions = this.locality.bindCityToUf(this.form);
+    persistFilters(this, 'departments', ['search', 'filterCity']);
   }
 
   async ngOnInit() {

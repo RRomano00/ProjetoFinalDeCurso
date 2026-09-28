@@ -1,0 +1,77 @@
+<div class="page-container">
+  <div class="page-header">
+    <div>
+      <h1>Logs</h1>
+      <p>Contas criadas e excluídas pela administração</p>
+    </div>
+  </div>
+
+  <div class="filters" *ngIf="!loading">
+    <input type="search" [(ngModel)]="search" class="filter-input"
+           aria-label="Pesquisar por nome ou e-mail"
+           placeholder="Pesquisar por nome ou e-mail" />
+    <select [(ngModel)]="filterAction" class="filter-select" aria-label="Ação">
+      <option value="">Criações e exclusões</option>
+      <option value="CREATE">Somente criações</option>
+      <option value="DELETE">Somente exclusões</option>
+    </select>
+    <select [(ngModel)]="filterRole" class="filter-select" aria-label="Perfil">
+      <option value="">Todos os perfis</option>
+      <option *ngFor="let r of roleOptions" [value]="r">{{ roleLabel(r) }}</option>
+    </select>
+    <select *ngIf="isSuperAdmin" [(ngModel)]="filterCity" class="filter-select" aria-label="Município">
+      <option value="">Todos os municípios</option>
+      <option *ngFor="let c of cityOptions" [value]="c">{{ c }}</option>
+    </select>
+    <input type="date" [(ngModel)]="dateFrom" class="filter-select" aria-label="A partir de" title="A partir de" />
+    <input type="date" [(ngModel)]="dateTo" class="filter-select" aria-label="Até" title="Até" />
+    <button type="button" class="btn-toggle" (click)="clearFilters()" [disabled]="!hasFilters">Limpar</button>
+  </div>
+
+  <div *ngIf="loading" class="loading-state">Carregando...</div>
+
+  <div class="table-card" *ngIf="!loading">
+    <table class="user-table">
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Ação</th>
+          <th>Feito por</th>
+          <th>Conta</th>
+          <th>Perfil</th>
+          <th>Município</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let l of filtered">
+          <td class="cell-name">{{ l.createdAt | date:'dd/MM/yyyy, HH:mm' }}</td>
+          <td data-label="Ação">
+            <span class="status-pill" [class.on]="l.action === 'CREATE'">
+              {{ l.action === 'CREATE' ? 'Criação' : 'Exclusão' }}
+            </span>
+          </td>
+          <td data-label="Feito por">
+            <ng-container *ngIf="l.actorName; else excluida">
+              {{ l.actorName }}<br /><span class="cell-email">{{ l.actorEmail }}</span>
+            </ng-container>
+          </td>
+          <td data-label="Conta">
+            <ng-container *ngIf="l.targetName; else excluida">
+              {{ l.targetName }}<br /><span class="cell-email">{{ l.targetEmail }}</span>
+            </ng-container>
+          </td>
+          <td data-label="Perfil">
+            <span class="role-pill role-{{ l.targetRole?.toLowerCase() }}">{{ roleLabel(l.targetRole) }}</span>
+          </td>
+          <td data-label="Município">{{ l.city || '—' }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <ng-template #excluida><span class="self-label">Conta excluída</span></ng-template>
+
+    <div *ngIf="filtered.length === 0" class="empty-state">
+      {{ logs.length === 0 ? 'Nenhum registro ainda.' : 'Nenhum registro para este filtro.' }}
+    </div>
+  </div>
+</div>

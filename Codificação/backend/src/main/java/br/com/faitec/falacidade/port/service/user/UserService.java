@@ -13,4 +13,8 @@ public interface UserService extends CrudService<UserModel>, ReadByEmailService,
     void setRole(int userId, UserModel.UserRole role);
 
     boolean hasStaffInCity(String city, String state);
+
+    void log(String action, UserModel actor, Integer targetId, UserModel target);
+
+    java.util.List<java.util.Map<String, Object>> findLog();
 }

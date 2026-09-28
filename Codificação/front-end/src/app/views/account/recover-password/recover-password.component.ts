@@ -6,7 +6,7 @@ import { PasswordResetService } from '../../../services/security/password-reset.
 import { ToastrService } from 'ngx-toastr';
 import { PasswordRevealDirective } from '../../../shared/password-reveal.directive';
 
-type ResetStep = 'request' | 'confirm';
+type ResetStep = 'request' | 'code' | 'password';
 
 @Component({
   selector: 'app-recover-password',
@@ -42,19 +42,28 @@ export class RecoverPasswordComponent {
     this.loading = true;
     try {
       await this.resetService.requestReset(this.email.value!);
-      this.toastr.success('Se o e-mail existir, enviamos um código de recuperação.');
-      this.step = 'confirm';
+    } catch { }
+    // Mesma resposta com ou sem conta: a tela não revela quais e-mails existem.
+    this.toastr.success('Se o e-mail existir, enviamos um código de recuperação.');
+    this.step = 'code';
+    this.loading = false;
+  }
+
+  async verifyCode() {
+    if (this.token.invalid) { this.token.markAsTouched(); return; }
+    this.loading = true;
+    try {
+      await this.resetService.verifyToken(this.token.value!);
+      this.step = 'password';
     } catch {
-      this.toastr.success('Se o e-mail existir, enviamos um código de recuperação.');
-      this.step = 'confirm';
+      this.toastr.error('Código inválido ou expirado. Solicite um novo.');
     } finally {
       this.loading = false;
     }
   }
 
   async confirmReset() {
-    if (this.token.invalid || this.newPassword.invalid || this.confirmPassword.invalid) {
-      this.token.markAsTouched();
+    if (this.newPassword.invalid || this.confirmPassword.invalid) {
       this.newPassword.markAsTouched();
       this.confirmPassword.markAsTouched();
       return;
@@ -70,7 +79,9 @@ export class RecoverPasswordComponent {
       this.toastr.success('Senha redefinida com sucesso! Faça login.');
       this.router.navigate(['/account/sign-in']);
     } catch {
-      this.toastr.error('Token inválido ou expirado. Solicite um novo.');
+      // O código venceu entre a conferência e o envio da senha.
+      this.toastr.error('Código inválido ou expirado. Solicite um novo.');
+      this.step = 'code';
     } finally {
       this.loading = false;
     }

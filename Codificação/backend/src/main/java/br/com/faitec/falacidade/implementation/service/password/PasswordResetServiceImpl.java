@@ -56,14 +56,16 @@ public class PasswordResetServiceImpl implements PasswordResetService {
         emailService.sendPasswordResetEmail(email, rawToken);
     }
 
+    /** A tela confere o código antes de pedir a nova senha; não o consome. */
+    @Override
+    public boolean isTokenValid(String rawToken) {
+        return findUsable(rawToken) != null;
+    }
+
     @Override
     public boolean confirmReset(String rawToken, String newPassword) {
-        if (rawToken == null) return false;
-        PasswordResetToken token = tokenDao.findByToken(rawToken.trim().toUpperCase());
-
-        if (token == null || token.isExpired() || token.isUsed()) {
-            return false;
-        }
+        PasswordResetToken token = findUsable(rawToken);
+        if (token == null) return false;
 
         if (!isPasswordValid(newPassword)) {
             return false;
@@ -77,6 +79,12 @@ public class PasswordResetServiceImpl implements PasswordResetService {
         }
 
         return updated;
+    }
+
+    private PasswordResetToken findUsable(String rawToken) {
+        if (rawToken == null || rawToken.isBlank()) return null;
+        PasswordResetToken token = tokenDao.findByToken(rawToken.trim().toUpperCase());
+        return token == null || token.isExpired() || token.isUsed() ? null : token;
     }
 
     private boolean isPasswordValid(String password) {

@@ -19,6 +19,10 @@ export class UserReadService {
     return firstValueFrom(this.http.get<any[]>(`${environment.api_endpoint}/user`));
   }
 
+  findLogs(): Promise<any[]> {
+    return firstValueFrom(this.http.get<any[]>(`${environment.api_endpoint}/user/log`));
+  }
+
   setActive(id: number, active: boolean): Promise<any> {
     return firstValueFrom(this.http.put<any>(`${environment.api_endpoint}/user/${id}/active`, { active }));
   }

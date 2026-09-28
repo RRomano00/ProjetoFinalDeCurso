@@ -356,4 +356,66 @@ class UserAdministrationScopeTest {
             verify(userService).delete(4);
         }
     }
+
+    @Nested
+    @DisplayName("Log de criação e exclusão de contas")
+    class Log {
+
+        private Map<String, Object> row(String action, String actorRole, String city) {
+            return Map.of("action", action, "actorRole", actorRole, "city", city, "state", "MG");
+        }
+
+        private List<Map<String, Object>> base() {
+            return List.of(
+                row("CREATE", "ADMINISTRATOR", "Santa Rita do Sapucaí"),
+                row("DELETE", "ADMINISTRATOR", "Santa Rita do Sapucaí"),
+                row("CREATE", "SUPER_ADMIN",   "Santa Rita do Sapucaí"),
+                row("CREATE", "ADMINISTRATOR", "Itajubá"));
+        }
+
+        @Test
+        @DisplayName("super administrador vê o log inteiro")
+        void superAdminSeesEverything() {
+            when(userService.findByEmail("admin@falacidade.com")).thenReturn(superAdmin());
+            when(userService.findLog()).thenReturn(base());
+
+            assertThat(sut.getLog(auth("admin@falacidade.com")).getBody()).hasSize(4);
+        }
+
+        @Test
+        @DisplayName("administrador vê só ações de administradores do seu município")
+        void municipalAdminSeesOnlyAdminActionsInItsCity() {
+            when(userService.findByEmail("admin.sr@falacidade.com")).thenReturn(adminSantaRita());
+            when(userService.findLog()).thenReturn(base());
+
+            assertThat(sut.getLog(auth("admin.sr@falacidade.com")).getBody())
+                .extracting(r -> r.get("action"))
+                .containsExactly("CREATE", "DELETE");
+        }
+
+        @Test
+        @DisplayName("funcionário não acessa o log")
+        void employeeIsForbidden() {
+            when(userService.findByEmail("carlos@prefeitura.com")).thenReturn(
+                user(3, "carlos@prefeitura.com", UserModel.UserRole.EMPLOYEE, "Santa Rita do Sapucaí", "MG"));
+
+            assertThat(sut.getLog(auth("carlos@prefeitura.com")).getStatusCode())
+                .isEqualTo(HttpStatus.FORBIDDEN);
+        }
+
+        @Test
+        @DisplayName("exclusão feita pela administração vai ao log sem o id da conta")
+        void deletionIsLoggedWithoutTargetId() {
+            UserModel alvo = user(4, "joao@email.com", UserModel.UserRole.CITIZEN,
+                                  "Santa Rita do Sapucaí", null);
+            alvo.setActive(false);
+            UserModel admin = adminSantaRita();
+            when(userService.findByEmail("admin.sr@falacidade.com")).thenReturn(admin);
+            when(userService.findById(4)).thenReturn(alvo);
+
+            sut.delete(4, auth("admin.sr@falacidade.com"));
+
+            verify(userService).log("DELETE", admin, null, alvo);
+        }
+    }
 }

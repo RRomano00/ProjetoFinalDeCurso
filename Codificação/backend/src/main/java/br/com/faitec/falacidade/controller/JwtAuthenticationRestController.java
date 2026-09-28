@@ -71,15 +71,10 @@ public class JwtAuthenticationRestController {
         }
         if (user == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 
-        boolean mandatory = (user.getRole() == UserModel.UserRole.EMPLOYEE
-                          || user.getRole() == UserModel.UserRole.ADMINISTRATOR
-                          || user.getRole() == UserModel.UserRole.SUPER_ADMIN)
-                         && !isMfaExempt(user.getEmail());
-
         boolean app   = user.isAppMfaActive();
         boolean email = user.isEmailMfaActive();
 
-        if (mandatory && !app && !email) {
+        if (isMfaMandatory(user) && !app && !email) {
             log.info("MFA obrigatório por e-mail no primeiro acesso: " + user.getEmail());
             String token = mfaTokenStore.createToken(user.getId());
             sendEmailCode(user);
@@ -100,14 +95,18 @@ public class JwtAuthenticationRestController {
         int userId = mfaTokenStore.peek(dto.getMfaToken());
         if (userId < 0) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         UserModel user = userService.findById(userId);
-        if (user == null || !user.isEmailMfaActive()) return ResponseEntity.badRequest().build();
+        // No primeiro acesso da equipe o 2FA por e-mail ainda não está ativo — ele
+        // só é ligado ao validar o código —, e o reenvio tem que valer ali também.
+        boolean emailAllowed = user != null && (user.isEmailMfaActive()
+            || (isMfaMandatory(user) && !user.isAppMfaActive()));
+        if (!emailAllowed) return ResponseEntity.badRequest().build();
         sendEmailCode(user);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/mfa")
     public ResponseEntity<LoginResponseDto> verifyMfa(@Valid @RequestBody MfaVerifyDto dto) {
-        int userId = mfaTokenStore.consume(dto.getMfaToken());
+        int userId = mfaTokenStore.peek(dto.getMfaToken());
         if (userId < 0) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 
         boolean byEmail = "EMAIL".equalsIgnoreCase(dto.getMethod());
@@ -115,7 +114,11 @@ public class JwtAuthenticationRestController {
             ? emailMfaCodeStore.validate(userId, dto.getTotpCode())
             : mfaService.validateCode(userId, dto.getTotpCode());
 
-        if (!ok) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        if (!ok) {
+            mfaTokenStore.fail(dto.getMfaToken());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        mfaTokenStore.consume(dto.getMfaToken());
 
         UserModel user = userService.findById(userId);
         if (byEmail && !user.isEmailMfaActive()) {
@@ -128,6 +131,10 @@ public class JwtAuthenticationRestController {
     @GetMapping("/session")
     public ResponseEntity<Void> session() {
         return ResponseEntity.ok().build();
+    }
+
+    private boolean isMfaMandatory(UserModel user) {
+        return user.isStaff() && !isMfaExempt(user.getEmail());
     }
 
     private boolean isMfaExempt(String email) {

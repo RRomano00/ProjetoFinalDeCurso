@@ -302,6 +302,20 @@ CREATE TABLE IF NOT EXISTS contact_message (
     created_at  TIMESTAMP    NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS user_log (
+    id           SERIAL PRIMARY KEY,
+    action       VARCHAR(10)  NOT NULL CHECK (action IN ('CREATE','DELETE')),
+    actor_id     INTEGER      REFERENCES "user"(id) ON DELETE SET NULL,
+    actor_role   VARCHAR(20)  NOT NULL,
+    target_id    INTEGER      REFERENCES "user"(id) ON DELETE SET NULL,
+    target_role  VARCHAR(20)  NOT NULL,
+    city         VARCHAR(100),
+    state        CHAR(2),
+    created_at   TIMESTAMP    NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_log_locality ON user_log(state, city);
+
 -- ============================================================
 -- 6. ÍNDICES
 -- ============================================================

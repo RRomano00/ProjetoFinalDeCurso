@@ -83,6 +83,7 @@ public class JwtSecurityConfiguration {
                 .requestMatchers(HttpMethod.POST, "/api/user/register").permitAll()
                 .requestMatchers(HttpMethod.POST,
                     "/api/user/password-reset/request",
+                    "/api/user/password-reset/verify",
                     "/api/user/password-reset/confirm").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/occurrence").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/occurrence/mine").authenticated()
@@ -112,7 +113,7 @@ public class JwtSecurityConfiguration {
                     .hasAnyRole(
                         UserModel.UserRole.ADMINISTRATOR.name(),
                         UserModel.UserRole.SUPER_ADMIN.name())
-                .requestMatchers(HttpMethod.GET, "/api/user")
+                .requestMatchers(HttpMethod.GET, "/api/user", "/api/user/log")
                     .hasAnyRole(
                         UserModel.UserRole.ADMINISTRATOR.name(),
                         UserModel.UserRole.SUPER_ADMIN.name())

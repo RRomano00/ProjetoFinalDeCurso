@@ -20,4 +20,8 @@ public interface UserDao extends CrudDao<UserModel>, ReadByEmailDao, UpdatePassw
     void setActive(int userId, boolean active);
 
     void setRole(int userId, UserModel.UserRole role);
+
+    void log(String action, UserModel actor, Integer targetId, UserModel target);
+
+    java.util.List<java.util.Map<String, Object>> readLog();
 }

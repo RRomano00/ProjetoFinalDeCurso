@@ -5,6 +5,7 @@ import { RouterModule } from '@angular/router';
 import { OccurrenceReadService } from '../../../services/occurrence-read.service';
 import { Occurrence } from '../../../domain/model/occurrence';
 import { typeLabel, typeColor } from '../../../domain/occurrence-labels';
+import { persistFilters } from '../../../shared/persist-filters';
 
 export interface ChartBar          { label: string; value: number; color: string; pct: number; }
 export interface NeighborhoodStat  { neighborhood: string; total: number; pct: number; }
@@ -43,7 +44,10 @@ export class StatisticsComponent implements OnInit {
   topNeighborhoods: NeighborhoodStat[]  = [];
   mostSupported:    SupportedItem[]     = [];
 
-  constructor(private occurrenceReadService: OccurrenceReadService) {}
+  constructor(private occurrenceReadService: OccurrenceReadService) {
+    persistFilters(this, 'statistics',
+      ['filterDateFrom', 'filterDateTo', 'filterNeighborhood', 'filterType']);
+  }
 
   async ngOnInit() {
     try {

@@ -151,7 +151,13 @@ export class SignInComponent implements OnInit, OnDestroy {
         this.toastr.success('Novo código enviado para o seu e-mail.');
         this.startResendCountdown();
       },
-      error: () => this.toastr.error('Falha ao reenviar o código.')
+      // 401: a etapa venceu (5 min, erros demais ou backend reiniciado) e só
+      // um novo login gera outra.
+      error: (err: any) => {
+        if (err?.status !== 401) { this.toastr.error('Falha ao reenviar o código.'); return; }
+        this.toastr.warning('A verificação expirou. Entre novamente.');
+        this.backToLogin();
+      }
     });
   }
 
