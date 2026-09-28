@@ -13,6 +13,7 @@ import { SANTA_RITA_DO_SAPUCAI, DEFAULT_MAP_ZOOM } from '../../../domain/map.con
 import { occurrencePopup } from '../../../domain/occurrence-popup';
 import { AuthenticationService } from '../../../services/security/authentication.service';
 import { ToastrService } from 'ngx-toastr';
+import { persistFilters } from '../../../shared/persist-filters';
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -136,7 +137,10 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
     private router: Router,
     private toastr: ToastrService,
     private ngZone: NgZone
-  ) {}
+  ) {
+    // O município já é lembrado pelo LocalityPreferenceService.
+    persistFilters(this, 'home-map', ['mapFilterNeighborhood', 'mapFilterType', 'mapFilterStatus']);
+  }
 
   goToLogin() { this.router.navigate(['/account/sign-in']); }
 

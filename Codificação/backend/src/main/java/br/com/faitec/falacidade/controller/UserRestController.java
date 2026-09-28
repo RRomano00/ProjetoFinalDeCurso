@@ -80,6 +80,8 @@ public class UserRestController {
         try { id = userService.create(entity); }
         catch (IllegalStateException e) { return conflict(e); }
         if (id < 0) return ResponseEntity.badRequest().build();
+        try { userService.log("CREATE", requester, id, entity); }
+        catch (Exception ignored) {}
         try {
             emailService.sendStaffWelcomeEmail(entity.getEmail(), entity.getFullname(),
                                                entity.getRole(), entity.getCity());
@@ -224,7 +226,29 @@ public class UserRestController {
         if (requester.getId() != id && target.isActive())
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
         userService.delete(id);
+        // A exclusão vai ao log sem o id do alvo: a linha não existe mais, e o
+        // registro não pode guardar nada que identifique a pessoa.
+        if (requester.getId() != id) {
+            try { userService.log("DELETE", requester, null, target); }
+            catch (Exception ignored) {}
+        }
         return ResponseEntity.noContent().build();
+    }
+
+    /** O que um Super Administrador fez só aparece para Super Administradores. */
+    @GetMapping("/log")
+    public ResponseEntity<List<java.util.Map<String, Object>>> getLog(Authentication auth) {
+        UserModel requester = getAuthenticatedUser(auth);
+        if (requester == null) return ResponseEntity.status(401).build();
+        if (!requester.isSuperAdmin() && requester.getRole() != UserModel.UserRole.ADMINISTRATOR)
+            return ResponseEntity.status(403).build();
+        List<java.util.Map<String, Object>> rows = userService.findLog().stream()
+            .filter(r -> requester.isSuperAdmin()
+                || (UserModel.UserRole.ADMINISTRATOR.name().equals(r.get("actorRole"))
+                    && Municipality.same(requester.getCity(), requester.getState(),
+                                         (String) r.get("city"), (String) r.get("state"))))
+            .toList();
+        return ResponseEntity.ok(rows);
     }
 
     @PostMapping("/account/delete-code")
@@ -312,6 +336,12 @@ public class UserRestController {
     public ResponseEntity<Void> requestReset(@Valid @RequestBody PasswordResetRequestDto dto) {
         passwordResetService.requestReset(dto.getEmail());
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/password-reset/verify")
+    public ResponseEntity<Void> verifyResetToken(@RequestBody java.util.Map<String, String> body) {
+        return passwordResetService.isTokenValid(body.get("token"))
+            ? ResponseEntity.ok().build() : ResponseEntity.badRequest().build();
     }
 
     @PostMapping("/password-reset/confirm")

@@ -213,4 +213,26 @@ class PasswordResetServiceImplTest {
             verify(tokenDao, never()).markUsed(anyInt());
         }
     }
+
+    @Nested
+    @DisplayName("isTokenValid()")
+    class IsTokenValid {
+
+        @Test
+        @DisplayName("aceita o código válido sem consumi-lo")
+        void validCodeIsNotConsumed() {
+            when(tokenDao.findByToken("A3KP7NB2")).thenReturn(validToken(1));
+            assertThat(sut.isTokenValid(" a3kp7nb2 ")).isTrue();
+            verify(tokenDao, never()).markUsed(anyInt());
+        }
+
+        @Test
+        @DisplayName("recusa código expirado, usado ou vazio")
+        void rejectsUnusableCode() {
+            when(tokenDao.findByToken("A3KP7NB2")).thenReturn(expiredToken(1), usedToken(1));
+            assertThat(sut.isTokenValid("A3KP7NB2")).isFalse();
+            assertThat(sut.isTokenValid("A3KP7NB2")).isFalse();
+            assertThat(sut.isTokenValid("  ")).isFalse();
+        }
+    }
 }

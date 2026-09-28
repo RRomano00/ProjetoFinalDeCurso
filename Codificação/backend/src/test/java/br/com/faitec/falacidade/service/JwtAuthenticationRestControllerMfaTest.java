@@ -4,6 +4,7 @@ import br.com.faitec.falacidade.controller.JwtAuthenticationRestController;
 import br.com.faitec.falacidade.domain.UserModel;
 import br.com.faitec.falacidade.domain.dto.auth.AuthenticationDto;
 import br.com.faitec.falacidade.domain.dto.auth.LoginResponseDto;
+import br.com.faitec.falacidade.domain.dto.auth.MfaVerifyDto;
 import br.com.faitec.falacidade.implementation.service.authentication.ActiveSessionStore;
 import br.com.faitec.falacidade.implementation.service.authentication.jwt.JwtService;
 import br.com.faitec.falacidade.implementation.service.mfa.EmailMfaCodeStore;
@@ -16,6 +17,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
@@ -103,5 +105,42 @@ class JwtAuthenticationRestControllerMfaTest {
     @DisplayName("cidadão sem 2FA entra direto, como antes")
     void citizenWithoutMfaLogsInDirectly() {
         assertThat(login("cidadao@email.com", UserModel.UserRole.CITIZEN).getToken()).isEqualTo("jwt-fake");
+    }
+
+    private MfaVerifyDto code(String mfaToken, String totp) {
+        MfaVerifyDto d = new MfaVerifyDto();
+        d.setMfaToken(mfaToken); d.setTotpCode(totp); d.setMethod("EMAIL");
+        return d;
+    }
+
+    private String lastEmailCode() {
+        ArgumentCaptor<String> c = ArgumentCaptor.forClass(String.class);
+        verify(emailService, atLeastOnce()).sendMfaCodeEmail(anyString(), c.capture());
+        return c.getValue();
+    }
+
+    @Test
+    @DisplayName("código errado não derruba a etapa: dá para reenviar e entrar com o novo")
+    void wrongCodeKeepsTheStepAlive() {
+        String token = login("func@prefeitura.com", UserModel.UserRole.EMPLOYEE).getMfaToken();
+        UserModel func = new UserModel();
+        func.setId(1); func.setEmail("func@prefeitura.com"); func.setRole(UserModel.UserRole.EMPLOYEE);
+        when(userService.findById(1)).thenReturn(func);
+
+        assertThat(sut.verifyMfa(code(token, "000000")).getStatusCode().value()).isEqualTo(401);
+        assertThat(sut.sendEmailMfaCode(code(token, null)).getStatusCode().value()).isEqualTo(200);
+        assertThat(sut.verifyMfa(code(token, lastEmailCode())).getBody().getToken()).isEqualTo("jwt-fake");
+    }
+
+    @Test
+    @DisplayName("cinco códigos errados encerram a etapa")
+    void fiveWrongCodesEndTheStep() {
+        String token = login("func@prefeitura.com", UserModel.UserRole.EMPLOYEE).getMfaToken();
+        String certo = lastEmailCode();
+        String errado = certo.equals("000000") ? "111111" : "000000";
+
+        for (int i = 0; i < 5; i++) sut.verifyMfa(code(token, errado));
+
+        assertThat(sut.verifyMfa(code(token, certo)).getStatusCode().value()).isEqualTo(401);
     }
 }

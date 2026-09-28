@@ -14,6 +14,12 @@ export class PasswordResetService {
     );
   }
 
+  verifyToken(token: string): Promise<any> {
+    return firstValueFrom(
+      this.http.post(`${environment.api_endpoint}/user/password-reset/verify`, { token })
+    );
+  }
+
   confirmReset(token: string, newPassword: string): Promise<any> {
     return firstValueFrom(
       this.http.post(`${environment.api_endpoint}/user/password-reset/confirm`, { token, newPassword })

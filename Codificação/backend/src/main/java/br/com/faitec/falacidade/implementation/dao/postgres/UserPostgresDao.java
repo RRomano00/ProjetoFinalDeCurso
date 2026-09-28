@@ -227,6 +227,56 @@ public class UserPostgresDao implements UserDao {
         }
     }
 
+    @Override
+    public void log(String action, UserModel actor, Integer targetId, UserModel target) {
+        String sql = "INSERT INTO user_log (action, actor_id, actor_role, target_id, target_role, city, state) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?)";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, action);
+            ps.setInt(2, actor.getId());
+            ps.setString(3, actor.getRole().name());
+            if (targetId != null) ps.setInt(4, targetId); else ps.setNull(4, Types.INTEGER);
+            ps.setString(5, target.getRole().name());
+            ps.setString(6, target.getCity());
+            ps.setString(7, target.getState());
+            ps.execute();
+        } catch (SQLException e) {
+            throw new RuntimeException("Erro ao gravar log de usuário", e);
+        }
+    }
+
+    @Override
+    public List<java.util.Map<String, Object>> readLog() {
+        String sql = "SELECT l.*, a.fullname AS actor_name, a.email AS actor_email, " +
+                     "t.fullname AS target_name, t.email AS target_email " +
+                     "FROM user_log l " +
+                     "LEFT JOIN \"user\" a ON a.id = l.actor_id " +
+                     "LEFT JOIN \"user\" t ON t.id = l.target_id " +
+                     "ORDER BY l.created_at DESC, l.id DESC";
+        List<java.util.Map<String, Object>> rows = new ArrayList<>();
+        try (PreparedStatement ps = connection.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                java.util.Map<String, Object> r = new java.util.LinkedHashMap<>();
+                r.put("id",          rs.getInt("id"));
+                r.put("action",      rs.getString("action"));
+                r.put("actorRole",   rs.getString("actor_role"));
+                r.put("actorName",   rs.getString("actor_name"));
+                r.put("actorEmail",  rs.getString("actor_email"));
+                r.put("targetRole",  rs.getString("target_role"));
+                r.put("targetName",  rs.getString("target_name"));
+                r.put("targetEmail", rs.getString("target_email"));
+                r.put("city",        rs.getString("city"));
+                r.put("state",       rs.getString("state"));
+                r.put("createdAt",   rs.getTimestamp("created_at").toLocalDateTime());
+                rows.add(r);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Erro ao listar log de usuários", e);
+        }
+        return rows;
+    }
+
     private UserModel queryOne(String sql, Object param) {
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             if (param instanceof Integer i) ps.setInt(1, i);

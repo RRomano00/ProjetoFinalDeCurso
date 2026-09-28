@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { UserReadService } from '../../../services/user/user-read.service';
 import { AuthenticationService } from '../../../services/security/authentication.service';
 import { ToastrService } from 'ngx-toastr';
+import { persistFilters } from '../../../shared/persist-filters';
 
 @Component({
   selector: 'app-user-list',
@@ -57,6 +58,7 @@ export class UserListComponent implements OnInit {
   ) {
     this.assignableRoles = ['CITIZEN', 'EMPLOYEE', 'ADMINISTRATOR'];
     if (this.auth.isSuperAdmin()) this.assignableRoles.push('SUPER_ADMIN');
+    persistFilters(this, 'users', ['search', 'filterRole', 'filterCity', 'filterActive']);
   }
 
   assignableRoles: string[] = [];

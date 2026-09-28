@@ -75,6 +75,11 @@ export const routes: Routes = [
           import('./views/user/user-list/user-list.component').then(m => m.UserListComponent)
       },
       {
+        path: 'user/log',
+        loadComponent: () =>
+          import('./views/user/user-log/user-log.component').then(m => m.UserLogComponent)
+      },
+      {
         path: 'account/my-profile',
         loadComponent: () =>
           import('./views/account/my-profile/my-profile.component').then(m => m.MyProfileComponent)

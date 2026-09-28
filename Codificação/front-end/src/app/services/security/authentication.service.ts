@@ -96,11 +96,12 @@ export class AuthenticationService {
    * Encerra a sessão preservando as preferências do navegador. O município em
    * exibição e a dispensa do convite de instalação não são credenciais: a
    * escolha é feita antes de entrar e tem que sobreviver ao logout e ao token
-   * vencido — localStorage.clear() apagava justamente isso.
+   * vencido — localStorage.clear() apagava justamente isso. Os filtros das telas
+   * também ficam: a chave deles já separa uma conta da outra.
    */
   private endSession() {
     const kept = Object.keys(localStorage)
-      .filter(key => key.startsWith('locality.') || key.startsWith('install.'))
+      .filter(key => key.startsWith('locality.') || key.startsWith('install.') || key.startsWith('filters.'))
       .map(key => [key, localStorage.getItem(key)!] as const);
     localStorage.clear();
     kept.forEach(([key, value]) => localStorage.setItem(key, value));

@@ -71,6 +71,16 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public void log(String action, UserModel actor, Integer targetId, UserModel target) {
+        if (actor != null && target != null) userDao.log(action, actor, targetId, target);
+    }
+
+    @Override
+    public List<java.util.Map<String, Object>> findLog() {
+        return userDao.readLog();
+    }
+
+    @Override
     public void update(int id, UserModel entity) {
         if (id != entity.getId()) return;
         if (findById(id) == null) return;

@@ -7,6 +7,7 @@ import { OccurrenceSupportService } from '../../../services/occurrence-support.s
 import { Occurrence } from '../../../domain/model/occurrence';
 import { typeLabel, typeColor, statusLabel, statusClass, priorityLabel } from '../../../domain/occurrence-labels';
 import { ToastrService } from 'ngx-toastr';
+import { persistFilters } from '../../../shared/persist-filters';
 import { AuthenticationService } from '../../../services/security/authentication.service';
 import { LocalityPreferenceService, Municipality } from '../../../services/local/locality-preference.service';
 
@@ -52,7 +53,15 @@ export class ListOccurrenceComponent implements OnInit {
     public  auth: AuthenticationService,
     private locality: LocalityPreferenceService,
     private toastr: ToastrService
-  ) {}
+  ) {
+    // A equipe triagem por bairro; o cidadão vê a grade corrida.
+    this.defaultGroupBy = auth.isStaff() ? 'neighborhood' : '';
+    this.groupBy = this.defaultGroupBy;
+    // O município já é lembrado pelo LocalityPreferenceService, junto do mapa.
+    persistFilters(this, 'occurrences', ['search', 'filterStatus', 'filterMine', 'groupBy']);
+  }
+
+  private readonly defaultGroupBy: '' | 'neighborhood';
 
   private mine: Occurrence[] | null = null;
   loadingMine = false;
@@ -61,7 +70,7 @@ export class ListOccurrenceComponent implements OnInit {
     try {
       this.occurrences = await this.occurrenceReadService.findAll();
       await this.loadMunicipalities();
-      this.applyFilters();
+      await this.toggleMine();
     } catch {
       this.toastr.error('Erro ao carregar ocorrências.');
     } finally {
@@ -164,7 +173,7 @@ export class ListOccurrenceComponent implements OnInit {
     this.filterStatus   = '';
     this.filterType     = '';
     this.filterMine     = false;
-    this.groupBy        = '';
+    this.groupBy        = this.defaultGroupBy;
     this.locality.choice = null;
     this.applyFilters();
   }
