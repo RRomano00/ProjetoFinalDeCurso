@@ -5,6 +5,7 @@ import br.com.faitec.falacidade.domain.UserModel;
 import br.com.faitec.falacidade.domain.dto.auth.MfaVerifyDto;
 import br.com.faitec.falacidade.domain.dto.user.*;
 import br.com.faitec.falacidade.implementation.service.mfa.EmailMfaCodeStore;
+import br.com.faitec.falacidade.implementation.service.mfa.SmsCodeSender;
 import br.com.faitec.falacidade.port.service.email.EmailService;
 import br.com.faitec.falacidade.port.service.mfa.MfaService;
 import br.com.faitec.falacidade.port.service.password.PasswordResetService;
@@ -28,17 +29,20 @@ public class UserRestController {
     private final EmailService         emailService;
     private final MfaService           mfaService;
     private final EmailMfaCodeStore    emailMfaCodeStore;
+    private final SmsCodeSender        smsSender;
 
     public UserRestController(UserService userService,
                               PasswordResetService passwordResetService,
                               EmailService emailService,
                               MfaService mfaService,
-                              EmailMfaCodeStore emailMfaCodeStore) {
+                              EmailMfaCodeStore emailMfaCodeStore,
+                              SmsCodeSender smsSender) {
         this.userService          = userService;
         this.passwordResetService = passwordResetService;
         this.emailService         = emailService;
         this.mfaService           = mfaService;
         this.emailMfaCodeStore    = emailMfaCodeStore;
+        this.smsSender            = smsSender;
     }
 
     @PostMapping("/register")
@@ -164,7 +168,7 @@ public class UserRestController {
         java.util.List<UserModel> users = userService.findAllUsers().stream()
             .filter(u -> canManage(requester, u))
             .toList();
-        users.forEach(u -> { u.setPassword(null); u.setMfaSecret(null); });
+        users.forEach(u -> { u.setPassword(null); u.setMfaSecret(null); u.setMfaSmsPhone(null); });
         return ResponseEntity.ok(users);
     }
 
@@ -213,6 +217,7 @@ public class UserRestController {
         if (entity == null) return ResponseEntity.notFound().build();
         entity.setPassword(null);
         entity.setMfaSecret(null);
+        entity.setMfaSmsPhone(null);
         return ResponseEntity.ok(entity);
     }
 
@@ -255,10 +260,14 @@ public class UserRestController {
     public ResponseEntity<Void> sendAccountDeletionCode(Authentication auth) {
         UserModel user = getAuthenticatedUser(auth);
         if (user == null) return ResponseEntity.status(401).build();
-        if (!user.isEmailMfaActive()) return ResponseEntity.badRequest().build();
-        String code = emailMfaCodeStore.generateCode(user.getId());
-        emailService.sendMfaCodeEmail(user.getEmail(), code);
-        return ResponseEntity.ok().build();
+        if (emailCodeAllowed(user)) {
+            String code = emailMfaCodeStore.generateCode(user.getId());
+            emailService.sendMfaCodeEmail(user.getEmail(), code);
+            return ResponseEntity.ok().build();
+        }
+        if (user.isSmsMfaActive())
+            return ResponseEntity.status(smsSender.send(user.getId(), user.getMfaSmsPhone())).build();
+        return ResponseEntity.badRequest().build();
     }
 
     @DeleteMapping("/account")
@@ -267,19 +276,27 @@ public class UserRestController {
         if (user == null) return ResponseEntity.status(401).build();
 
         boolean appActive   = user.isAppMfaActive();
-        boolean emailActive = user.isEmailMfaActive();
+        boolean emailActive = emailCodeAllowed(user);
+        boolean smsActive   = user.isSmsMfaActive();
 
-        if (appActive || emailActive) {
+        if (appActive || emailActive || smsActive) {
             String code = dto != null ? dto.getTotpCode() : null;
             if (code == null || code.isBlank()) return ResponseEntity.status(401).build();
             boolean ok = false;
             if (appActive)            ok = mfaService.validateCode(user.getId(), code);
             if (!ok && emailActive)   ok = emailMfaCodeStore.validate(user.getId(), code);
+            if (!ok && smsActive)     ok = emailMfaCodeStore.validate(user.getId(), EmailMfaCodeStore.SMS,
+                                                                      user.getMfaSmsPhone(), code);
             if (!ok) return ResponseEntity.status(401).build();
         }
 
         userService.delete(user.getId());
         return ResponseEntity.noContent().build();
+    }
+
+    /** Com o SMS desligado (fim da feira), o e-mail substitui o SMS; sem isso a conta não teria como se excluir. */
+    private boolean emailCodeAllowed(UserModel user) {
+        return user.isEmailMfaActive() || (user.isSmsMfaActive() && !smsSender.isEnabled());
     }
 
     private UserModel getAuthenticatedUser(Authentication auth) {
@@ -329,6 +346,7 @@ public class UserRestController {
         if (entity == null) return ResponseEntity.notFound().build();
         entity.setPassword(null);
         entity.setMfaSecret(null);
+        entity.setMfaSmsPhone(null);
         return ResponseEntity.ok(entity);
     }
 

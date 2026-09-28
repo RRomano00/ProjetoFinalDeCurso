@@ -13,4 +13,6 @@ public interface MfaService {
     boolean disable(int userId, String totpCode);
 
     void setEmailMfa(int userId, boolean enabled);
+
+    void setSmsMfa(int userId, String phone);
 }

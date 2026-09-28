@@ -8,6 +8,7 @@ import br.com.faitec.falacidade.implementation.service.authentication.ActiveSess
 import br.com.faitec.falacidade.implementation.service.authentication.jwt.JwtService;
 import br.com.faitec.falacidade.implementation.service.mfa.EmailMfaCodeStore;
 import br.com.faitec.falacidade.implementation.service.mfa.MfaTokenStore;
+import br.com.faitec.falacidade.implementation.service.mfa.SmsCodeSender;
 import br.com.faitec.falacidade.port.service.authentication.AuthenticationService;
 import br.com.faitec.falacidade.port.service.email.EmailService;
 import br.com.faitec.falacidade.port.service.mfa.MfaService;
@@ -40,6 +41,7 @@ public class JwtAuthenticationRestController {
     private final EmailService          emailService;
     private final EmailMfaCodeStore     emailMfaCodeStore;
     private final ActiveSessionStore    activeSessions;
+    private final SmsCodeSender         smsSender;
 
     @Value("${app.mfa.exempt-emails:admin@falacidade.com}")
     private String mfaExemptEmails;
@@ -49,7 +51,7 @@ public class JwtAuthenticationRestController {
             UserDetailsService userDetailsService, MfaService mfaService,
             MfaTokenStore mfaTokenStore, UserService userService,
             EmailService emailService, EmailMfaCodeStore emailMfaCodeStore,
-            ActiveSessionStore activeSessions) {
+            ActiveSessionStore activeSessions, SmsCodeSender smsSender) {
         this.authenticationService = authenticationService;
         this.jwtService            = jwtService;
         this.userDetailsService    = userDetailsService;
@@ -59,6 +61,7 @@ public class JwtAuthenticationRestController {
         this.emailService          = emailService;
         this.emailMfaCodeStore     = emailMfaCodeStore;
         this.activeSessions        = activeSessions;
+        this.smsSender             = smsSender;
     }
 
     @PostMapping
@@ -72,22 +75,18 @@ public class JwtAuthenticationRestController {
         if (user == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 
         boolean app   = user.isAppMfaActive();
-        boolean email = user.isEmailMfaActive();
+        boolean sms   = user.isSmsMfaActive() && smsSender.isEnabled();
+        boolean email = emailCodeAllowed(user);
 
-        if (isMfaMandatory(user) && !app && !email) {
-            log.info("MFA obrigatório por e-mail no primeiro acesso: " + user.getEmail());
-            String token = mfaTokenStore.createToken(user.getId());
-            sendEmailCode(user);
-            return ResponseEntity.ok(LoginResponseDto.requiresMfa(token, false, true));
-        }
+        if (!app && !email && !sms)
+            return ResponseEntity.ok(LoginResponseDto.withJwt(generateJwt(user)));
 
-        if (app || email) {
-            String token = mfaTokenStore.createToken(user.getId());
-            if (email && !app) sendEmailCode(user);
-            return ResponseEntity.ok(LoginResponseDto.requiresMfa(token, app, email));
-        }
-
-        return ResponseEntity.ok(LoginResponseDto.withJwt(generateJwt(user)));
+        String token = mfaTokenStore.createToken(user.getId());
+        // Um método só dispensa a tela de escolha: o e-mail já sai junto do login.
+        // O SMS não: a tela o pede em /mfa/send-sms e assim fica sabendo se o
+        // celular gateway falhou, em vez de esperar um código que não vem.
+        if (email && !app && !sms) sendEmailCode(user);
+        return ResponseEntity.ok(LoginResponseDto.requiresMfa(token, app, email, sms));
     }
 
     @PostMapping("/mfa/send-email")
@@ -95,13 +94,18 @@ public class JwtAuthenticationRestController {
         int userId = mfaTokenStore.peek(dto.getMfaToken());
         if (userId < 0) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         UserModel user = userService.findById(userId);
-        // No primeiro acesso da equipe o 2FA por e-mail ainda não está ativo — ele
-        // só é ligado ao validar o código —, e o reenvio tem que valer ali também.
-        boolean emailAllowed = user != null && (user.isEmailMfaActive()
-            || (isMfaMandatory(user) && !user.isAppMfaActive()));
-        if (!emailAllowed) return ResponseEntity.badRequest().build();
+        if (user == null || !emailCodeAllowed(user)) return ResponseEntity.badRequest().build();
         sendEmailCode(user);
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/mfa/send-sms")
+    public ResponseEntity<Void> sendSmsMfaCode(@RequestBody MfaVerifyDto dto) {
+        int userId = mfaTokenStore.peek(dto.getMfaToken());
+        if (userId < 0) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        UserModel user = userService.findById(userId);
+        if (user == null || !user.isSmsMfaActive()) return ResponseEntity.badRequest().build();
+        return ResponseEntity.status(smsSender.send(userId, user.getMfaSmsPhone())).build();
     }
 
     @PostMapping("/mfa")
@@ -109,10 +113,12 @@ public class JwtAuthenticationRestController {
         int userId = mfaTokenStore.peek(dto.getMfaToken());
         if (userId < 0) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 
-        boolean byEmail = "EMAIL".equalsIgnoreCase(dto.getMethod());
-        boolean ok = byEmail
-            ? emailMfaCodeStore.validate(userId, dto.getTotpCode())
-            : mfaService.validateCode(userId, dto.getTotpCode());
+        String method = dto.getMethod() == null ? "APP" : dto.getMethod().toUpperCase();
+        boolean ok = switch (method) {
+            case "EMAIL" -> emailMfaCodeStore.validate(userId, dto.getTotpCode());
+            case "SMS"   -> validSmsCode(userId, dto.getTotpCode());
+            default      -> mfaService.validateCode(userId, dto.getTotpCode());
+        };
 
         if (!ok) {
             mfaTokenStore.fail(dto.getMfaToken());
@@ -121,7 +127,7 @@ public class JwtAuthenticationRestController {
         mfaTokenStore.consume(dto.getMfaToken());
 
         UserModel user = userService.findById(userId);
-        if (byEmail && !user.isEmailMfaActive()) {
+        if ("EMAIL".equals(method) && !user.isEmailMfaActive() && isMfaMandatory(user)) {
             mfaService.setEmailMfa(userId, true);
             log.info("2FA por e-mail ativado no primeiro acesso: " + user.getEmail());
         }
@@ -141,6 +147,24 @@ public class JwtAuthenticationRestController {
         return Arrays.stream(mfaExemptEmails.split(","))
             .map(String::trim).filter(e -> !e.isEmpty())
             .anyMatch(e -> e.equalsIgnoreCase(email));
+    }
+
+    /**
+     * E-mail vale quando está ativo, no primeiro acesso da equipe e como reserva
+     * de quem só tem SMS com o envio desligado — sem ela a conta ficaria sem
+     * como entrar ou entraria sem segundo fator.
+     */
+    private boolean emailCodeAllowed(UserModel user) {
+        if (user.isEmailMfaActive()) return true;
+        if (user.isAppMfaActive()) return false;
+        if (user.isSmsMfaActive()) return !smsSender.isEnabled();
+        return isMfaMandatory(user);
+    }
+
+    private boolean validSmsCode(int userId, String code) {
+        UserModel user = userService.findById(userId);
+        return user != null && user.isSmsMfaActive()
+            && emailMfaCodeStore.validate(userId, EmailMfaCodeStore.SMS, user.getMfaSmsPhone(), code);
     }
 
     private void sendEmailCode(UserModel user) {

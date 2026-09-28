@@ -36,6 +36,22 @@ export class MfaService {
   disableEmail(code: string): Promise<any> {
     return firstValueFrom(this.http.delete<any>(`${this.base}/email`, { body: { totpCode: code } }));
   }
+  sendSmsEnableCode(phone: string): Promise<any> {
+    return firstValueFrom(this.http.post<any>(`${this.base}/sms/send-enable-code`, { phone }));
+  }
+
+  enableSms(phone: string, code: string): Promise<any> {
+    return firstValueFrom(this.http.post<any>(`${this.base}/sms`, { phone, totpCode: code }));
+  }
+
+  sendSmsDisableCode(): Promise<any> {
+    return firstValueFrom(this.http.post<any>(`${this.base}/sms/send-code`, {}));
+  }
+
+  disableSms(code: string): Promise<any> {
+    return firstValueFrom(this.http.delete<any>(`${this.base}/sms`, { body: { totpCode: code } }));
+  }
+
 
   disableApp(totpCode: string): Promise<any> {
     return firstValueFrom(this.http.delete<any>(`${this.base}`, { body: { totpCode } }));

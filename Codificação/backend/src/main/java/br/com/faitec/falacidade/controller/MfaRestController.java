@@ -1,9 +1,11 @@
 package br.com.faitec.falacidade.controller;
 
+import br.com.faitec.falacidade.domain.MobilePhone;
 import br.com.faitec.falacidade.domain.UserModel;
 import br.com.faitec.falacidade.domain.dto.auth.MfaSetupResponseDto;
 import br.com.faitec.falacidade.domain.dto.auth.MfaVerifyDto;
 import br.com.faitec.falacidade.implementation.service.mfa.EmailMfaCodeStore;
+import br.com.faitec.falacidade.implementation.service.mfa.SmsCodeSender;
 import br.com.faitec.falacidade.port.service.email.EmailService;
 import br.com.faitec.falacidade.port.service.mfa.MfaService;
 import br.com.faitec.falacidade.port.service.user.UserService;
@@ -23,13 +25,16 @@ public class MfaRestController {
     private final UserService       userService;
     private final EmailService      emailService;
     private final EmailMfaCodeStore emailMfaCodeStore;
+    private final SmsCodeSender     smsSender;
 
     public MfaRestController(MfaService mfaService, UserService userService,
-                             EmailService emailService, EmailMfaCodeStore emailMfaCodeStore) {
+                             EmailService emailService, EmailMfaCodeStore emailMfaCodeStore,
+                             SmsCodeSender smsSender) {
         this.mfaService        = mfaService;
         this.userService       = userService;
         this.emailService      = emailService;
         this.emailMfaCodeStore = emailMfaCodeStore;
+        this.smsSender         = smsSender;
     }
 
     @PostMapping("/setup")
@@ -54,9 +59,12 @@ public class MfaRestController {
         UserModel user = getUser(auth);
         if (user == null) return ResponseEntity.status(401).build();
         return ResponseEntity.ok(Map.of(
-            "appActive",   user.isAppMfaActive(),
-            "emailActive", user.isEmailMfaActive(),
-            "role",        user.getRole().name()
+            "appActive",    user.isAppMfaActive(),
+            "emailActive",  user.isEmailMfaActive(),
+            "smsActive",    user.isSmsMfaActive(),
+            "smsAvailable", smsSender.isEnabled(),
+            "smsPhone",     java.util.Objects.toString(MobilePhone.mask(user.getMfaSmsPhone()), ""),
+            "role",         user.getRole().name()
         ));
     }
 
@@ -96,7 +104,7 @@ public class MfaRestController {
         UserModel user = getUser(auth);
         if (user == null) return ResponseEntity.status(401).build();
         if (!user.isEmailMfaActive()) return ResponseEntity.badRequest().build();
-        if (isStaff(user) && !user.isAppMfaActive())
+        if (isStaff(user) && user.activeMfaCount() <= 1)
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
         if (!emailMfaCodeStore.validate(user.getId(), dto.getTotpCode()))
             return ResponseEntity.status(401).build();
@@ -109,10 +117,55 @@ public class MfaRestController {
         UserModel user = getUser(auth);
         if (user == null) return ResponseEntity.status(401).build();
         if (!user.isAppMfaActive()) return ResponseEntity.badRequest().build();
-        if (isStaff(user) && !user.isEmailMfaActive())
+        if (isStaff(user) && user.activeMfaCount() <= 1)
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
         return mfaService.disable(user.getId(), dto.getTotpCode())
             ? ResponseEntity.ok().build() : ResponseEntity.status(401).build();
+    }
+
+    @PostMapping("/sms/send-enable-code")
+    public ResponseEntity<Void> sendSmsEnableCode(@RequestBody MfaVerifyDto dto, Authentication auth) {
+        UserModel user = getUser(auth);
+        if (user == null) return ResponseEntity.status(401).build();
+        if (user.isSmsMfaActive()) return ResponseEntity.badRequest().build();
+        String phone = MobilePhone.toE164(dto.getPhone());
+        if (phone == null) return ResponseEntity.badRequest().build();
+        return ResponseEntity.status(smsSender.send(user.getId(), phone)).build();
+    }
+
+    @PostMapping("/sms")
+    public ResponseEntity<Void> enableSms(@RequestBody MfaVerifyDto dto, Authentication auth) {
+        UserModel user = getUser(auth);
+        if (user == null) return ResponseEntity.status(401).build();
+        if (user.isSmsMfaActive()) return ResponseEntity.badRequest().build();
+        String phone = MobilePhone.toE164(dto.getPhone());
+        if (phone == null) return ResponseEntity.badRequest().build();
+        if (!emailMfaCodeStore.validate(user.getId(), EmailMfaCodeStore.SMS, phone, dto.getTotpCode()))
+            return ResponseEntity.status(401).build();
+        mfaService.setSmsMfa(user.getId(), phone);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/sms/send-code")
+    public ResponseEntity<Void> sendSmsDisableCode(Authentication auth) {
+        UserModel user = getUser(auth);
+        if (user == null) return ResponseEntity.status(401).build();
+        if (!user.isSmsMfaActive()) return ResponseEntity.badRequest().build();
+        return ResponseEntity.status(smsSender.send(user.getId(), user.getMfaSmsPhone())).build();
+    }
+
+    @DeleteMapping("/sms")
+    public ResponseEntity<Void> disableSms(@RequestBody MfaVerifyDto dto, Authentication auth) {
+        UserModel user = getUser(auth);
+        if (user == null) return ResponseEntity.status(401).build();
+        if (!user.isSmsMfaActive()) return ResponseEntity.badRequest().build();
+        if (isStaff(user) && user.activeMfaCount() <= 1)
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        if (!emailMfaCodeStore.validate(user.getId(), EmailMfaCodeStore.SMS,
+                                        user.getMfaSmsPhone(), dto.getTotpCode()))
+            return ResponseEntity.status(401).build();
+        mfaService.setSmsMfa(user.getId(), null);
+        return ResponseEntity.ok().build();
     }
 
     private boolean isStaff(UserModel user) {

@@ -16,7 +16,7 @@ export class AuthenticationService {
     );
   }
 
-  verifyMfa(mfaToken: string, totpCode: string, method: 'APP' | 'EMAIL' = 'APP'): Observable<any> {
+  verifyMfa(mfaToken: string, totpCode: string, method: 'APP' | 'EMAIL' | 'SMS' = 'APP'): Observable<any> {
     return this.http.post<any>(
       `${environment.authentication_api_endpoint}/authenticate/mfa`,
       { mfaToken, totpCode, method }
@@ -29,6 +29,13 @@ export class AuthenticationService {
       { mfaToken }
     );
   }
+  sendSmsCode(mfaToken: string): Observable<any> {
+    return this.http.post<any>(
+      `${environment.authentication_api_endpoint}/authenticate/mfa/send-sms`,
+      { mfaToken }
+    );
+  }
+
 
   saveSession(token: string, email: string, fullname: string, role: string, id?: string) {
     localStorage.setItem('token',    token);
