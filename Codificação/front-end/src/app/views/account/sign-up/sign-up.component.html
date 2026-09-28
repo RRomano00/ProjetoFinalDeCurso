@@ -7,188 +7,230 @@
       <p>Crie sua conta gratuitamente</p>
     </div>
 
-    <form class="auth-form" [formGroup]="form" (ngSubmit)="create()">
+    <form class="auth-form" [formGroup]="form" (ngSubmit)="next()" novalidate>
 
-      <div class="field-group">
-        <label for="fullname">Nome Completo</label>
-        <div class="input-wrapper">
-          <span class="input-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-              fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/>
-            </svg>
-          </span>
-          <input type="text" id="fullname" formControlName="fullname"
-            placeholder="Seu nome completo" autocomplete="name">
-        </div>
-        <span class="field-error"
-          *ngIf="form.controls['fullname'].touched && form.controls['fullname'].hasError('required')">
-          Nome é obrigatório.
-        </span>
-        <span class="field-error"
-          *ngIf="form.controls['fullname'].touched && form.controls['fullname'].hasError('minlength')">
-          Nome deve ter no mínimo 2 caracteres.
-        </span>
-      </div>
+      <button type="button" class="step-back" (click)="back()">
+        <span aria-hidden="true">←</span> Voltar
+      </button>
 
-      <div class="field-group">
-        <label for="email">E-mail</label>
-        <div class="input-wrapper">
-          <span class="input-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-              fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect width="20" height="16" x="2" y="4" rx="2"/>
-              <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
-            </svg>
-          </span>
-          <input type="email" id="email" formControlName="email"
-            placeholder="seu@email.com" autocomplete="email">
-        </div>
-        <span class="field-error"
-          *ngIf="form.controls['email'].touched && form.controls['email'].hasError('required')">
-          E-mail é obrigatório.
-        </span>
-        <span class="field-error"
-          *ngIf="form.controls['email'].touched && form.controls['email'].hasError('email')">
-          E-mail inválido.
-        </span>
-      </div>
-
-      <div class="field-group">
-        <label for="dateOfBirth">Data de Nascimento</label>
-        <div class="input-wrapper">
-          <span class="input-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-              fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18M8 2v4M16 2v4"/>
-            </svg>
-          </span>
-          <input type="date" id="dateOfBirth" formControlName="dateOfBirth" autocomplete="bday">
-        </div>
-        <span class="field-error"
-          *ngIf="form.controls['dateOfBirth'].touched && form.controls['dateOfBirth'].hasError('required')">
-          Data de nascimento é obrigatória.
-        </span>
-      </div>
-
-      <div class="field-group">
-        <label for="phoneNumber">Telefone <span class="label-optional">(opcional)</span></label>
-        <div class="input-wrapper">
-          <span class="input-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-              fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6
-                       19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92Z"/>
-            </svg>
-          </span>
-          <input type="tel" id="phoneNumber" formControlName="phoneNumber"
-            placeholder="(35) 99999-9999" autocomplete="tel">
-        </div>
-        <span class="field-hint">Usamos apenas para contato sobre suas ocorrências.</span>
-      </div>
-
-      <div class="field-row">
-        <div class="field-group field-uf">
-          <label for="state">UF</label>
-          <div class="input-wrapper">
-            <input type="text" id="state" formControlName="state" list="uf-options"
-              placeholder="MG" maxlength="2" autocomplete="address-level1"
-              autocapitalize="characters" spellcheck="false">
-          </div>
-          <datalist id="uf-options">
-            <option *ngFor="let u of units" [value]="u.uf">{{ u.name }}</option>
-          </datalist>
-          <span class="field-error"
-            *ngIf="form.controls['state'].touched && form.controls['state'].hasError('required')">
-            Informe a UF.
-          </span>
-        </div>
-
-        <div class="field-group field-city">
-          <label for="city">Município</label>
-          <div class="input-wrapper">
-            <span class="input-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
-              </svg>
+      <!-- Todas as etapas ocupam a mesma célula: a área fica com a altura da maior
+           e o botão Continuar/Criar conta não muda de lugar entre as etapas. -->
+      <div class="steps">
+        <div class="step" [class.active]="step === 0">
+          <h2 class="step-title">{{ steps[0].title }}</h2>
+          <div class="field-group">
+            <label for="fullname">Nome Completo</label>
+            <div class="input-wrapper">
+              <span class="input-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                  fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/>
+                </svg>
+              </span>
+              <input type="text" id="fullname" formControlName="fullname"
+                placeholder="Seu nome completo" autocomplete="name">
+            </div>
+            <span class="field-error"
+              *ngIf="form.controls['fullname'].touched && form.controls['fullname'].hasError('required')">
+              Nome é obrigatório.
             </span>
-            <input type="text" id="city" formControlName="city" list="city-options"
-              [readOnly]="!cityOptions.ready" autocomplete="address-level2" spellcheck="false"
-              [placeholder]="cityOptions.ready ? 'Comece a digitar o município' : 'Informe a UF primeiro'">
+            <span class="field-error"
+              *ngIf="form.controls['fullname'].touched && form.controls['fullname'].hasError('minlength')">
+              Nome deve ter no mínimo 2 caracteres.
+            </span>
           </div>
-          <datalist id="city-options">
-            <option *ngFor="let c of cityOptions.list" [value]="c"></option>
-          </datalist>
-          <span class="field-error"
-            *ngIf="form.controls['city'].touched && form.controls['city'].hasError('required')">
-            Município é obrigatório.
-          </span>
-          <span class="field-hint" *ngIf="!cityOptions.ready">Selecione a UF para ver os municípios.</span>
         </div>
-      </div>
-
-      <div class="field-group">
-        <label for="password">Senha</label>
-        <div class="input-wrapper">
-          <span class="input-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-              fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-            </svg>
-          </span>
-          <input type="password" id="password" formControlName="password"
-            placeholder="••••••••" autocomplete="new-password">
+        <div class="step" [class.active]="step === 1">
+          <h2 class="step-title">{{ steps[1].title }}</h2>
+          <div class="field-group">
+            <label for="email">E-mail</label>
+            <div class="input-wrapper">
+              <span class="input-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                  fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect width="20" height="16" x="2" y="4" rx="2"/>
+                  <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                </svg>
+              </span>
+              <input type="email" id="email" formControlName="email"
+                placeholder="seu@email.com" autocomplete="email">
+            </div>
+            <span class="field-error"
+              *ngIf="form.controls['email'].touched && form.controls['email'].hasError('required')">
+              E-mail é obrigatório.
+            </span>
+            <span class="field-error"
+              *ngIf="form.controls['email'].touched && form.controls['email'].hasError('email')">
+              E-mail inválido.
+            </span>
+            <span class="field-error" *ngIf="form.controls['email'].hasError('taken')">
+              Este e-mail já está cadastrado. Use outro ou faça login.
+            </span>
+          </div>
         </div>
-        <span class="field-error"
-          *ngIf="form.controls['password'].touched && form.controls['password'].invalid">
-          Senha deve ter no mínimo 8 caracteres, com letra, número e caractere especial.
-        </span>
-      </div>
-
-      <div class="field-group">
-        <label for="repeatPassword">Confirmar Senha</label>
-        <div class="input-wrapper">
-          <span class="input-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-              fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-            </svg>
-          </span>
-          <input type="password" id="repeatPassword" formControlName="repeatPassword"
-            placeholder="••••••••" autocomplete="new-password">
+        <div class="step" [class.active]="step === 2">
+          <h2 class="step-title">{{ steps[2].title }}</h2>
+          <div class="field-group">
+            <label for="dateOfBirth">Data de Nascimento</label>
+            <div class="input-wrapper">
+              <span class="input-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                  fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18M8 2v4M16 2v4"/>
+                </svg>
+              </span>
+              <input type="text" id="dateOfBirth" formControlName="dateOfBirth" autocomplete="bday"
+                inputmode="numeric" maxlength="10" placeholder="dd/mm/aaaa">
+            </div>
+            <span class="field-error"
+              *ngIf="form.controls['dateOfBirth'].touched && form.controls['dateOfBirth'].hasError('required')">
+              Data de nascimento é obrigatória.
+            </span>
+            <span class="field-error"
+              *ngIf="form.controls['dateOfBirth'].touched && form.controls['dateOfBirth'].hasError('brDate')">
+              Informe uma data válida no formato dd/mm/aaaa.
+            </span>
+            <span class="field-error"
+              *ngIf="form.controls['dateOfBirth'].touched && form.controls['dateOfBirth'].hasError('futureDate')">
+              A data de nascimento não pode ser no futuro.
+            </span>
+          </div>
+          <div class="field-group">
+            <label for="phoneNumber">Telefone <span class="label-optional">(opcional)</span></label>
+            <div class="input-wrapper">
+              <span class="input-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                  fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6
+                           19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92Z"/>
+                </svg>
+              </span>
+              <input type="tel" id="phoneNumber" formControlName="phoneNumber"
+                placeholder="(35) 99999-9999" autocomplete="tel">
+            </div>
+            <span class="field-error" *ngIf="form.controls['phoneNumber'].hasError('taken')">
+              Este celular já está cadastrado em outra conta.
+            </span>
+            <span class="field-hint">Usamos apenas para contato sobre suas ocorrências.</span>
+          </div>
         </div>
-        <span class="field-error"
-          *ngIf="form.controls['repeatPassword'].touched && !passwordsMatch()">
-          As senhas não coincidem.
-        </span>
-      </div>
+        <div class="step" [class.active]="step === 3">
+          <h2 class="step-title">{{ steps[3].title }}</h2>
+          <div class="field-row">
+            <div class="field-group field-uf">
+              <label for="state">UF</label>
+              <div class="input-wrapper">
+                <input type="text" id="state" formControlName="state" list="uf-options"
+                  placeholder="MG" maxlength="2" autocomplete="address-level1"
+                  autocapitalize="characters" spellcheck="false">
+              </div>
+              <datalist id="uf-options">
+                <option *ngFor="let u of units" [value]="u.uf">{{ u.name }}</option>
+              </datalist>
+              <span class="field-error"
+                *ngIf="form.controls['state'].touched && form.controls['state'].hasError('required')">
+                Informe a UF.
+              </span>
+            </div>
 
-      <div class="field-group checkbox-group">
-        <label class="checkbox-label">
-          <input type="checkbox" formControlName="acceptsTerms" />
-          Aceito os <a href="#" (click)="openTerms($event)">Termos de Uso e a Política de Privacidade</a>
-        </label>
-        <span class="field-error"
-          *ngIf="form.controls['acceptsTerms'].touched && form.controls['acceptsTerms'].invalid">
-          Você deve aceitar os termos de uso.
-        </span>
-      </div>
-
-      <div class="field-group checkbox-group">
-        <label class="checkbox-label">
-          <input type="checkbox" formControlName="mfaEmailEnabled" />
-          Ativar verificação em duas etapas por e-mail (MFA)
-        </label>
-        <span class="mfa-hint">
-          A cada login enviaremos um código para o seu e-mail. Você poderá adicionar um
-          aplicativo autenticador ou o SMS depois, em Meu Perfil.
-        </span>
+            <div class="field-group field-city">
+              <label for="city">Município</label>
+              <div class="input-wrapper">
+                <span class="input-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
+                  </svg>
+                </span>
+                <input type="text" id="city" formControlName="city" list="city-options"
+                  [readOnly]="!cityOptions.ready" autocomplete="address-level2" spellcheck="false"
+                  [placeholder]="cityOptions.ready ? 'Comece a digitar o município' : 'Informe a UF primeiro'">
+              </div>
+              <datalist id="city-options">
+                <option *ngFor="let c of cityOptions.list" [value]="c"></option>
+              </datalist>
+              <span class="field-error"
+                *ngIf="form.controls['city'].touched && form.controls['city'].hasError('required')">
+                Município é obrigatório.
+              </span>
+              <span class="field-hint" *ngIf="!cityOptions.ready">Selecione a UF para ver os municípios.</span>
+            </div>
+          </div>
+        </div>
+        <div class="step" [class.active]="step === 4">
+          <h2 class="step-title">{{ steps[4].title }}</h2>
+          <div class="field-group">
+            <label for="password">Senha</label>
+            <div class="input-wrapper">
+              <span class="input-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                  fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+              </span>
+              <input type="password" id="password" formControlName="password"
+                placeholder="••••••••" autocomplete="new-password">
+            </div>
+            <ul class="password-rules" aria-live="polite">
+              <li *ngFor="let r of passwordRules" [class.ok]="r.ok">
+                <span aria-hidden="true">{{ r.ok ? '✓' : '•' }}</span> {{ r.label }}
+              </li>
+            </ul>
+          </div>
+          <div class="field-group">
+            <label for="repeatPassword">Confirmar Senha</label>
+            <div class="input-wrapper">
+              <span class="input-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                  fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+              </span>
+              <input type="password" id="repeatPassword" formControlName="repeatPassword"
+                placeholder="••••••••" autocomplete="new-password">
+            </div>
+            <span class="field-error"
+              *ngIf="form.controls['repeatPassword'].touched && !passwordsMatch()">
+              As senhas não coincidem.
+            </span>
+          </div>
+        </div>
+        <div class="step" [class.active]="step === 5">
+          <h2 class="step-title">{{ steps[5].title }}</h2>
+          <div class="field-group checkbox-group">
+            <label class="checkbox-label">
+              <input type="checkbox" formControlName="acceptsTerms" />
+              <span>Aceito os <a href="#" (click)="openTerms($event)">Termos de Uso e a Política de Privacidade</a></span>
+            </label>
+            <span class="field-error"
+              *ngIf="form.controls['acceptsTerms'].touched && form.controls['acceptsTerms'].invalid">
+              Você deve aceitar os termos de uso.
+            </span>
+          </div>
+          <div class="field-group checkbox-group">
+            <label class="checkbox-label">
+              <input type="checkbox" formControlName="mfaEmailEnabled" />
+              Ativar verificação em duas etapas por e-mail (MFA)
+            </label>
+            <span class="mfa-hint">
+              A cada login enviaremos um código para o seu e-mail. Você poderá adicionar um
+              aplicativo autenticador ou o SMS depois, em Meu Perfil.
+            </span>
+          </div>
+        </div>
       </div>
 
       <button type="submit" class="btn-primary btn-full" [disabled]="loading">
-        {{ loading ? 'Criando conta...' : 'Criar Conta' }}
+        {{ isLastStep ? (loading ? 'Criando conta...' : 'Criar conta') : 'Continuar' }}
       </button>
+
+      <div class="signup-progress">
+        <div class="progress-track" role="progressbar" aria-label="Progresso do cadastro"
+             aria-valuemin="1" [attr.aria-valuemax]="steps.length" [attr.aria-valuenow]="step + 1">
+          <div class="progress-fill" [style.width.%]="progress"></div>
+        </div>
+        <span class="progress-label">Etapa {{ step + 1 }} de {{ steps.length }}</span>
+      </div>
 
       <p class="auth-link">
         Já tem uma conta? <a routerLink="/account/sign-in">Faça login</a>
