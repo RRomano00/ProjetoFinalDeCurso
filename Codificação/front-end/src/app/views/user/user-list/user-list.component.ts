@@ -19,6 +19,9 @@ export class UserListComponent implements OnInit {
   togglingId: number | null = null;
   deletingId: number | null = null;
   pendingDelete: any = null;
+  // Conta recém ativada/inativada segue na lista mesmo fora do filtro, senão
+  // some da tela sob "Somente ativas" e parece ter sido excluída.
+  touchedId: number | null = null;
 
   myId = Number(localStorage.getItem('id') || 0);
 
@@ -36,7 +39,7 @@ export class UserListComponent implements OnInit {
 
   get filtered(): any[] {
     const q = this.search.trim().toLowerCase();
-    return this.users.filter(u =>
+    return this.users.filter(u => u.id === this.touchedId ||
       (!q || `${u.fullname} ${u.email}`.toLowerCase().includes(q))
       && (!this.filterRole   || u.role === this.filterRole)
       && (!this.filterCity   || u.city === this.filterCity)
@@ -113,6 +116,7 @@ export class UserListComponent implements OnInit {
     try {
       await this.userReadService.setActive(user.id, !user.active);
       user.active = !user.active;
+      this.touchedId = user.id;
       this.toastr.success(user.active ? 'Conta ativada.' : 'Conta inativada.');
     } catch {
       this.toastr.error('Não foi possível alterar o status da conta.');

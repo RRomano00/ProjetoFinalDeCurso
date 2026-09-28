@@ -187,7 +187,11 @@
   <div class="modal-overlay" *ngIf="session.ended()">
     <div class="modal-card" role="alertdialog" aria-modal="true" aria-labelledby="sessao-encerrada-titulo">
       <h2 id="sessao-encerrada-titulo">Sessão encerrada</h2>
-      <p>
+      <p *ngIf="session.ended() === 'ACCOUNT_REMOVED'">
+        Esta conta foi excluída ou desativada pela administração
+        e a sessão foi desconectada.
+      </p>
+      <p *ngIf="session.ended() === 'SESSION_SUPERSEDED'">
         Esta conta foi acessada em outro dispositivo.
         Se esse acesso for desconhecido, restaure a senha.
         Para continuar o acesso aqui, entre novamente.

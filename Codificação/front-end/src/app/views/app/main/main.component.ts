@@ -52,7 +52,7 @@ export class MainComponent implements OnInit {
   }
 
   entrarNovamente() {
-    this.session.ended.set(false);
+    this.session.ended.set(null);
     this.router.navigate(['/account/sign-in']);
   }
 
