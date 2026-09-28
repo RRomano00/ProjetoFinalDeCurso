@@ -29,6 +29,8 @@ O **Fala, Cidade!** é uma solução digital desenvolvida para estreitar a comun
 ## 📋 Funcionalidades Principais
 
 * **Cidadão:**
+  * Cadastro em etapas, com barra de progresso; um celular por conta.
+  * Verificação em duas etapas por e-mail, aplicativo autenticador ou SMS.
   * Registro de notificações com geolocalização e fotos.
   * Acompanhamento de status via número de protocolo único.
   * Opção de envio anônimo (Conformidade com LGPD).
@@ -52,7 +54,7 @@ O **Fala, Cidade!** é uma solução digital desenvolvida para estreitar a comun
    git clone https://github.com/RRomano00/ProjetoFinalDeCurso.git
 2. Configurar o Backend:
  * Acesse a pasta `Codificação/backend`.
- * Copie `src/main/resources/application.properties.example` para `application.properties` e preencha as credenciais do banco, do Cloudinary, do SMTP e o segredo do JWT (`app.jwt.secret`). O arquivo real não é versionado.
+ * Em `src/main/resources/application.properties`, troque cada `ALTERE_AQUI` pelas credenciais do banco, do Cloudinary, do SMTP, do gateway de SMS (`app.sms.*`) e pelo segredo do JWT (`app.jwt.secret`). Os valores reais ficam só na sua cópia local — não os commite.
  * Execute o projeto via Maven ou sua IDE de preferência.
 
 3. Configurar o Frontend:

@@ -84,6 +84,31 @@ Abra **no celular** a URL que este comando gerar.
 
 ---
 
+## SMS do 2FA (gateway Android)
+
+O código sai de um celular Android com o app [SMS Gateway for Android](https://github.com/capcom6/android-sms-gateway/releases) (chip com SMS ilimitado).
+
+No celular: permissão de SMS, bateria **sem restrições**, ligar **Cloud Server** (ou **Local Server**) e tocar em **Offline** → **Online**.
+
+Testar o envio (usuário e senha aparecem no app):
+```bash
+curl -i -X POST -u "USUARIO:SENHA" -H "Content-Type: application/json" \
+  -d '{"textMessage":{"text":"FalaCidade: teste"},"phoneNumbers":["+55DDDNUMERO"]}' \
+  https://api.sms-gate.app/3rdparty/v1/messages          # Local Server: http://<ip-do-celular>:8080/message
+```
+
+No `application.properties` local (nunca commitar os valores):
+```properties
+app.sms.enabled=true
+app.sms.url=https://api.sms-gate.app/3rdparty/v1/messages
+app.sms.username=USUARIO
+app.sms.password=SENHA
+```
+- `enabled=false`: quem só tem SMS recebe o código por e-mail.
+- Aviso do Android "enviando muitas mensagens": tocar em **Sempre permitir**.
+
+---
+
 ## Observações importantes
 
 - **A URL do Cloudflare muda toda vez** que você reinicia o túnel, mas isso não obriga mais a rebuildar: o endereço da API não entra no bundle.
