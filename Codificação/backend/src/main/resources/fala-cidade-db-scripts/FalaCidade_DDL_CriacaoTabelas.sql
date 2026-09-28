@@ -133,6 +133,11 @@ ALTER TABLE "user" ADD COLUMN IF NOT EXISTS number         VARCHAR(10);
 ALTER TABLE "user" ADD COLUMN IF NOT EXISTS cep            VARCHAR(10);
 ALTER TABLE "user" ADD COLUMN IF NOT EXISTS city           VARCHAR(100);
 ALTER TABLE "user" ADD COLUMN IF NOT EXISTS state          CHAR(2);
+
+-- Um celular por conta. Compara só os últimos 11 dígitos para que
+-- "(35) 99999-9999", "35999999999" e "+55 35 99999-9999" contem como o mesmo.
+CREATE UNIQUE INDEX IF NOT EXISTS user_phone_number_key
+    ON "user" (NULLIF(right(regexp_replace(phone_number, '\D', '', 'g'), 11), ''));
 ALTER TABLE "user" ADD COLUMN IF NOT EXISTS is_active      BOOLEAN NOT NULL DEFAULT TRUE;
 ALTER TABLE "user" ADD COLUMN IF NOT EXISTS accepts_terms  BOOLEAN NOT NULL DEFAULT FALSE;
 ALTER TABLE "user" ADD COLUMN IF NOT EXISTS created_at     TIMESTAMP NOT NULL DEFAULT NOW();
@@ -149,6 +154,10 @@ ALTER TABLE "user" ADD COLUMN IF NOT EXISTS mfa_email_enabled BOOLEAN      NOT N
 -- phone_number porque o administrador edita o telefone do perfil, e isso não
 -- pode redirecionar o segundo fator de outra pessoa.
 ALTER TABLE "user" ADD COLUMN IF NOT EXISTS mfa_sms_phone VARCHAR(14);
+-- Um celular de SMS por conta, com a mesma chave (11 últimos dígitos) do
+-- índice do phone_number. O cruzamento entre as duas colunas fica no backend.
+CREATE UNIQUE INDEX IF NOT EXISTS user_mfa_sms_phone_key
+    ON "user" (right(regexp_replace(mfa_sms_phone, '\D', '', 'g'), 11));
 
 -- Fase 4: perfil Super Administrador (RF25). O administrador passou a ser
 -- municipal, e quem o nomeia — e define o município dele — é o Super

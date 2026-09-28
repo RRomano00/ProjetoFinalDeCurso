@@ -1,5 +1,6 @@
 package br.com.faitec.falacidade.controller;
 
+import br.com.faitec.falacidade.domain.DuplicateFieldException;
 import br.com.faitec.falacidade.domain.Municipality;
 import br.com.faitec.falacidade.domain.UserModel;
 import br.com.faitec.falacidade.domain.dto.auth.MfaVerifyDto;
@@ -157,8 +158,10 @@ public class UserRestController {
     }
 
     private ResponseEntity<java.util.Map<String, String>> conflict(IllegalStateException e) {
-        return ResponseEntity.status(HttpStatus.CONFLICT)
-            .body(java.util.Map.of("error", e.getMessage()));
+        java.util.Map<String, String> body = e instanceof DuplicateFieldException d
+            ? java.util.Map.of("error", e.getMessage(), "field", d.getField())
+            : java.util.Map.of("error", e.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
     }
 
     @GetMapping
@@ -329,7 +332,8 @@ public class UserRestController {
         }
 
         List<String> alteracoes = diff(target, changes);
-        userService.update(id, changes);
+        try { userService.update(id, changes); }
+        catch (IllegalStateException e) { return conflict(e); }
         if (requester.getId() != id) notifyAccountChange(target, alteracoes, requester);
         return ResponseEntity.noContent().build();
     }

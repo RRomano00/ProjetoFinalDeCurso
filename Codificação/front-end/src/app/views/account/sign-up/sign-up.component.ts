@@ -152,7 +152,7 @@ export class SignUpComponent {
         if (err.status === 409) {
           // E-mail e celular só são conferidos no envio: volta para a etapa do campo repetido.
           const msg: string = err.error?.error || 'Este e-mail já está cadastrado.';
-          const phone = /celular/i.test(msg);
+          const phone = err.error?.field === 'phoneNumber';
           const field = phone ? 'phoneNumber' : 'email';
           this.form.controls[field].setErrors({ taken: true });
           this.form.controls[field].markAsTouched();

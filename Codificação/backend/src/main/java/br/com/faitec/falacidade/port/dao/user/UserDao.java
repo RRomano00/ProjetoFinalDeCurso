@@ -15,6 +15,9 @@ public interface UserDao extends CrudDao<UserModel>, ReadByEmailDao, UpdatePassw
 
     void setSmsMfa(int userId, String phone);
 
+    /** O número já é de outra conta, como telefone do perfil ou como celular do SMS? */
+    boolean isPhoneInUse(int exceptUserId, String phone);
+
     java.util.List<UserModel> readAllUsers();
 
     boolean existsStaffInCity(String city, String state);

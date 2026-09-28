@@ -143,8 +143,9 @@ export class MyProfileComponent {
         this.toastr.success('Dados atualizados com sucesso!');
         this.savingProfile = false;
       },
-      error: () => {
-        this.toastr.error('Não foi possível salvar. Tente novamente.');
+      error: (err) => {
+        this.toastr.error(err.status === 409 && err.error?.error
+          ? err.error.error : 'Não foi possível salvar. Tente novamente.');
         this.savingProfile = false;
       }
     });
@@ -274,6 +275,7 @@ export class MyProfileComponent {
   }
   private smsSendError(err: any) {
     if (err?.status === 400) this.toastr.error('Celular inválido. Informe DDD e número de celular (com o 9).');
+    else if (err?.status === 409) this.toastr.error(err.error?.error || 'Este celular já está cadastrado em outra conta.');
     else if (err?.status === 429) this.toastr.warning('Aguarde um minuto para pedir outro código.');
     else if (err?.status === 502) this.toastr.error('Não foi possível enviar o SMS agora. Tente de novo em instantes.');
     else if (err?.status === 503) this.toastr.error('O envio por SMS está indisponível no momento.');
@@ -328,6 +330,7 @@ export class MyProfileComponent {
       await this.loadMfaStatus();
     } catch (err: any) {
       if (err?.status === 401) this.toastr.error('Código inválido ou expirado.');
+      else if (err?.status === 409) this.toastr.error(err.error?.error || 'Este celular já está cadastrado em outra conta.');
       else this.toastr.error('Não foi possível ativar o MFA por SMS.');
     } finally {
       this.savingMfa = false;
