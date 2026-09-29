@@ -23,9 +23,12 @@
                 <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
               </svg>
             </span>
-            <input type="email" id="email" [formControl]="email" placeholder="seu@email.com" autocomplete="email" />
+            <input type="email" id="email" [formControl]="email" placeholder="seu@email.com" autocomplete="email"
+                   aria-describedby="email-error" [attr.aria-invalid]="email.touched && email.invalid" />
           </div>
-          <span *ngIf="email.touched && email.invalid" class="field-error">E-mail inválido.</span>
+          <span *ngIf="email.touched && email.invalid" id="email-error" class="field-error">
+            {{ email.hasError('required') ? 'Informe o e-mail.' : 'E-mail inválido.' }}
+          </span>
         </div>
 
         <div class="field-group">
