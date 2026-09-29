@@ -68,6 +68,7 @@
   gap: 0.4375rem;
   transition: border-color 0.15s, background 0.15s;
   cursor: pointer;
+  overflow-wrap: anywhere;
 }
 .incident-card:hover { border-color: var(--plate); background: var(--plate-wash); }
 
@@ -331,5 +332,5 @@
 @media (max-width: 600px) {
   .page-header .btn-primary { width: 100%; justify-content: center; }
   #incident-map { height: 280px; }
-  .map-filters select { min-width: 0; flex-basis: 100%; }
+  .map-filters select { min-width: 0; flex-basis: 100%; font-size: 1rem; }
 }

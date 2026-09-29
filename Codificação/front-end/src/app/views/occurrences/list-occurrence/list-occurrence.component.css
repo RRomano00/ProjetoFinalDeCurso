@@ -123,7 +123,7 @@
 
 .occurrence-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr));
   gap: 1rem;
 }
 
@@ -137,6 +137,8 @@
   padding: 1.125rem 1.25rem;
   transition: border-color 0.15s;
   text-decoration: none;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .occurrence-card:hover { border-color: var(--plate); }
 .occurrence-card:hover .card-title { color: var(--plate); }
@@ -315,7 +317,7 @@
   .filter-input,
   .filter-select { width: 100%; min-width: 0; flex: none; }
   .filter-check { padding: 0.25rem 0; }
-  .occurrence-grid { grid-template-columns: 1fr; }
+  .occurrence-grid { grid-template-columns: minmax(0, 1fr); }
   .modal-card { max-width: 100%; }
 }
 

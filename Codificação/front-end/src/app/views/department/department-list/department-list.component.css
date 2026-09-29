@@ -133,6 +133,8 @@
 
 @media (max-width: 640px) {
   .new-department-fields { grid-template-columns: 1fr; }
+  /* Abaixo de 16px o iPhone amplia a tela ao focar o campo. */
+  .field-group input, #dep-email { font-size: 1rem; }
   .new-department-actions { flex-direction: column-reverse; }
   .new-department-actions button { width: 100%; }
 }
@@ -144,7 +146,6 @@
 .cell-city { white-space: nowrap; }
 .cell-uf   { color: var(--ink-faint); }
 
-.new-department-fields { grid-template-columns: 1fr 1fr; }
 .new-department-fields > .field-group:nth-child(3) { grid-column: 1; max-width: 6rem; }
 @media (max-width: 640px) {
   .new-department-fields > .field-group:nth-child(3) { max-width: none; }

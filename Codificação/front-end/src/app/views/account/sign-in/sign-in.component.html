@@ -23,9 +23,12 @@
                 <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
               </svg>
             </span>
-            <input type="email" id="email" [formControl]="email" placeholder="seu@email.com" autocomplete="email" />
+            <input type="email" id="email" [formControl]="email" placeholder="seu@email.com" autocomplete="email"
+                   aria-describedby="email-error" [attr.aria-invalid]="email.touched && email.invalid" />
           </div>
-          <span *ngIf="email.touched && email.invalid" class="field-error">E-mail inválido.</span>
+          <span *ngIf="email.touched && email.invalid" id="email-error" class="field-error">
+            {{ email.hasError('required') ? 'Informe o e-mail.' : 'E-mail inválido.' }}
+          </span>
         </div>
 
         <div class="field-group">
@@ -37,8 +40,10 @@
                 <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
               </svg>
             </span>
-            <input type="password" id="password" [formControl]="password" placeholder="••••••••" autocomplete="current-password" />
+            <input type="password" id="password" [formControl]="password" placeholder="••••••••" autocomplete="current-password"
+                   aria-describedby="password-error" [attr.aria-invalid]="password.touched && password.invalid" />
           </div>
+          <span *ngIf="password.touched && password.invalid" id="password-error" class="field-error">Informe a senha.</span>
         </div>
 
         <button type="submit" [disabled]="loading" class="btn-primary btn-full">

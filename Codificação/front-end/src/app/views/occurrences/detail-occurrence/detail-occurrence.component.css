@@ -40,6 +40,7 @@
 .btn-secondary:hover { background: var(--surface-2); border-color: var(--plate-line); }
 
 .detail-card {
+  overflow-wrap: anywhere;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--r-card);

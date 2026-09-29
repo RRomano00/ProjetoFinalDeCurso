@@ -330,6 +330,10 @@
   .form-section { padding: 1.25rem 1.125rem; }
   .form-actions { padding: 1rem 1.125rem; }
   .tracking-code { font-size: 1.375rem; letter-spacing: 0.2em; text-indent: 0.2em; }
+  /* Abaixo de 16px o iPhone amplia a tela ao focar o campo. */
+  .form-group input,
+  .form-group select,
+  .form-group textarea { font-size: 1rem; }
 }
 
 .form-row:has(.form-group--uf) { grid-template-columns: 1fr 5.5rem 1.4fr; }

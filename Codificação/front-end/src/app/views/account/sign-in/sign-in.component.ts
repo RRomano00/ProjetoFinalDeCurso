@@ -63,7 +63,12 @@ export class SignInComponent implements OnInit, OnDestroy {
   ngOnDestroy() { this.clearResendTimer(); }
 
   login() {
-    if (this.email.invalid || this.password.invalid) return;
+    if (this.email.invalid || this.password.invalid) {
+      // Mostra os avisos dos campos em vez de o botão não fazer nada.
+      this.email.markAsTouched();
+      this.password.markAsTouched();
+      return;
+    }
     this.loading = true;
     this.isLoginIncorrect = false;
 
