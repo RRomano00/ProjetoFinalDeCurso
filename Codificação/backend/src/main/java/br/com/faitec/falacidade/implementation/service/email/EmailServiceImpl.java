@@ -296,7 +296,8 @@ public class EmailServiceImpl implements EmailService {
             "<p style='font-size:15px; color:#333;'><strong>Obrigado pelo seu comprometimento com a cidade!</strong> " +
             "Registros como o seu ajudam a administração pública a agir mais rápido.</p>";
 
-        send(toEmail, null, "Fala, Cidade! – Ocorrência registrada (" + protocol + ")",
+        // O assunto aparece na notificação do celular, até com a tela bloqueada: o protocolo fica só no corpo.
+        send(toEmail, null, "Fala, Cidade! – Ocorrência registrada",
              withFooter(text), layout(content), "Falha ao enviar e-mail de ocorrência registrada");
     }
 
@@ -343,7 +344,7 @@ public class EmailServiceImpl implements EmailService {
                 : "") +
             "<p style='font-size:14px; color:#555;'>Você pode ver os detalhes pelo aplicativo a qualquer momento.</p>";
 
-        send(toEmail, null, "Fala, Cidade! – Ocorrência " + protocol + ": " + statusLabel,
+        send(toEmail, null, "Fala, Cidade! – Sua ocorrência está " + statusLabel,
              withFooter(text), layout(content), "Falha ao enviar e-mail de mudança de status");
     }
 
