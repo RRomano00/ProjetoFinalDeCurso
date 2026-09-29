@@ -98,11 +98,20 @@ describe('LocalityPreferenceService – mapa: conta primeiro, GPS depois', () =>
     expect(sut.choice).toEqual({ city: 'Itajubá', state: 'MG' });
   });
 
-  it('sem conta (visitante), usa a última escolha salva', async () => {
+  it('visitante (conta anônima) abre sempre em Santa Rita do Sapucaí/MG', async () => {
     sut.choice = { city: 'Pouso Alegre', state: 'MG' };
 
-    expect(await sut.startingMunicipality()).toEqual({ city: 'Pouso Alegre', state: 'MG' });
+    expect(await sut.startingMunicipality(true)).toEqual({ city: 'Santa Rita do Sapucaí', state: 'MG' });
+    expect(sut.choice).toEqual({ city: 'Santa Rita do Sapucaí', state: 'MG' });
     expect(userRead.findById).not.toHaveBeenCalled();
+  });
+
+  it('conta sem município cadastrado usa a última escolha salva', async () => {
+    sut.choice = { city: 'Pouso Alegre', state: 'MG' };
+    localStorage.setItem('id', '1');
+    userRead.findById.and.resolveTo({ city: null } as any);
+
+    expect(await sut.startingMunicipality()).toEqual({ city: 'Pouso Alegre', state: 'MG' });
   });
 
   it('descobre o município de uma posição do GPS e passa a lembrá-lo', async () => {

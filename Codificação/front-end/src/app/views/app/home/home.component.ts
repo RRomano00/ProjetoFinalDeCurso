@@ -206,7 +206,7 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
       this.occurrences = [];
     }
 
-    const conhecido = await this.locality.startingMunicipality();
+    const conhecido = await this.locality.startingMunicipality(this.auth.isAnonymous());
 
     this.municipalityOptions = LocalityPreferenceService.options(this.occurrences, [conhecido]);
     if (conhecido) this.filterCity = LocalityPreferenceService.fold(conhecido.city);
