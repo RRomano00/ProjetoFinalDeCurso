@@ -101,14 +101,26 @@ export class LocalityPreferenceService {
   async detect(): Promise<Municipality | null> {
     const position = await this.position();
     if (!position) return null;
+    return this.municipalityAt(position.coords.latitude, position.coords.longitude);
+  }
 
-    const address = await this.geocoding.reverseGeocode(
-      position.coords.latitude, position.coords.longitude);
+  /** Município de uma posição (ex.: do GPS), que passa a ser a escolha lembrada. */
+  async municipalityAt(lat: number, lng: number): Promise<Municipality | null> {
+    const address = await this.geocoding.reverseGeocode(lat, lng);
     if (!address?.city) return null;
-
     const municipality = { city: address.city, state: address.state || '' };
     this.choice = municipality;
     return municipality;
+  }
+
+  /**
+   * Onde o mapa abre: com conta, sempre no município do cadastro (e ele vira a escolha
+   * lembrada, para as outras telas acompanharem); sem conta, na última escolha salva.
+   */
+  async startingMunicipality(): Promise<Municipality | null> {
+    const cadastro = await this.ofCurrentUser();
+    if (cadastro) { this.choice = cadastro; return cadastro; }
+    return this.choice;
   }
 
   async mapCenter(): Promise<{ lat: number; lng: number; zoom: number } | null> {

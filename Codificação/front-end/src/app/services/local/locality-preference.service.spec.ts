@@ -65,3 +65,58 @@ describe('LocalityPreferenceService.mapCenter()', () => {
     expect(await sut.mapCenter()).toBeNull();
   });
 });
+
+describe('LocalityPreferenceService – mapa: conta primeiro, GPS depois', () => {
+  let sut: LocalityPreferenceService;
+  let geocoding: jasmine.SpyObj<GeocodingService>;
+  let userRead: jasmine.SpyObj<UserReadService>;
+
+  beforeEach(() => {
+    localStorage.removeItem('locality.choice');
+    localStorage.removeItem('id');
+    geocoding = jasmine.createSpyObj('GeocodingService', ['geocode', 'reverseGeocode']);
+    userRead  = jasmine.createSpyObj('UserReadService', ['findById']);
+    TestBed.configureTestingModule({
+      providers: [
+        LocalityPreferenceService,
+        { provide: GeocodingService, useValue: geocoding },
+        { provide: UserReadService,  useValue: userRead },
+        { provide: ToastrService,    useValue: jasmine.createSpyObj('ToastrService', ['warning', 'info']) },
+      ]
+    });
+    sut = TestBed.inject(LocalityPreferenceService);
+  });
+
+  afterEach(() => { localStorage.removeItem('locality.choice'); localStorage.removeItem('id'); });
+
+  it('com conta, abre no município do cadastro mesmo havendo outra escolha salva', async () => {
+    sut.choice = { city: 'Pouso Alegre', state: 'MG' };
+    localStorage.setItem('id', '7');
+    userRead.findById.and.resolveTo({ city: 'Itajubá', state: 'mg' } as any);
+
+    expect(await sut.startingMunicipality()).toEqual({ city: 'Itajubá', state: 'MG' });
+    expect(sut.choice).toEqual({ city: 'Itajubá', state: 'MG' });
+  });
+
+  it('sem conta (visitante), usa a última escolha salva', async () => {
+    sut.choice = { city: 'Pouso Alegre', state: 'MG' };
+
+    expect(await sut.startingMunicipality()).toEqual({ city: 'Pouso Alegre', state: 'MG' });
+    expect(userRead.findById).not.toHaveBeenCalled();
+  });
+
+  it('descobre o município de uma posição do GPS e passa a lembrá-lo', async () => {
+    geocoding.reverseGeocode.and.resolveTo({ city: 'Santa Rita do Sapucaí', state: 'MG' } as any);
+
+    expect(await sut.municipalityAt(-22.25, -45.70)).toEqual({ city: 'Santa Rita do Sapucaí', state: 'MG' });
+    expect(sut.choice).toEqual({ city: 'Santa Rita do Sapucaí', state: 'MG' });
+  });
+
+  it('posição sem município conhecido não muda a escolha', async () => {
+    sut.choice = { city: 'Itajubá', state: 'MG' };
+    geocoding.reverseGeocode.and.resolveTo(null as any);
+
+    expect(await sut.municipalityAt(0, 0)).toBeNull();
+    expect(sut.choice).toEqual({ city: 'Itajubá', state: 'MG' });
+  });
+});
