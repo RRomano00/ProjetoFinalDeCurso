@@ -154,7 +154,10 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
       const position = await this.locality.position();
       if (!position) return;
       const { latitude, longitude } = position.coords;
-      this.ngZone.run(() => this.map.setView([latitude, longitude], 17));
+      this.ngZone.run(() => {
+        this.showMe(latitude, longitude);
+        this.map.setView([latitude, longitude], 17);
+      });
     } finally {
       this.ngZone.run(() => this.locating = false);
     }
@@ -228,9 +231,12 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   private async followGps() {
     if (!navigator.geolocation || this.gpsWatch !== undefined) return;
     this.gpsWatch = navigator.geolocation.watchPosition(
-      position => { if (!this.gpsOn) { this.gpsOn = true; void this.goToGps(position); } },
+      position => {
+        this.showMe(position.coords.latitude, position.coords.longitude);
+        if (!this.gpsOn) { this.gpsOn = true; void this.goToGps(position); }
+      },
       // Timeout é passageiro; só desligar o GPS ou negar a permissão "rearma" o redirecionamento.
-      error => { if (error.code !== error.TIMEOUT) this.gpsOn = false; },
+      error => { if (error.code !== error.TIMEOUT) { this.gpsOn = false; this.hideMe(); } },
       { enableHighAccuracy: false, maximumAge: 60000 });
 
     // Permissão negada encerra a escuta; se liberarem depois nas configurações, recomeça.
@@ -248,6 +254,31 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.gpsWatch !== undefined) navigator.geolocation.clearWatch(this.gpsWatch);
     this.gpsWatch = undefined;
     this.gpsOn = false;
+    this.hideMe();
+  }
+
+  private meMarker?: L.Marker;
+
+  // Pessoa na posição do aparelho enquanto o GPS responde; some quando ele é desligado.
+  private showMe(lat: number, lng: number) {
+    if (!this.map) return;
+    if (this.meMarker) { this.meMarker.setLatLng([lat, lng]); return; }
+    const icon = L.divIcon({
+      className: '',
+      html: `<div style="width:30px;height:30px;border-radius:50%;background:#14487e;border:2px solid #fff;
+             box-shadow:0 0 0 6px rgb(20 72 126 / .22), 0 1px 4px rgb(18 32 51 / .45);
+             display:flex;align-items:center;justify-content:center">
+             <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff" aria-hidden="true">
+               <circle cx="12" cy="6.5" r="4"/><path d="M4 22a8 8 0 0 1 16 0z"/></svg></div>`,
+      iconSize: [30, 30], iconAnchor: [15, 15]
+    });
+    this.meMarker = L.marker([lat, lng], { icon, title: 'Você está aqui', keyboard: false, zIndexOffset: 2000 })
+      .addTo(this.map);
+  }
+
+  private hideMe() {
+    this.meMarker?.remove();
+    this.meMarker = undefined;
   }
 
   private async goToGps(position: GeolocationPosition) {
