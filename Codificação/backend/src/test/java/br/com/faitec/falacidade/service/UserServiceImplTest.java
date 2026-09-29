@@ -1,5 +1,6 @@
 package br.com.faitec.falacidade.service;
 
+import br.com.faitec.falacidade.domain.DuplicateFieldException;
 import br.com.faitec.falacidade.domain.UserModel;
 import br.com.faitec.falacidade.implementation.service.user.UserServiceImpl;
 import br.com.faitec.falacidade.port.dao.user.UserDao;
@@ -192,6 +193,32 @@ class UserServiceImplTest {
         void negative() {
             assertThat(sut.updatePasswordEncoded(-1, "$2a$H")).isFalse();
             verifyNoInteractions(userDao);
+        }
+    }
+
+    @Nested @DisplayName("celular de outra conta")
+    class PhoneOfAnotherAccount {
+
+        @Test @DisplayName("create() recusa o celular que outra conta usa, no perfil ou no SMS")
+        void createRejects() {
+            UserModel u = citizenWith("novo@email.com", "Senha@123");
+            u.setPhoneNumber("(35) 99876-1234");
+            when(userDao.isPhoneInUse(0, "(35) 99876-1234")).thenReturn(true);
+
+            assertThatThrownBy(() -> sut.create(u)).isInstanceOf(DuplicateFieldException.class)
+                .hasFieldOrPropertyWithValue("field", "phoneNumber");
+            verify(userDao, never()).add(any());
+        }
+
+        @Test @DisplayName("update() recusa o celular de outra conta e não grava")
+        void updateRejects() {
+            UserModel changes = citizenInDb(5, "$2a$HASH");
+            changes.setPhoneNumber("35998761234");
+            when(userDao.readById(5)).thenReturn(changes);
+            when(userDao.isPhoneInUse(5, "35998761234")).thenReturn(true);
+
+            assertThatThrownBy(() -> sut.update(5, changes)).isInstanceOf(DuplicateFieldException.class);
+            verify(userDao, never()).updateInformation(anyInt(), any());
         }
     }
 }

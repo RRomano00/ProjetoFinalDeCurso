@@ -1,5 +1,6 @@
 package br.com.faitec.falacidade.implementation.service.user;
 
+import br.com.faitec.falacidade.domain.DuplicateFieldException;
 import br.com.faitec.falacidade.domain.UserModel;
 import br.com.faitec.falacidade.port.dao.user.UserDao;
 import br.com.faitec.falacidade.port.service.user.UserService;
@@ -27,6 +28,8 @@ public class UserServiceImpl implements UserService {
         if (entity.getRole() == UserModel.UserRole.CITIZEN && !entity.isAcceptsTerms()) return -1;
 
         if (!isPasswordValid(entity.getPassword())) return -1;
+
+        rejectPhoneOfAnotherAccount(0, entity.getPhoneNumber());
 
         entity.setPassword(passwordEncoder.encode(entity.getPassword()));
 
@@ -66,6 +69,17 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public boolean isPhoneInUse(int exceptUserId, String phone) {
+        return !isBlank(phone) && userDao.isPhoneInUse(exceptUserId, phone);
+    }
+
+    // O índice único só cobre a própria coluna; o celular do SMS de outra conta é conferido aqui.
+    private void rejectPhoneOfAnotherAccount(int userId, String phone) {
+        if (isPhoneInUse(userId, phone))
+            throw new DuplicateFieldException("phoneNumber", DuplicateFieldException.PHONE_TAKEN);
+    }
+
+    @Override
     public boolean hasStaffInCity(String city, String state) {
         return city != null && !city.isBlank() && userDao.existsStaffInCity(city, state);
     }
@@ -84,6 +98,7 @@ public class UserServiceImpl implements UserService {
     public void update(int id, UserModel entity) {
         if (id != entity.getId()) return;
         if (findById(id) == null) return;
+        rejectPhoneOfAnotherAccount(id, entity.getPhoneNumber());
         userDao.updateInformation(id, entity);
     }
 

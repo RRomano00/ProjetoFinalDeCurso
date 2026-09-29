@@ -119,4 +119,17 @@ class MfaRestControllerSmsTest {
         assertThat(sut.disableSms(dto(null, enviado()), auth).getStatusCode().value()).isEqualTo(200);
         verify(mfaService).setSmsMfa(1, null);
     }
+
+    @Test
+    @DisplayName("celular de outra conta não recebe SMS nem é ativado")
+    void celularDeOutraConta() {
+        when(userService.isPhoneInUse(1, FONE)).thenReturn(true);
+
+        assertThat(sut.sendSmsEnableCode(dto("(35) 99876-1234", null), auth).getStatusCode().value()).isEqualTo(409);
+        verify(smsService, never()).send(anyString(), anyString());
+
+        String c = codes.generateCode(1, EmailMfaCodeStore.SMS, FONE);
+        assertThat(sut.enableSms(dto("(35) 99876-1234", c), auth).getStatusCode().value()).isEqualTo(409);
+        verify(mfaService, never()).setSmsMfa(anyInt(), any());
+    }
 }

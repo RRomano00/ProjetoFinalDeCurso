@@ -1,5 +1,6 @@
 package br.com.faitec.falacidade.service;
 
+import br.com.faitec.falacidade.domain.DuplicateFieldException;
 import br.com.faitec.falacidade.domain.UserModel;
 import br.com.faitec.falacidade.implementation.dao.postgres.UserPostgresDao;
 import org.junit.jupiter.api.BeforeEach;
@@ -320,6 +321,86 @@ class UserPostgresDaoTest {
 
             verify(connection).rollback();
             verify(connection).setAutoCommit(true);
+        }
+    }
+
+    @Nested
+    @DisplayName("celular repetido")
+    class PhoneTaken {
+
+        SQLException violation(String constraint) {
+            return new SQLException("duplicate key value violates unique constraint \"" + constraint + "\"", "23505");
+        }
+
+        UserModel user() {
+            UserModel u = new UserModel();
+            u.setId(7);
+            u.setPassword("$2a$HASH");
+            u.setFullname("Teste");
+            u.setEmail("teste@email.com");
+            u.setPhoneNumber("(35) 99123-4567");
+            u.setRole(UserModel.UserRole.CITIZEN);
+            return u;
+        }
+
+        @Test
+        @DisplayName("add() distingue celular de e-mail repetido")
+        void addReportsWhichFieldIsTaken() throws Exception {
+            when(connection.prepareStatement(anyString(), eq(Statement.RETURN_GENERATED_KEYS))).thenReturn(ps);
+            when(ps.execute()).thenThrow(violation("user_phone_number_key"), violation("user_email_key"));
+
+            assertThatThrownBy(() -> sut.add(user()))
+                .isInstanceOf(DuplicateFieldException.class).hasMessageContaining("celular")
+                .hasFieldOrPropertyWithValue("field", "phoneNumber");
+            assertThatThrownBy(() -> sut.add(user()))
+                .isInstanceOf(DuplicateFieldException.class).hasMessageContaining("e-mail")
+                .hasFieldOrPropertyWithValue("field", "email");
+        }
+
+        @Test
+        @DisplayName("updateInformation() vira conflito quando o celular é de outra conta")
+        void updateReportsPhoneTaken() throws Exception {
+            when(connection.prepareStatement(anyString())).thenReturn(ps);
+            when(ps.execute()).thenThrow(violation("user_phone_number_key"));
+
+            assertThatThrownBy(() -> sut.updateInformation(7, user()))
+                .isInstanceOf(DuplicateFieldException.class).hasMessageContaining("celular")
+                .hasFieldOrPropertyWithValue("field", "phoneNumber");
+        }
+    }
+
+    @Nested
+    @DisplayName("celular em uso")
+    class PhoneInUse {
+
+        @Test
+        @DisplayName("isPhoneInUse() compara os 11 últimos dígitos nas duas colunas, fora a própria conta")
+        void comparesLastElevenDigits() throws Exception {
+            when(connection.prepareStatement(anyString())).thenReturn(ps);
+            when(ps.executeQuery()).thenReturn(rs);
+            when(rs.next()).thenReturn(true);
+
+            assertThat(sut.isPhoneInUse(7, "+55 (35) 99876-1234")).isTrue();
+            verify(ps).setInt(1, 7);
+            verify(ps).setString(2, "35998761234");
+        }
+
+        @Test
+        @DisplayName("isPhoneInUse() sem número não consulta o banco")
+        void blankPhoneIsFree() throws Exception {
+            assertThat(sut.isPhoneInUse(7, "  ")).isFalse();
+            verify(connection, never()).prepareStatement(anyString());
+        }
+
+        @Test
+        @DisplayName("setSmsMfa() vira conflito quando o celular do SMS é de outra conta")
+        void smsPhoneTaken() throws Exception {
+            when(connection.prepareStatement(anyString())).thenReturn(ps);
+            when(ps.execute()).thenThrow(new SQLException(
+                "duplicate key value violates unique constraint \"user_mfa_sms_phone_key\"", "23505"));
+
+            assertThatThrownBy(() -> sut.setSmsMfa(7, "+5535998761234"))
+                .isInstanceOf(DuplicateFieldException.class).hasMessageContaining("celular");
         }
     }
 }

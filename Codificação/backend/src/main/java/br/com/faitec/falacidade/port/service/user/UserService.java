@@ -14,6 +14,8 @@ public interface UserService extends CrudService<UserModel>, ReadByEmailService,
 
     boolean hasStaffInCity(String city, String state);
 
+    boolean isPhoneInUse(int exceptUserId, String phone);
+
     void log(String action, UserModel actor, Integer targetId, UserModel target);
 
     java.util.List<java.util.Map<String, Object>> findLog();

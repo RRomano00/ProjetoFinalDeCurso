@@ -1,5 +1,6 @@
 package br.com.faitec.falacidade.implementation.dao.postgres;
 
+import br.com.faitec.falacidade.domain.DuplicateFieldException;
 import br.com.faitec.falacidade.domain.UserModel;
 import br.com.faitec.falacidade.port.dao.user.UserDao;
 
@@ -55,8 +56,9 @@ public class UserPostgresDao implements UserDao {
             }
         } catch (SQLException e) {
             rollback();
+            if (isPhoneTaken(e)) throw new DuplicateFieldException("phoneNumber", PHONE_TAKEN, e);
             if ("23505".equals(e.getSQLState()))
-                throw new IllegalStateException("Este e-mail já está cadastrado.", e);
+                throw new DuplicateFieldException("email", "Este e-mail já está cadastrado.", e);
             throw new RuntimeException("Erro ao inserir usuário: " + e.getMessage(), e);
         } finally {
             restoreAutoCommit();
@@ -129,7 +131,40 @@ public class UserPostgresDao implements UserDao {
             ps.setInt(9, id);
             ps.execute();
         } catch (SQLException e) {
+            if (isPhoneTaken(e)) throw new DuplicateFieldException("phoneNumber", PHONE_TAKEN, e);
             throw new RuntimeException("Erro ao atualizar usuário", e);
+        }
+    }
+
+    private static final String PHONE_TAKEN = DuplicateFieldException.PHONE_TAKEN;
+
+    private static boolean isPhoneTaken(SQLException e) {
+        return violates(e, "user_phone_number_key");
+    }
+
+    private static boolean violates(SQLException e, String index) {
+        return "23505".equals(e.getSQLState()) && String.valueOf(e.getMessage()).contains(index);
+    }
+
+    // Mesma chave dos índices únicos: os 11 últimos dígitos, com ou sem máscara e DDI.
+    private static final String LAST_11 = "right(regexp_replace(%s, '\\D', '', 'g'), 11)";
+
+    @Override
+    public boolean isPhoneInUse(int exceptUserId, String phone) {
+        String digits = phone == null ? "" : phone.replaceAll("\\D", "");
+        if (digits.isEmpty()) return false;
+        String key = digits.substring(Math.max(0, digits.length() - 11));
+        String sql = "SELECT 1 FROM \"user\" WHERE id <> ? AND (" + LAST_11.formatted("phone_number")
+                   + " = ? OR " + LAST_11.formatted("mfa_sms_phone") + " = ?) LIMIT 1";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, exceptUserId);
+            ps.setString(2, key);
+            ps.setString(3, key);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Erro ao verificar celular", e);
         }
     }
 
@@ -216,6 +251,8 @@ public class UserPostgresDao implements UserDao {
             ps.setInt(2, userId);
             ps.execute();
         } catch (SQLException e) {
+            if (violates(e, "user_mfa_sms_phone_key"))
+                throw new DuplicateFieldException("smsPhone", PHONE_TAKEN, e);
             throw new RuntimeException("Erro ao atualizar MFA por SMS", e);
         }
     }

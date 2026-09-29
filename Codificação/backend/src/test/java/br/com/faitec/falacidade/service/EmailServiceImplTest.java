@@ -121,4 +121,36 @@ class EmailServiceImplTest {
             verify(mailSender, times(1)).send(any(MimeMessage.class));
         }
     }
+
+    @Nested
+    @DisplayName("e-mails de ocorrência")
+    class OccurrenceSubjects {
+
+        // O assunto aparece na notificação do celular, até com a tela bloqueada: o protocolo fica só no corpo.
+        @Test
+        @DisplayName("o assunto do registro não mostra o protocolo; o corpo mostra")
+        void createdSubjectHidesProtocol() throws Exception {
+            MimeMessage mime = newMime();
+            when(mailSender.createMimeMessage()).thenReturn(mime);
+
+            sut.sendOccurrenceCreatedEmail("c@test.com", "Maria", "FC-26-CUPHM", "Buraco na rua");
+
+            assertThat(mime.getSubject()).isEqualTo("Fala, Cidade! – Ocorrência registrada");
+            mime.saveChanges();
+            java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+            mime.writeTo(out);
+            assertThat(out.toString(java.nio.charset.StandardCharsets.UTF_8)).contains("FC-26-CUPHM");
+        }
+
+        @Test
+        @DisplayName("o assunto da mudança de situação não mostra o protocolo")
+        void statusSubjectHidesProtocol() throws Exception {
+            MimeMessage mime = newMime();
+            when(mailSender.createMimeMessage()).thenReturn(mime);
+
+            sut.sendStatusChangeEmail("c@test.com", "Maria", "FC-26-CUPHM", "EM_ANDAMENTO", null);
+
+            assertThat(mime.getSubject()).doesNotContain("FC-26-CUPHM").contains("Em Andamento");
+        }
+    }
 }

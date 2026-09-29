@@ -1,5 +1,6 @@
 package br.com.faitec.falacidade.controller;
 
+import br.com.faitec.falacidade.domain.DuplicateFieldException;
 import br.com.faitec.falacidade.domain.MobilePhone;
 import br.com.faitec.falacidade.domain.UserModel;
 import br.com.faitec.falacidade.domain.dto.auth.MfaSetupResponseDto;
@@ -124,26 +125,34 @@ public class MfaRestController {
     }
 
     @PostMapping("/sms/send-enable-code")
-    public ResponseEntity<Void> sendSmsEnableCode(@RequestBody MfaVerifyDto dto, Authentication auth) {
+    public ResponseEntity<?> sendSmsEnableCode(@RequestBody MfaVerifyDto dto, Authentication auth) {
         UserModel user = getUser(auth);
         if (user == null) return ResponseEntity.status(401).build();
         if (user.isSmsMfaActive()) return ResponseEntity.badRequest().build();
         String phone = MobilePhone.toE164(dto.getPhone());
         if (phone == null) return ResponseEntity.badRequest().build();
+        if (userService.isPhoneInUse(user.getId(), phone)) return phoneTaken();
         return ResponseEntity.status(smsSender.send(user.getId(), phone)).build();
     }
 
     @PostMapping("/sms")
-    public ResponseEntity<Void> enableSms(@RequestBody MfaVerifyDto dto, Authentication auth) {
+    public ResponseEntity<?> enableSms(@RequestBody MfaVerifyDto dto, Authentication auth) {
         UserModel user = getUser(auth);
         if (user == null) return ResponseEntity.status(401).build();
         if (user.isSmsMfaActive()) return ResponseEntity.badRequest().build();
         String phone = MobilePhone.toE164(dto.getPhone());
         if (phone == null) return ResponseEntity.badRequest().build();
+        if (userService.isPhoneInUse(user.getId(), phone)) return phoneTaken();
         if (!emailMfaCodeStore.validate(user.getId(), EmailMfaCodeStore.SMS, phone, dto.getTotpCode()))
             return ResponseEntity.status(401).build();
-        mfaService.setSmsMfa(user.getId(), phone);
+        try { mfaService.setSmsMfa(user.getId(), phone); }
+        catch (DuplicateFieldException e) { return phoneTaken(); }
         return ResponseEntity.ok().build();
+    }
+
+    private ResponseEntity<Map<String, String>> phoneTaken() {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+            .body(Map.of("error", DuplicateFieldException.PHONE_TAKEN, "field", "smsPhone"));
     }
 
     @PostMapping("/sms/send-code")
