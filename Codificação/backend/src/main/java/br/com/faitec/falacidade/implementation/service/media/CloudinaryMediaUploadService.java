@@ -135,6 +135,11 @@ public class CloudinaryMediaUploadService implements MediaUploadService {
         return type != null && CRITICAL_TYPES.contains(type);
     }
 
+    @Override
+    public void delete(String publicId) {
+        if (publicId != null && !publicId.isBlank()) deleteFromCloudinary(publicId);
+    }
+
     private void deleteFromCloudinary(String publicId) {
         try {
             cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());

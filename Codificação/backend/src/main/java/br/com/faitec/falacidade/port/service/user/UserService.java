@@ -16,6 +16,8 @@ public interface UserService extends CrudService<UserModel>, ReadByEmailService,
 
     boolean isPhoneInUse(int exceptUserId, String phone);
 
+    void logOccurrenceDeletion(UserModel actor, String protocol, String title, String city, String state);
+
     void log(String action, UserModel actor, Integer targetId, UserModel target);
 
     java.util.List<java.util.Map<String, Object>> findLog();

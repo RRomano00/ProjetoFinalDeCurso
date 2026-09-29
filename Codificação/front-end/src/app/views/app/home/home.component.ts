@@ -52,7 +52,11 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   mapFilterNeighborhood = '';
   mapFilterType         = '';
   mapFilterStatus       = '';
-  readonly mapStatusOptions = ['PENDENTE', 'EM_ANDAMENTO', 'CONCLUIDA', 'INDEFERIDA'];
+  // Finalizada só chega ao Super Administrador; o filtro dela só aparece para ele.
+  get mapStatusOptions(): string[] {
+    return this.auth.isSuperAdmin() ? [...HomeComponent.STATUSES, 'FINALIZADA'] : HomeComponent.STATUSES;
+  }
+  private static readonly STATUSES = ['PENDENTE', 'EM_ANDAMENTO', 'CONCLUIDA', 'INDEFERIDA'];
 
   get totalOccurrences() { return this.inCity.length; }
 
@@ -73,10 +77,11 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
     EM_ANDAMENTO: 'em andamento',
     CONCLUIDA:    'concluídas',
     INDEFERIDA:   'indeferidas',
+    FINALIZADA:   'finalizadas',
   };
 
   get statusBreakdown() {
-    return ['PENDENTE', 'EM_ANDAMENTO', 'CONCLUIDA', 'INDEFERIDA']
+    return ['PENDENTE', 'EM_ANDAMENTO', 'CONCLUIDA', 'INDEFERIDA', 'FINALIZADA']
       .map(status => ({
         status,
         count: this.inCity.filter(o => o.status === status).length,

@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { OccurrenceReadService } from '../../../services/occurrence-read.service';
 import { OccurrenceSupportService } from '../../../services/occurrence-support.service';
+import { OccurrenceEditService } from '../../../services/occurrence-edit.service';
 import { Occurrence } from '../../../domain/model/occurrence';
 import { typeLabel, typeColor, statusLabel, statusClass, priorityLabel } from '../../../domain/occurrence-labels';
 import { ToastrService } from 'ngx-toastr';
@@ -38,7 +39,11 @@ export class ListOccurrenceComponent implements OnInit {
 
   groupBy: '' | 'type' | 'neighborhood' | 'status' = '';
 
-  statusOptions = ['PENDENTE', 'EM_ANDAMENTO', 'CONCLUIDA', 'INDEFERIDA'];
+  // Finalizada só chega ao Super Administrador; o filtro dela só aparece para ele.
+  get statusOptions(): string[] {
+    const base = ['PENDENTE', 'EM_ANDAMENTO', 'CONCLUIDA', 'INDEFERIDA'];
+    return this.auth.isSuperAdmin() ? [...base, 'FINALIZADA'] : base;
+  }
 
   showLoginPrompt = false;
 
@@ -49,19 +54,46 @@ export class ListOccurrenceComponent implements OnInit {
   constructor(
     private occurrenceReadService: OccurrenceReadService,
     private occurrenceSupportService: OccurrenceSupportService,
+    private occurrenceEditService: OccurrenceEditService,
     private router: Router,
     public  auth: AuthenticationService,
     private locality: LocalityPreferenceService,
     private toastr: ToastrService
   ) {
     // A equipe triagem por bairro; o cidadão vê a grade corrida.
-    this.defaultGroupBy = auth.isStaff() ? 'neighborhood' : '';
+    this.defaultGroupBy = '';
     this.groupBy = this.defaultGroupBy;
     // O município já é lembrado pelo LocalityPreferenceService, junto do mapa.
     persistFilters(this, 'occurrences', ['search', 'filterStatus', 'filterMine', 'groupBy']);
   }
 
-  private readonly defaultGroupBy: '' | 'neighborhood';
+  private readonly defaultGroupBy: '';
+
+  pendingDelete: Occurrence | null = null;
+  deleting = false;
+
+  askDelete(o: Occurrence) { this.pendingDelete = o; }
+
+  async confirmDelete() {
+    const o = this.pendingDelete;
+    if (!o?.id || this.deleting) return;
+    this.deleting = true;
+    try {
+      await this.occurrenceEditService.delete(o.id);
+      // Continua na lista do Super Administrador, agora como Finalizada (preta).
+      o.status = 'FINALIZADA';
+      o.urlMedia = undefined;
+      this.toastr.success(`Ocorrência ${o.protocolNumber} excluída: agora ela está Finalizada.`);
+      this.pendingDelete = null;
+    } catch (err: any) {
+      this.toastr.error(err?.status === 403 ? 'Apenas o Super Administrador pode excluir ocorrências.'
+                      : err?.status === 404 ? 'Esta ocorrência já tinha sido excluída (finalizada).'
+                      : 'Não foi possível excluir a ocorrência.');
+      if (err?.status === 404) this.pendingDelete = null;
+    } finally {
+      this.deleting = false;
+    }
+  }
 
   private mine: Occurrence[] | null = null;
   loadingMine = false;

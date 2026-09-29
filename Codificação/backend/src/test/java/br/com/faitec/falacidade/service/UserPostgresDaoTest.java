@@ -403,4 +403,30 @@ class UserPostgresDaoTest {
                 .isInstanceOf(DuplicateFieldException.class).hasMessageContaining("celular");
         }
     }
+
+    @Nested
+    @DisplayName("log de exclusão de ocorrência")
+    class OccurrenceDeletionLog {
+
+        @Test
+        @DisplayName("grava a exclusão com protocolo, título e município, sem conta-alvo")
+        void insertsOccurrenceRow() throws Exception {
+            when(connection.prepareStatement(anyString())).thenReturn(ps);
+            UserModel actor = new UserModel();
+            actor.setId(1); actor.setRole(UserModel.UserRole.SUPER_ADMIN);
+
+            sut.logOccurrenceDeletion(actor, "FC-26-ABCDE", "Buraco na rua", "Santa Rita do Sapucaí", "MG");
+
+            org.mockito.ArgumentCaptor<String> sql = org.mockito.ArgumentCaptor.forClass(String.class);
+            verify(connection).prepareStatement(sql.capture());
+            assertThat(sql.getValue()).contains("occurrence_protocol").contains("'DELETE'");
+            verify(ps).setInt(1, 1);
+            verify(ps).setString(2, "SUPER_ADMIN");
+            verify(ps).setString(3, "FC-26-ABCDE");
+            verify(ps).setString(4, "Buraco na rua");
+            verify(ps).setString(5, "Santa Rita do Sapucaí");
+            verify(ps).setString(6, "MG");
+            verify(ps).execute();
+        }
+    }
 }

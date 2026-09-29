@@ -136,6 +136,33 @@ public class OccurrencePostgresDao implements OccurrenceDao {
         return dto;
     }
 
+    @Override
+    public List<String> readMediaPublicIds(int id) {
+        String sql = "SELECT cloudinary_public_id FROM occurrence WHERE id=? AND cloudinary_public_id IS NOT NULL "
+                   + "UNION SELECT cloudinary_public_id FROM occurrence_media "
+                   + "WHERE occurrence_id=? AND cloudinary_public_id IS NOT NULL";
+        List<String> ids = new ArrayList<>();
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            ps.setInt(2, id);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) ids.add(rs.getString(1));
+        } catch (SQLException e) { throw new RuntimeException("Erro ao listar fotos da ocorrência", e); }
+        return ids;
+    }
+
+    @Override
+    public void clearMedia(int id) {
+        try (PreparedStatement fotos = connection.prepareStatement("DELETE FROM occurrence_media WHERE occurrence_id=?");
+             PreparedStatement principal = connection.prepareStatement(
+                 "UPDATE occurrence SET url_media=NULL, cloudinary_public_id=NULL, updated_at=NOW() WHERE id=?")) {
+            fotos.setInt(1, id);
+            fotos.execute();
+            principal.setInt(1, id);
+            principal.execute();
+        } catch (SQLException e) { throw new RuntimeException("Erro ao remover as fotos da ocorrência", e); }
+    }
+
     private List<OccurrenceMedia> readMedia(int occurrenceId) {
         List<OccurrenceMedia> list = new ArrayList<>();
         String sql = "SELECT url, cloudinary_public_id, image_blurred FROM occurrence_media WHERE occurrence_id=? ORDER BY id";
@@ -219,7 +246,7 @@ public class OccurrencePostgresDao implements OccurrenceDao {
         double dLon = radius / (111_111.0 * Math.cos(Math.toRadians(lat)));
         String sql  = SELECT_FIELDS +
                       "LEFT JOIN \"user\" u ON o.user_id=u.id " +
-                      "WHERE o.status NOT IN ('CONCLUIDA','INDEFERIDA') AND o.type=? " +
+                      "WHERE o.status NOT IN ('CONCLUIDA','INDEFERIDA','FINALIZADA') AND o.type=? " +
                       "AND o.latitude BETWEEN ? AND ? AND o.longitude BETWEEN ? AND ?";
         List<GetOccurrenceDto> list = new ArrayList<>();
         try (PreparedStatement ps = connection.prepareStatement(sql)) {

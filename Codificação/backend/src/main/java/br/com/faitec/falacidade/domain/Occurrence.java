@@ -54,7 +54,9 @@ public class Occurrence {
     }
 
     public enum OccurrenceStatus {
-        PENDENTE, EM_ANDAMENTO, CONCLUIDA, INDEFERIDA
+        PENDENTE, EM_ANDAMENTO, CONCLUIDA, INDEFERIDA,
+        /** Excluída pelo Super Administrador: definitiva e visível só para ele. */
+        FINALIZADA
     }
 
     public enum Priority {

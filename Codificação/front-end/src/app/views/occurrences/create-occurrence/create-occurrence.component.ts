@@ -4,12 +4,10 @@ import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } 
 import { CommonModule } from '@angular/common';
 import * as L from 'leaflet';
 import { OccurrenceCreateService } from '../../../services/occurrence-create.service';
-import { OccurrenceSupportService } from '../../../services/occurrence-support.service';
 import { GeocodingService } from '../../../services/local/geocoding.service';
 import { LocalityService, CityOptions } from '../../../services/local/locality.service';
 import { LocalityPreferenceService } from '../../../services/local/locality-preference.service';
 import { OccurrenceCoverageService } from '../../../services/occurrence-coverage.service';
-import { Occurrence } from '../../../domain/model/occurrence';
 import { OCCURRENCE_TYPES } from '../../../domain/occurrence-labels';
 import { ToastrService } from 'ngx-toastr';
 import { AuthenticationService } from '../../../services/security/authentication.service';
@@ -50,17 +48,11 @@ export class CreateOccurrenceComponent implements OnInit, AfterViewInit, OnDestr
   photoState: 'idle' | 'uploading' | 'rejected' | 'error' = 'idle';
   photoMessage = '';
 
-  nearbyDuplicates: Occurrence[] = [];
-  checkingDuplicates = false;
-  supportedIds = new Set<number>();
-  supportingId: number | null = null;
-  showLoginPrompt = false;
 
   occurrenceTypes = OCCURRENCE_TYPES;
 
   constructor(
     private occurrenceCreateService: OccurrenceCreateService,
-    private occurrenceSupportService: OccurrenceSupportService,
     private geocodingService: GeocodingService,
     private fb: FormBuilder,
     private router: Router,
@@ -90,8 +82,6 @@ export class CreateOccurrenceComponent implements OnInit, AfterViewInit, OnDestr
 
     if (this.auth.isVisitor()) this.form.patchValue({ anonymous: true });
 
-    this.form.get('type')!.valueChanges.subscribe(() => this.checkDuplicates());
-
     this.units = this.locality.units;
     this.cityOptions = this.locality.bindCityToUf(this.form);
 
@@ -105,8 +95,6 @@ export class CreateOccurrenceComponent implements OnInit, AfterViewInit, OnDestr
           this.form.get('state')!.valueChanges)
       .pipe(debounceTime(900))
       .subscribe(() => this.centerOnTypedAddress());
-
-    this.loadMySupports();
   }
 
   ngAfterViewInit() {
@@ -170,7 +158,6 @@ export class CreateOccurrenceComponent implements OnInit, AfterViewInit, OnDestr
 
   private async setLocation(lat: number, lng: number, fillAddress: boolean) {
     this.form.patchValue({ latitude: lat, longitude: lng });
-    this.checkDuplicates();
 
     if (this.marker) this.marker.setLatLng([lat, lng]);
     else this.marker = L.marker([lat, lng]).addTo(this.map);
@@ -202,52 +189,6 @@ export class CreateOccurrenceComponent implements OnInit, AfterViewInit, OnDestr
   private async checkCoverage() {
     const { city, state } = this.form.value;
     this.cityServed = await this.coverage.isServed(city, state);
-  }
-
-  async checkDuplicates() {
-    const { latitude, longitude, type } = this.form.value;
-    if (latitude == null || longitude == null || !type) { this.nearbyDuplicates = []; return; }
-
-    this.checkingDuplicates = true;
-    try {
-      this.nearbyDuplicates = await this.occurrenceSupportService.findNearby(latitude, longitude, type);
-    } catch {
-      this.nearbyDuplicates = [];
-    } finally {
-      this.checkingDuplicates = false;
-    }
-  }
-
-  goToLogin() { this.router.navigate(['/account/sign-in']); }
-
-  isSupported(id?: number): boolean {
-    return id != null && this.supportedIds.has(id);
-  }
-
-  async toggleSupportDuplicate(o: Occurrence) {
-    if (this.auth.isVisitor()) { this.showLoginPrompt = true; return; }
-    if (o.id == null || this.supportingId != null) return;
-    const apoiando = this.isSupported(o.id);
-    this.supportingId = o.id;
-    try {
-      const info = await this.occurrenceSupportService.toggle(o.id, apoiando);
-      if (info.supportedByMe) this.supportedIds.add(o.id);
-      else                    this.supportedIds.delete(o.id);
-      this.toastr[apoiando ? 'info' : 'success'](
-        apoiando ? 'Apoio removido.' : 'Apoio registrado. Obrigado por colaborar!');
-    } catch {
-      this.toastr.error(apoiando
-        ? 'Não foi possível remover o apoio.'
-        : 'Não foi possível registrar o apoio.');
-    } finally {
-      this.supportingId = null;
-    }
-  }
-
-  private async loadMySupports() {
-    if (this.auth.isVisitor()) return;
-    try { this.supportedIds = new Set(await this.occurrenceSupportService.mySupports()); }
-    catch { this.supportedIds = new Set(); }
   }
 
   async onPhotoSelected(event: Event) {
@@ -361,6 +302,12 @@ export class CreateOccurrenceComponent implements OnInit, AfterViewInit, OnDestr
     try {
       const res: any = await this.occurrenceCreateService.create(payload);
       this.loading = false;
+      if (res?.groupedWithProtocol) {
+        this.toastr.info(
+          `Já havia um relato do mesmo problema a até 50 metros (${res.groupedWithProtocol}). `
+          + 'Sua ocorrência foi agrupada a ele, e a prefeitura acompanha os dois juntos.',
+          'Ocorrência agrupada', { timeOut: 10000 });
+      }
       if (res?.trackingCode) {
         this.trackingCode = res.trackingCode;
       } else {

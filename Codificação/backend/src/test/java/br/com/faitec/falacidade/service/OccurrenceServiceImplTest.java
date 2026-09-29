@@ -209,20 +209,63 @@ class OccurrenceServiceImplTest {
     }
 
     @Nested
-    @DisplayName("findNearbyDuplicates()")
-    class FindNearby {
-        @Test @DisplayName("passa raio de 50m ao DAO")
-        void passesCorrectRadius() {
-            when(occurrenceDao.findNearby(anyDouble(), anyDouble(), anyString(), anyDouble()))
-                .thenReturn(List.of());
-            sut.findNearbyDuplicates(0.0, 0.0, Occurrence.OccurrenceType.LIXO_ACUMULADO_OU_TERRENO_SUJO);
-            verify(occurrenceDao).findNearby(0.0, 0.0, "LIXO_ACUMULADO_OU_TERRENO_SUJO", 50.0);
+    @DisplayName("agrupamento automático na criação")
+    class AutoGroup {
+
+        @BeforeEach
+        void stubs() {
+            when(trackingCodeService.generateCode()).thenReturn("AAAAAAAA");
+            when(trackingCodeService.hash(any())).thenReturn("hash");
+            when(occurrenceDao.add(any())).thenReturn(1);
         }
 
-        @Test @DisplayName("type null retorna lista vazia sem chamar DAO")
-        void nullTypeReturnsEmpty() {
-            assertThat(sut.findNearbyDuplicates(-20.0, -47.0, null)).isEmpty();
-            verifyNoInteractions(occurrenceDao);
+        private Occurrence locatedAt() {
+            Occurrence o = validAnonymous();
+            o.setLatitude(-22.25);
+            o.setLongitude(-45.70);
+            return o;
+        }
+
+        private Occurrence created() {
+            ArgumentCaptor<Occurrence> c = ArgumentCaptor.forClass(Occurrence.class);
+            verify(occurrenceDao).add(c.capture());
+            return c.getValue();
+        }
+
+        @Test
+        @DisplayName("entra no grupo da ocorrência aberta do mesmo tipo a até 50 m, sem perguntar ao usuário")
+        void joinsNearbyOccurrence() {
+            when(occurrenceDao.findNearby(-22.25, -45.70, "BURACO_NA_RUA_OU_CALCADA", 50.0))
+                .thenReturn(List.of(dtoWith(5, "FC-26-AAAAA")));
+
+            var resposta = sut.createOccurrence(locatedAt(), null);
+
+            assertThat(created().getGroupId()).isEqualTo(5);
+            assertThat(resposta.getGroupedWithProtocol()).isEqualTo("FC-26-AAAAA");
+        }
+
+        @Test
+        @DisplayName("se a vizinha já faz parte de um grupo, entra no mesmo grupo")
+        void joinsExistingGroup() {
+            GetOccurrenceDto vizinha = dtoWith(5, "FC-26-AAAAA");
+            vizinha.setGroupId(3);
+            when(occurrenceDao.findNearby(-22.25, -45.70, "BURACO_NA_RUA_OU_CALCADA", 50.0))
+                .thenReturn(List.of(vizinha));
+
+            sut.createOccurrence(locatedAt(), null);
+
+            assertThat(created().getGroupId()).isEqualTo(3);
+        }
+
+        @Test
+        @DisplayName("sem vizinha do mesmo tipo, fica sozinha")
+        void staysAlone() {
+            when(occurrenceDao.findNearby(anyDouble(), anyDouble(), anyString(), anyDouble())).thenReturn(List.of());
+
+            var resposta = sut.createOccurrence(locatedAt(), null);
+
+            assertThat(created().getGroupId()).isNull();
+            assertThat(resposta.getGroupedWithProtocol()).isNull();
         }
     }
 
@@ -308,6 +351,48 @@ class OccurrenceServiceImplTest {
         void guardsInvalidCitizen() {
             assertThat(sut.unsupportOccurrence(5, 0)).isFalse();
             verifyNoInteractions(supportDao);
+        }
+    }
+
+    @Nested
+    @DisplayName("ocorrência finalizada")
+    class Finalized {
+
+        @Test
+        @DisplayName("finalizar não apaga: lê e limpa as fotos, muda o status com histórico e avisa o autor")
+        void finalizesWithoutDeleting() {
+            GetOccurrenceDto o = dtoWith(7, "FC-26-ABCDE");
+            o.setStatus(Occurrence.OccurrenceStatus.PENDENTE);
+            o.setEmail("autor@email.com");
+            o.setFullname("Ana");
+            when(occurrenceDao.readById(7)).thenReturn(o);
+            when(occurrenceDao.readMediaPublicIds(7)).thenReturn(List.of("p1", "p2"));
+
+            assertThat(sut.finalizeOccurrence(7, 1)).containsExactly("p1", "p2");
+
+            org.mockito.InOrder ordem = inOrder(occurrenceDao);
+            ordem.verify(occurrenceDao).readMediaPublicIds(7);
+            ordem.verify(occurrenceDao).clearMedia(7);
+            ordem.verify(occurrenceDao).updateStatus(eq(7), eq("FINALIZADA"), eq(1), anyString());
+            verify(emailService).sendStatusChangeEmail(eq("autor@email.com"), eq("Ana"), eq("FC-26-ABCDE"),
+                                                       eq("FINALIZADA"), anyString());
+        }
+
+        @Test
+        @DisplayName("a atualização coletiva do grupo pula as ocorrências finalizadas")
+        void collectiveSkipsFinalized() {
+            GetOccurrenceDto raiz = dtoWith(1, "FC-26-AAAAA");
+            raiz.setStatus(Occurrence.OccurrenceStatus.PENDENTE);
+            GetOccurrenceDto finalizada = dtoWith(2, "FC-26-BBBBB");
+            finalizada.setStatus(Occurrence.OccurrenceStatus.FINALIZADA);
+            finalizada.setGroupId(1);
+            when(occurrenceDao.readById(1)).thenReturn(raiz);
+            when(occurrenceDao.readGroup(1)).thenReturn(List.of(raiz, finalizada));
+
+            sut.changeStatus(1, "CONCLUIDA", 9, "resolvido", true);
+
+            verify(occurrenceDao).updateStatus(1, "CONCLUIDA", 9, "resolvido");
+            verify(occurrenceDao, never()).updateStatus(eq(2), anyString(), anyInt(), any());
         }
     }
 }

@@ -15,12 +15,6 @@ export class OccurrenceSupportService {
 
   constructor(private http: HttpClient) {}
 
-  findNearby(lat: number, lng: number, type: string): Promise<Occurrence[]> {
-    return firstValueFrom(this.http.get<Occurrence[]>(
-      `${this.base}/nearby?lat=${lat}&lon=${lng}&type=${type}`
-    ));
-  }
-
   getSupportInfo(id: number | string): Promise<SupportInfo> {
     return firstValueFrom(this.http.get<SupportInfo>(`${this.base}/${id}/support`));
   }

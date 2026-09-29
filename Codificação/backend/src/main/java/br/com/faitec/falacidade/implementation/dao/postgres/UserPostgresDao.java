@@ -294,6 +294,25 @@ public class UserPostgresDao implements UserDao {
         }
     }
 
+    // A ocorrência deixa de existir: protocolo e título ficam copiados no log para
+    // saber o que foi excluído. Não há conta-alvo, então target_* ficam nulos.
+    @Override
+    public void logOccurrenceDeletion(UserModel actor, String protocol, String title, String city, String state) {
+        String sql = "INSERT INTO user_log (action, actor_id, actor_role, occurrence_protocol, occurrence_title, city, state) "
+                   + "VALUES ('DELETE', ?, ?, ?, ?, ?, ?)";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, actor.getId());
+            ps.setString(2, actor.getRole().name());
+            ps.setString(3, protocol);
+            ps.setString(4, title);
+            ps.setString(5, city);
+            ps.setString(6, state);
+            ps.execute();
+        } catch (SQLException e) {
+            throw new RuntimeException("Erro ao gravar log de exclusão de ocorrência", e);
+        }
+    }
+
     @Override
     public List<java.util.Map<String, Object>> readLog() {
         String sql = "SELECT l.*, a.fullname AS actor_name, a.email AS actor_email, " +
@@ -315,6 +334,8 @@ public class UserPostgresDao implements UserDao {
                 r.put("targetRole",  rs.getString("target_role"));
                 r.put("targetName",  rs.getString("target_name"));
                 r.put("targetEmail", rs.getString("target_email"));
+                r.put("occurrenceProtocol", rs.getString("occurrence_protocol"));
+                r.put("occurrenceTitle",    rs.getString("occurrence_title"));
                 r.put("city",        rs.getString("city"));
                 r.put("state",       rs.getString("state"));
                 r.put("createdAt",   rs.getTimestamp("created_at").toLocalDateTime());

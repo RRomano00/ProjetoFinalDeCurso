@@ -172,6 +172,7 @@
 .badge-progress { background: var(--st-progress-bg); color: var(--st-progress); }
 .badge-done     { background: var(--st-done-bg);     color: var(--st-done); }
 .badge-rejected { background: var(--st-refused-bg);  color: var(--st-refused); }
+.badge-finalized { background: var(--st-final); color: #fff; }
 
 .card-title {
   font-size: 1.0625rem;
@@ -317,3 +318,30 @@
   .occurrence-grid { grid-template-columns: 1fr; }
   .modal-card { max-width: 100%; }
 }
+
+/* Exclusão (só Super Administrador) */
+.btn-delete {
+  padding: 0.25rem 0.625rem;
+  border: 1px solid var(--st-refused-line);
+  border-radius: var(--r-ctl);
+  background: var(--st-refused-bg);
+  color: var(--st-refused);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-delete:hover { border-color: var(--st-refused); }
+
+.btn-danger {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--st-refused);
+  border-radius: var(--r-ctl);
+  background: var(--st-refused);
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-danger:hover:not(:disabled) { filter: brightness(0.92); }
+.btn-danger:disabled { opacity: 0.6; cursor: not-allowed; }
+

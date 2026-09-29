@@ -18,6 +18,8 @@ public interface UserDao extends CrudDao<UserModel>, ReadByEmailDao, UpdatePassw
     /** O número já é de outra conta, como telefone do perfil ou como celular do SMS? */
     boolean isPhoneInUse(int exceptUserId, String phone);
 
+    void logOccurrenceDeletion(UserModel actor, String protocol, String title, String city, String state);
+
     java.util.List<UserModel> readAllUsers();
 
     boolean existsStaffInCity(String city, String state);

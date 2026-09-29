@@ -45,7 +45,8 @@ export class UserLogComponent implements OnInit {
     const q = this.search.trim().toLowerCase();
     return this.logs.filter(l => {
       const day = String(l.createdAt).slice(0, 10);
-      return (!q || `${l.actorName} ${l.actorEmail} ${l.targetName} ${l.targetEmail}`.toLowerCase().includes(q))
+      return (!q || `${l.actorName} ${l.actorEmail} ${l.targetName} ${l.targetEmail} ${l.occurrenceProtocol} ${l.occurrenceTitle}`
+                      .toLowerCase().includes(q))
         && (!this.filterAction || l.action === this.filterAction)
         && (!this.filterRole   || l.targetRole === this.filterRole)
         && (!this.filterCity   || l.city === this.filterCity)

@@ -123,7 +123,7 @@ public class OccurrenceRestController {
     @GetMapping("/{id}")
     public ResponseEntity<GetOccurrenceDto> getById(@PathVariable int id, Authentication auth) {
         GetOccurrenceDto entity = occurrenceService.findById(id);
-        if (entity == null) return ResponseEntity.notFound().build();
+        if (entity == null || hiddenFrom(entity, auth)) return ResponseEntity.notFound().build();
         maskIfNotPrivileged(entity, auth);
         return ResponseEntity.ok(entity);
     }
@@ -136,10 +136,10 @@ public class OccurrenceRestController {
         if (hasRole(auth, UserModel.UserRole.EMPLOYEE)
          || hasRole(auth, UserModel.UserRole.ADMINISTRATOR)) {
             UserModel user = safeFindUser(auth);
-            return ResponseEntity.ok(occurrenceService.findAllByCity(user != null ? user.getCity() : null));
+            return ResponseEntity.ok(visibleTo(occurrenceService.findAllByCity(user != null ? user.getCity() : null), auth));
         }
 
-        List<GetOccurrenceDto> all = occurrenceService.findAll().stream()
+        List<GetOccurrenceDto> all = visibleTo(occurrenceService.findAll(), auth).stream()
             .filter(o -> !o.isAnonymous())
             .toList();
         all.forEach(o -> maskIfNotPrivileged(o, auth));
@@ -149,7 +149,7 @@ public class OccurrenceRestController {
     @GetMapping("/mine")
     public ResponseEntity<List<GetOccurrenceDto>> mine(Authentication auth) {
         if (auth == null || auth.getName() == null) return ResponseEntity.ok(List.of());
-        return ResponseEntity.ok(occurrenceService.findAllByUserEmail(auth.getName()));
+        return ResponseEntity.ok(visibleTo(occurrenceService.findAllByUserEmail(auth.getName()), auth));
     }
 
     @GetMapping("/coverage")
@@ -170,24 +170,16 @@ public class OccurrenceRestController {
     @GetMapping("/protocol/{number}")
     public ResponseEntity<GetOccurrenceDto> getByProtocol(@PathVariable String number, Authentication auth) {
         GetOccurrenceDto entity = occurrenceService.findByProtocolNumber(number);
-        if (entity == null) return ResponseEntity.notFound().build();
+        if (entity == null || hiddenFrom(entity, auth)) return ResponseEntity.notFound().build();
         maskIfNotPrivileged(entity, auth);
         return ResponseEntity.ok(entity);
-    }
-
-    @GetMapping("/nearby")
-    public ResponseEntity<List<GetOccurrenceDto>> getNearby(
-            @RequestParam double lat, @RequestParam double lon,
-            @RequestParam Occurrence.OccurrenceType type) {
-        List<GetOccurrenceDto> nearby = occurrenceService.findNearbyDuplicates(lat, lon, type);
-        nearby.forEach(this::maskAuthor);
-        return ResponseEntity.ok(nearby);
     }
 
     @PostMapping("/{id}/support")
     public ResponseEntity<Map<String, Object>> support(@PathVariable int id, Authentication auth) {
         UserModel user = safeFindUser(auth);
         if (user == null) return ResponseEntity.status(401).build();
+        if (hiddenFrom(occurrenceService.findById(id), auth)) return ResponseEntity.notFound().build();
         try {
             occurrenceService.supportOccurrence(id, user.getId());
         } catch (IllegalArgumentException e) {
@@ -227,7 +219,7 @@ public class OccurrenceRestController {
     public ResponseEntity<GetOccurrenceDto> getAnonymousStatus(
             @Valid @ModelAttribute AnonymousTrackingQueryDto query) {
         GetOccurrenceDto result = occurrenceService.findByAnonymousTrackingCode(query.getTrackingCode());
-        if (result == null) return ResponseEntity.notFound().build();
+        if (result == null || hiddenFrom(result, null)) return ResponseEntity.notFound().build();
         maskAuthor(result);
         return ResponseEntity.ok(result);
     }
@@ -235,8 +227,13 @@ public class OccurrenceRestController {
     @PutMapping("/{id}/status")
     public ResponseEntity<?> updateStatus(@PathVariable int id,
             @Valid @RequestBody UpdateOccurrenceStatusDto dto, Authentication auth) {
+        if (dto.getNewStatus() == Occurrence.OccurrenceStatus.FINALIZADA)
+            return ResponseEntity.badRequest().body(Map.of(
+                "error", "Para finalizar uma ocorrência, use Excluir (somente o Super Administrador)."));
         ResponseEntity<Map<String, String>> denied = outOfJurisdiction(auth, id);
         if (denied != null) return denied;
+        ResponseEntity<Map<String, String>> finalized = finalizedConflict(id);
+        if (finalized != null) return finalized;
         occurrenceService.changeStatus(id, dto.getNewStatus().name(), getUserId(auth),
             dto.getObservation(), dto.isCollective());
         return ResponseEntity.noContent().build();
@@ -247,6 +244,8 @@ public class OccurrenceRestController {
             @RequestBody(required = false) UpdateOccurrenceStatusDto body, Authentication auth) {
         ResponseEntity<Map<String, String>> denied = outOfJurisdiction(auth, id);
         if (denied != null) return denied;
+        ResponseEntity<Map<String, String>> finalized = finalizedConflict(id);
+        if (finalized != null) return finalized;
         occurrenceService.changeStatus(id, Occurrence.OccurrenceStatus.EM_ANDAMENTO.name(), getUserId(auth),
             body != null ? body.getObservation() : null, body != null && body.isCollective());
         return ResponseEntity.noContent().build();
@@ -257,6 +256,8 @@ public class OccurrenceRestController {
             @RequestBody(required = false) UpdateOccurrenceStatusDto body, Authentication auth) {
         ResponseEntity<Map<String, String>> denied = outOfJurisdiction(auth, id);
         if (denied != null) return denied;
+        ResponseEntity<Map<String, String>> finalized = finalizedConflict(id);
+        if (finalized != null) return finalized;
         occurrenceService.changeStatus(id, Occurrence.OccurrenceStatus.CONCLUIDA.name(), getUserId(auth),
             body != null ? body.getObservation() : null, body != null && body.isCollective());
         return ResponseEntity.noContent().build();
@@ -267,6 +268,8 @@ public class OccurrenceRestController {
             @Valid @RequestBody ForwardOccurrenceDto dto, Authentication auth) {
         ResponseEntity<Map<String, String>> denied = outOfJurisdiction(auth, id);
         if (denied != null) return denied;
+        ResponseEntity<Map<String, String>> finalized = finalizedConflict(id);
+        if (finalized != null) return finalized;
         try {
             var resultado = occurrenceService.forwardToDepartment(
                     id, dto.getDepartmentIds(), getUserId(auth));
@@ -286,16 +289,34 @@ public class OccurrenceRestController {
 
     @GetMapping("/{id}/group")
     public ResponseEntity<List<GetOccurrenceDto>> getGroup(@PathVariable int id, Authentication auth) {
-        List<GetOccurrenceDto> group = occurrenceService.getGroup(id);
+        List<GetOccurrenceDto> group = visibleTo(occurrenceService.getGroup(id), auth);
         if (!isPrivileged(auth)) group.forEach(this::maskAuthor);
         return ResponseEntity.ok(group);
     }
 
     @GetMapping("/{id}/history")
     public ResponseEntity<List<OccurrenceHistoryDto>> getHistory(@PathVariable int id, Authentication auth) {
+        if (hiddenFrom(occurrenceService.findById(id), auth)) return ResponseEntity.notFound().build();
         List<OccurrenceHistoryDto> history = occurrenceService.getHistory(id);
         if (!isPrivileged(auth)) history.forEach(h -> h.setChangedByName(null));
         return ResponseEntity.ok(history);
+    }
+
+    // A ocorrência finalizada (excluída) só existe para o Super Administrador; para os outros, 404.
+    private boolean hiddenFrom(GetOccurrenceDto o, Authentication auth) {
+        return o != null && o.getStatus() == Occurrence.OccurrenceStatus.FINALIZADA
+            && !hasRole(auth, UserModel.UserRole.SUPER_ADMIN);
+    }
+
+    private List<GetOccurrenceDto> visibleTo(List<GetOccurrenceDto> list, Authentication auth) {
+        return list.stream().filter(o -> !hiddenFrom(o, auth)).collect(java.util.stream.Collectors.toList());
+    }
+
+    private ResponseEntity<Map<String, String>> finalizedConflict(int id) {
+        GetOccurrenceDto o = occurrenceService.findById(id);
+        if (o == null || o.getStatus() != Occurrence.OccurrenceStatus.FINALIZADA) return null;
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of(
+            "error", "Ocorrência finalizada não pode ser alterada."));
     }
 
     private void maskIfNotPrivileged(GetOccurrenceDto e, Authentication auth) {
@@ -345,6 +366,27 @@ public class OccurrenceRestController {
     private int getUserId(Authentication auth) {
         UserModel user = safeFindUser(auth);
         return user != null ? user.getId() : 0;
+    }
+
+    /**
+     * Só o Super Administrador exclui. A exclusão é lógica: status FINALIZADA (definitivo), fotos
+     * apagadas, autor avisado; a ocorrência passa a existir só para o Super Administrador.
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteOccurrence(@PathVariable int id, Authentication auth) {
+        UserModel requester = safeFindUser(auth);
+        if (requester == null || !requester.isSuperAdmin()) return ResponseEntity.status(403).build();
+        GetOccurrenceDto occurrence = occurrenceService.findById(id);
+        if (occurrence == null || occurrence.getStatus() == Occurrence.OccurrenceStatus.FINALIZADA)
+            return ResponseEntity.notFound().build();
+
+        // Banco primeiro: se a finalização falhar, as fotos continuam onde estavam.
+        occurrenceService.finalizeOccurrence(id, requester.getId()).forEach(mediaUploadService::delete);
+        try {
+            userService.logOccurrenceDeletion(requester, occurrence.getProtocolNumber(), occurrence.getTitle(),
+                                              occurrence.getCity(), occurrence.getState());
+        } catch (Exception ignored) { }
+        return ResponseEntity.noContent().build();
     }
 
     private UserModel safeFindUser(Authentication auth) {

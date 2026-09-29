@@ -205,7 +205,7 @@ CREATE TABLE IF NOT EXISTS occurrence (
     classification_id            INTEGER      REFERENCES classification(id) ON DELETE SET NULL,
     department_id                INTEGER      REFERENCES department(id) ON DELETE SET NULL,
     status                       VARCHAR(20)  NOT NULL DEFAULT 'PENDENTE'
-                                     CHECK (status IN ('PENDENTE','EM_ANDAMENTO','CONCLUIDA','INDEFERIDA')),
+                                     CHECK (status IN ('PENDENTE','EM_ANDAMENTO','CONCLUIDA','INDEFERIDA','FINALIZADA')),
     priority                     VARCHAR(10)  NOT NULL DEFAULT 'MEDIA'
                                      CHECK (priority IN ('BAIXA','MEDIA','ALTA')),
     is_anonymous                 BOOLEAN      NOT NULL DEFAULT FALSE,
@@ -252,8 +252,9 @@ ALTER TABLE occurrence DROP CONSTRAINT IF EXISTS occurrence_status_check;
 -- a nova recusa o valor antigo. Sem constraint alguma, as duas grafias passam.
 UPDATE occurrence SET status = 'CONCLUIDA' WHERE status = 'ATENDIDA';
 
+-- FINALIZADA: ocorrência excluída pelo Super Administrador (exclusão lógica, definitiva).
 ALTER TABLE occurrence ADD CONSTRAINT occurrence_status_check
-    CHECK (status IN ('PENDENTE','EM_ANDAMENTO','CONCLUIDA','INDEFERIDA'));
+    CHECK (status IN ('PENDENTE','EM_ANDAMENTO','CONCLUIDA','INDEFERIDA','FINALIZADA'));
 
 -- ============================================================
 -- 4. TABELAS DEPENDENTES DA OCORRÊNCIA
@@ -328,6 +329,12 @@ CREATE TABLE IF NOT EXISTS user_log (
 );
 
 CREATE INDEX IF NOT EXISTS idx_user_log_locality ON user_log(state, city);
+
+-- Exclusão de ocorrência pelo Super Administrador: sem conta-alvo, com protocolo
+-- e título copiados, porque a ocorrência deixa de existir.
+ALTER TABLE user_log ADD COLUMN IF NOT EXISTS occurrence_protocol VARCHAR(20);
+ALTER TABLE user_log ADD COLUMN IF NOT EXISTS occurrence_title    VARCHAR(200);
+ALTER TABLE user_log ALTER COLUMN target_role DROP NOT NULL;
 
 -- ============================================================
 -- 6. ÍNDICES

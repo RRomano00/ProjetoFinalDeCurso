@@ -14,7 +14,6 @@ public interface OccurrenceService extends ReadService<GetOccurrenceDto> {
     void updateOccurrenceStatusToConclude(int id);
     void updateStatus(int occurrenceId, String newStatus, int changedByUserId, String observation);
     GetOccurrenceDto findByProtocolNumber(String protocolNumber);
-    List<GetOccurrenceDto> findNearbyDuplicates(double lat, double lon, Occurrence.OccurrenceType type);
     GetOccurrenceDto findByAnonymousTrackingCode(String plainCode);
 
     List<GetOccurrenceDto> findAllByUserEmail(String email);
@@ -33,6 +32,12 @@ public interface OccurrenceService extends ReadService<GetOccurrenceDto> {
     List<br.com.faitec.falacidade.domain.dto.occurrence.OccurrenceHistoryDto> getHistory(int occurrenceId);
 
     List<GetOccurrenceDto> getGroup(int occurrenceId);
+
+    /**
+     * "Exclui" a ocorrência: status FINALIZADA (definitivo), fotos removidas do banco e autor
+     * avisado. Devolve as imagens, para quem chamou apagá-las no Cloudinary.
+     */
+    List<String> finalizeOccurrence(int id, int changedBy);
 
     void changeStatus(int occurrenceId, String newStatus, int changedBy,
                       String message, boolean collective);

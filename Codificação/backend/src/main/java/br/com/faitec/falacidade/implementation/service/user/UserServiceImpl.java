@@ -90,6 +90,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public void logOccurrenceDeletion(UserModel actor, String protocol, String title, String city, String state) {
+        if (actor != null && protocol != null) userDao.logOccurrenceDeletion(actor, protocol, title, city, state);
+    }
+
+    @Override
     public List<java.util.Map<String, Object>> findLog() {
         return userDao.readLog();
     }
