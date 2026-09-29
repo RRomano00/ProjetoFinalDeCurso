@@ -169,7 +169,8 @@ export class DetailOccurrenceComponent implements OnInit, OnDestroy {
 
       const points: [number, number][] = [];
       for (const g of this.group) {
-        if (g.id === o.id || g.latitude == null || g.longitude == null) continue;
+        // Finalizada fica fora do mapa; só aparece se for a própria ocorrência aberta.
+        if (g.id === o.id || g.status === 'FINALIZADA' || g.latitude == null || g.longitude == null) continue;
         const p: [number, number] = [g.latitude, g.longitude];
         points.push(p);
         L.marker(p, { icon: this.pointIcon(statusColor(g.status), false) }).addTo(this.map!)
