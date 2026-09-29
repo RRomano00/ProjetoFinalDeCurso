@@ -39,7 +39,7 @@ O **Fala, Cidade!** é uma solução digital desenvolvida para estreitar a comun
 * **Administração Municipal:**
   * Painel de Gestão (Dashboard) com indicadores de demandas.
   * Gestão de usuários (Funcionários e Administradores).
-  * Exclusão de ocorrências pelo Super Administrador: a ocorrência passa a **Finalizada** (definitiva, visível só para ele), as fotos são apagadas, o autor é avisado e a ação fica nos Logs.
+  * Exclusão de ocorrências pelo Super Administrador: a ocorrência passa a **Finalizada** (definitiva, visível só para ele, e fora da tela inicial e dos mapas), as fotos são apagadas, o autor é avisado e a ação fica nos Logs.
   * Atualização de status e relatórios de desempenho por categoria.
 
 ---

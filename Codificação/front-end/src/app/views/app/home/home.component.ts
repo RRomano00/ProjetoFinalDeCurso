@@ -52,11 +52,7 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   mapFilterNeighborhood = '';
   mapFilterType         = '';
   mapFilterStatus       = '';
-  // Finalizada só chega ao Super Administrador; o filtro dela só aparece para ele.
-  get mapStatusOptions(): string[] {
-    return this.auth.isSuperAdmin() ? [...HomeComponent.STATUSES, 'FINALIZADA'] : HomeComponent.STATUSES;
-  }
-  private static readonly STATUSES = ['PENDENTE', 'EM_ANDAMENTO', 'CONCLUIDA', 'INDEFERIDA'];
+  mapStatusOptions = ['PENDENTE', 'EM_ANDAMENTO', 'CONCLUIDA', 'INDEFERIDA'];
 
   get totalOccurrences() { return this.inCity.length; }
 
@@ -77,11 +73,10 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
     EM_ANDAMENTO: 'em andamento',
     CONCLUIDA:    'concluídas',
     INDEFERIDA:   'indeferidas',
-    FINALIZADA:   'finalizadas',
   };
 
   get statusBreakdown() {
-    return ['PENDENTE', 'EM_ANDAMENTO', 'CONCLUIDA', 'INDEFERIDA', 'FINALIZADA']
+    return this.mapStatusOptions
       .map(status => ({
         status,
         count: this.inCity.filter(o => o.status === status).length,
@@ -145,6 +140,8 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   ) {
     // O município já é lembrado pelo LocalityPreferenceService.
     persistFilters(this, 'home-map', ['mapFilterNeighborhood', 'mapFilterType', 'mapFilterStatus']);
+    // Filtro salvo antes, quando a Finalizada ainda era opção aqui.
+    if (!this.mapStatusOptions.includes(this.mapFilterStatus)) this.mapFilterStatus = '';
   }
 
   goToLogin() { this.router.navigate(['/account/sign-in']); }
@@ -201,7 +198,9 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private async loadOccurrencesAndPlot() {
     try {
-      this.occurrences = await this.occurrenceReadService.findAll() || [];
+      // Finalizada (excluída) só aparece na listagem do Super Administrador, nunca aqui nem no mapa.
+      this.occurrences = (await this.occurrenceReadService.findAll() || [])
+        .filter(o => o.status !== 'FINALIZADA');
     } catch {
       this.occurrences = [];
     }

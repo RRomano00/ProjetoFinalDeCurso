@@ -100,14 +100,12 @@
 .badge-progress { background: var(--st-progress-bg); color: var(--st-progress); }
 .badge-done     { background: var(--st-done-bg);     color: var(--st-done); }
 .badge-rejected { background: var(--st-refused-bg);  color: var(--st-refused); }
-.badge-finalized { background: var(--st-final); color: #fff; }
 
 .badge-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
 .badge-open     .badge-dot { background: var(--st-pending); }
 .badge-progress .badge-dot { background: var(--st-progress); }
 .badge-done     .badge-dot { background: var(--st-done); }
 .badge-rejected .badge-dot { background: var(--st-refused); }
-.badge-finalized .badge-dot { background: #fff; }
 
 .incident-title {
   font-size: 0.9375rem;
@@ -268,7 +266,6 @@
 .dot.em-andamento { background: var(--st-progress); }
 .dot.done    { background: var(--st-done); }
 .dot.refused { background: var(--st-refused); }
-.dot.finalized { background: var(--st-final); }
 
 .city-state {
   background: var(--surface);
