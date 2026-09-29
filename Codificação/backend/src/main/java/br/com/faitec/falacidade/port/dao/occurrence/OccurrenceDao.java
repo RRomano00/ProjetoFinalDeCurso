@@ -31,4 +31,10 @@ public interface OccurrenceDao extends CreateDao<Occurrence>, ReadDao<GetOccurre
     List<OccurrenceHistoryDto> readHistory(int occurrenceId);
 
     List<GetOccurrenceDto> readGroup(int rootId);
+
+    /** Imagens da ocorrência no Cloudinary (a principal e as adicionais). */
+    List<String> readMediaPublicIds(int id);
+
+    /** Apaga do banco o registro das fotos (a principal e as adicionais) da ocorrência. */
+    void clearMedia(int id);
 }

@@ -101,14 +101,28 @@ export class LocalityPreferenceService {
   async detect(): Promise<Municipality | null> {
     const position = await this.position();
     if (!position) return null;
+    return this.municipalityAt(position.coords.latitude, position.coords.longitude);
+  }
 
-    const address = await this.geocoding.reverseGeocode(
-      position.coords.latitude, position.coords.longitude);
+  /** Município de uma posição (ex.: do GPS), que passa a ser a escolha lembrada. */
+  async municipalityAt(lat: number, lng: number): Promise<Municipality | null> {
+    const address = await this.geocoding.reverseGeocode(lat, lng);
     if (!address?.city) return null;
-
     const municipality = { city: address.city, state: address.state || '' };
     this.choice = municipality;
     return municipality;
+  }
+
+  static readonly VISITOR_START: Municipality = { city: 'Santa Rita do Sapucaí', state: 'MG' };
+
+  async startingMunicipality(visitor = false): Promise<Municipality | null> {
+    if (visitor) {
+      this.choice = LocalityPreferenceService.VISITOR_START;
+      return LocalityPreferenceService.VISITOR_START;
+    }
+    const cadastro = await this.ofCurrentUser();
+    if (cadastro) { this.choice = cadastro; return cadastro; }
+    return this.choice;
   }
 
   async mapCenter(): Promise<{ lat: number; lng: number; zoom: number } | null> {

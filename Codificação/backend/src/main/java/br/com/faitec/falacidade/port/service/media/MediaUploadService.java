@@ -11,6 +11,9 @@ public interface MediaUploadService {
 
     UploadResult uploadSync(byte[] fileBytes, Occurrence.OccurrenceType type);
 
+    /** Apaga a imagem no provedor; falha não interrompe quem chamou. */
+    void delete(String publicId);
+
     record UploadResult(
         String  publicId,
         String  url,

@@ -36,6 +36,7 @@ const STATUS_LABELS: Record<string, string> = {
   EM_ANDAMENTO: 'Em Andamento',
   CONCLUIDA:    'Concluída',
   INDEFERIDA:   'Indeferida',
+  FINALIZADA:   'Finalizada',
 };
 
 const STATUS_CLASSES: Record<string, string> = {
@@ -43,6 +44,7 @@ const STATUS_CLASSES: Record<string, string> = {
   EM_ANDAMENTO: 'badge-progress',
   CONCLUIDA:    'badge-done',
   INDEFERIDA:   'badge-rejected',
+  FINALIZADA:   'badge-finalized',
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -50,6 +52,7 @@ const STATUS_COLORS: Record<string, string> = {
   EM_ANDAMENTO: '#14487e',
   INDEFERIDA:   '#8b3a2d',
   PENDENTE:     '#8a5800',
+  FINALIZADA:   '#111111',
 };
 
 const PRIORITY_LABELS: Record<string, string> = {

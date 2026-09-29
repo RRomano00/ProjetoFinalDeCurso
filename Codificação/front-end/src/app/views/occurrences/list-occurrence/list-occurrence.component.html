@@ -106,6 +106,10 @@
           {{ o.supportCount }} {{ o.supportCount === 1 ? 'apoio' : 'apoios' }}
         </span>
         <time *ngIf="o.createdAt">{{ o.createdAt | date:'dd/MM/yyyy, HH:mm' }}</time>
+        <button *ngIf="auth.isSuperAdmin() && o.status !== 'FINALIZADA'" type="button" class="btn-delete"
+                [attr.aria-label]="'Excluir a ocorrência ' + o.protocolNumber" (click)="askDelete(o)">
+          Excluir
+        </button>
       </div>
     </div>
   </ng-template>
@@ -141,4 +145,25 @@
       </div>
     </section>
   </div>
+
+  @if (pendingDelete) {
+    <div class="modal-overlay" (click)="deleting || (pendingDelete = null)">
+      <div class="modal-card" role="alertdialog" aria-modal="true" aria-labelledby="excluir-ocorrencia-titulo"
+           (click)="$event.stopPropagation()">
+        <h2 id="excluir-ocorrencia-titulo">Excluir ocorrência</h2>
+        <p>
+          A ocorrência <strong>{{ pendingDelete.protocolNumber }}</strong>
+          ({{ pendingDelete.title || 'sem título' }}) passará a <strong>Finalizada</strong>: some para
+          todos os perfis (só o Super Administrador continua a vê-la), as fotos são apagadas e o autor
+          é avisado por e-mail. Esta ação não pode ser desfeita.
+        </p>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" (click)="pendingDelete = null" [disabled]="deleting">Cancelar</button>
+          <button type="button" class="btn-danger" (click)="confirmDelete()" [disabled]="deleting">
+            {{ deleting ? 'Excluindo...' : 'Excluir ocorrência' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
 </div>

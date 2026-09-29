@@ -2,14 +2,14 @@
   <div class="page-header">
     <div>
       <h1>Logs</h1>
-      <p>Contas criadas e excluídas pela administração</p>
+      <p>Contas criadas e excluídas pela administração e ocorrências excluídas</p>
     </div>
   </div>
 
   <div class="filters" *ngIf="!loading">
     <input type="search" [(ngModel)]="search" class="filter-input"
-           aria-label="Pesquisar por nome ou e-mail"
-           placeholder="Pesquisar por nome ou e-mail" />
+           aria-label="Pesquisar por nome, e-mail ou protocolo"
+           placeholder="Pesquisar por nome, e-mail ou protocolo" />
     <select [(ngModel)]="filterAction" class="filter-select" aria-label="Ação">
       <option value="">Criações e exclusões</option>
       <option value="CREATE">Somente criações</option>
@@ -56,12 +56,18 @@
             </ng-container>
           </td>
           <td data-label="Conta">
-            <ng-container *ngIf="l.targetName; else excluida">
-              {{ l.targetName }}<br /><span class="cell-email">{{ l.targetEmail }}</span>
+            <ng-container *ngIf="l.occurrenceProtocol; else conta">
+              Ocorrência {{ l.occurrenceProtocol }}<br /><span class="cell-email">{{ l.occurrenceTitle }}</span>
             </ng-container>
+            <ng-template #conta>
+              <ng-container *ngIf="l.targetName; else excluida">
+                {{ l.targetName }}<br /><span class="cell-email">{{ l.targetEmail }}</span>
+              </ng-container>
+            </ng-template>
           </td>
           <td data-label="Perfil">
-            <span class="role-pill role-{{ l.targetRole?.toLowerCase() }}">{{ roleLabel(l.targetRole) }}</span>
+            <span *ngIf="!l.occurrenceProtocol" class="role-pill role-{{ l.targetRole?.toLowerCase() }}">{{ roleLabel(l.targetRole) }}</span>
+            <span *ngIf="l.occurrenceProtocol">—</span>
           </td>
           <td data-label="Município">{{ l.city || '—' }}</td>
         </tr>

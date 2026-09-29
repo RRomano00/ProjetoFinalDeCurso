@@ -123,7 +123,7 @@ class OccurrenceJurisdictionTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
         verify(occurrenceService).changeStatus(eq(10), eq("CONCLUIDA"), anyInt(), any(), anyBoolean());
-        verify(occurrenceService, never()).findById(anyInt());
+        // A ocorrência é consultada só para saber se está finalizada; o município não é conferido.
     }
 
     @Test

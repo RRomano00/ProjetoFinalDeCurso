@@ -310,21 +310,27 @@ public class EmailServiceImpl implements EmailService {
             case "EM_ANDAMENTO" -> "Em Andamento";
             case "CONCLUIDA"    -> "Concluída";
             case "INDEFERIDA"   -> "Indeferida";
+            case "FINALIZADA"   -> "Finalizada";
             default             -> newStatus;
         };
         String statusColor = switch (newStatus) {
             case "EM_ANDAMENTO" -> "#d97706";
             case "CONCLUIDA"    -> "#16a34a";
             case "INDEFERIDA"   -> "#6b7280";
+            case "FINALIZADA"   -> "#111111";
             default             -> BRAND_COLOR;
         };
         boolean hasMessage = message != null && !message.isBlank();
+        // A finalizada deixa de aparecer para o autor: não há detalhe para ele ver no aplicativo.
+        String closing = "FINALIZADA".equals(newStatus)
+            ? "A ocorrência foi excluída pela administração e não aparece mais no aplicativo."
+            : "Você pode ver os detalhes pelo aplicativo a qualquer momento.";
 
         String text =
             "Olá, " + name + "!\n\n" +
             "O status da sua ocorrência (protocolo " + protocol + ") foi atualizado para: " + statusLabel + ".\n" +
             (hasMessage ? "\nMensagem da equipe:\n" + message + "\n" : "") +
-            "\nVocê pode ver os detalhes pelo aplicativo a qualquer momento.";
+            "\n" + closing;
 
         String content =
             "<h2 style='margin:0 0 16px; font-size:20px; color:#111;'>Sua ocorrência foi atualizada</h2>" +
@@ -342,7 +348,7 @@ public class EmailServiceImpl implements EmailService {
                   "  <p style='font-size:15px; color:#333; margin:0; white-space:pre-wrap;'>" + message + "</p>" +
                   "</div>"
                 : "") +
-            "<p style='font-size:14px; color:#555;'>Você pode ver os detalhes pelo aplicativo a qualquer momento.</p>";
+            "<p style='font-size:14px; color:#555;'>" + closing + "</p>";
 
         send(toEmail, null, "Fala, Cidade! – Sua ocorrência está " + statusLabel,
              withFooter(text), layout(content), "Falha ao enviar e-mail de mudança de status");
@@ -453,6 +459,7 @@ public class EmailServiceImpl implements EmailService {
         java.util.Map.entry("EM_ANDAMENTO", "Em andamento"),
         java.util.Map.entry("CONCLUIDA",    "Concluída"),
         java.util.Map.entry("INDEFERIDA",   "Indeferida"),
+        java.util.Map.entry("FINALIZADA",   "Finalizada"),
         java.util.Map.entry("ALTA",  "Alta"),
         java.util.Map.entry("MEDIA", "Média"),
         java.util.Map.entry("BAIXA", "Baixa")

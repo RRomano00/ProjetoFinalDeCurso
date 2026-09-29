@@ -66,20 +66,25 @@ public class OccurrenceServiceImpl implements OccurrenceService {
                 throw new IllegalStateException("Limite de " + MAX_IDENTIFIED_PER_DAY + " ocorrências por dia atingido");
         }
 
-        assignGroup(entity);
+        String groupedWith = assignGroup(entity);
 
         int id = occurrenceDao.add(entity);
         if (id < 0) throw new RuntimeException("Falha ao persistir ocorrência");
-        return new CreateOccurrenceResponseDto(id, entity.getProtocolNumber(), plainCode, entity.isAnonymous());
+        return new CreateOccurrenceResponseDto(id, entity.getProtocolNumber(), plainCode, entity.isAnonymous(),
+                                               groupedWith);
     }
 
-    private void assignGroup(Occurrence entity) {
-        if (entity.getLatitude() == null || entity.getLongitude() == null || entity.getType() == null) return;
+    // Mesmo tipo, aberta e a até 50 m: entra no grupo sem perguntar ao usuário. O DAO
+    // busca num quadrado de ±50 m, então nos cantos a distância real chega a ~70 m.
+    /** Devolve o protocolo da ocorrência à qual a nova foi agrupada, para a tela avisar; null se ficou sozinha. */
+    private String assignGroup(Occurrence entity) {
+        if (entity.getLatitude() == null || entity.getLongitude() == null || entity.getType() == null) return null;
         List<GetOccurrenceDto> nearby = occurrenceDao.findNearby(
             entity.getLatitude(), entity.getLongitude(), entity.getType().name(), DUPLICATE_RADIUS_METERS);
-        if (nearby.isEmpty()) return;
+        if (nearby.isEmpty()) return null;
         GetOccurrenceDto first = nearby.get(0);
         entity.setGroupId(first.getGroupId() != null ? first.getGroupId() : first.getId());
+        return first.getProtocolNumber();
     }
 
     @Override
@@ -101,6 +106,21 @@ public class OccurrenceServiceImpl implements OccurrenceService {
     @Override
     public GetOccurrenceDto findById(int id) {
         return id >= 0 ? occurrenceDao.readById(id) : null;
+    }
+
+    private static final String FINALIZE_NOTE = "Ocorrência excluída pelo Super Administrador.";
+
+    @Override
+    public List<String> finalizeOccurrence(int id, int changedBy) {
+        GetOccurrenceDto o = findById(id);
+        if (o == null) return List.of();
+        // As fotos são lidas antes de limpar: depois, o banco já não sabe quais eram.
+        List<String> photos = occurrenceDao.readMediaPublicIds(id);
+        occurrenceDao.clearMedia(id);
+        String finalizada = Occurrence.OccurrenceStatus.FINALIZADA.name();
+        occurrenceDao.updateStatus(id, finalizada, changedBy, FINALIZE_NOTE);
+        notifyAuthor(o, finalizada, FINALIZE_NOTE);
+        return photos;
     }
 
     @Override
@@ -128,12 +148,6 @@ public class OccurrenceServiceImpl implements OccurrenceService {
         if (isBlank(plainCode)) return null;
         return occurrenceDao.findByAnonymousTrackingCodeHash(
             trackingCodeService.hash(plainCode.toUpperCase().trim()));
-    }
-
-    @Override
-    public List<GetOccurrenceDto> findNearbyDuplicates(double lat, double lon, Occurrence.OccurrenceType type) {
-        if (type == null) return List.of();
-        return occurrenceDao.findNearby(lat, lon, type.name(), DUPLICATE_RADIUS_METERS);
     }
 
     @Override
@@ -190,7 +204,8 @@ public class OccurrenceServiceImpl implements OccurrenceService {
             : List.of(findById(occurrenceId));
 
         for (GetOccurrenceDto o : targets) {
-            if (o == null) continue;
+            // Finalizada é definitiva: nem a atualização coletiva do grupo a altera.
+            if (o == null || o.getStatus() == Occurrence.OccurrenceStatus.FINALIZADA) continue;
             occurrenceDao.updateStatus(o.getId(), newStatus, changedBy, message);
             notifyAuthor(o, newStatus, message);
         }

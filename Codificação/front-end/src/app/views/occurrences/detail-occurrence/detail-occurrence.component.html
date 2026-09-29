@@ -152,7 +152,7 @@
           </label>
         </div>
 
-        <div class="forward" *ngIf="occurrence.status !== 'CONCLUIDA'">
+        <div class="forward" *ngIf="occurrence.status !== 'CONCLUIDA' && occurrence.status !== 'FINALIZADA'">
           <button type="button" class="btn-action btn-forward" (click)="toggleForward()"
                   [attr.aria-expanded]="forwardOpen" aria-controls="forward-panel">
             <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none"
@@ -220,6 +220,7 @@
           </button>
           <span *ngIf="occurrence.status === 'CONCLUIDA'" class="concluded-label">✓ Ocorrência concluída</span>
           <span *ngIf="occurrence.status === 'INDEFERIDA'" class="rejected-label">✕ Ocorrência Indeferida</span>
+          <span *ngIf="occurrence.status === 'FINALIZADA'" class="finalized-label">■ Ocorrência finalizada (excluída) — não pode mais ser alterada</span>
 
           <button *ngIf="canReopen" (click)="reopen()" [disabled]="updating" class="btn-action">
             {{ updating ? 'Reabrindo...' : '↻ Reabrir Ocorrência' }}

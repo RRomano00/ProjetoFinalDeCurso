@@ -111,6 +111,8 @@ export class StatisticsComponent implements OnInit {
       { label: 'Em andamento', value: this.inProgress, token: 'st-progress' },
       { label: 'Concluídas',   value: this.resolved,   token: 'st-done'     },
       { label: 'Indeferidas',  value: this.rejected,   token: 'st-refused'  },
+      // Só o Super Administrador recebe as finalizadas; para os outros, a fatia não aparece.
+      { label: 'Finalizadas',  value: f.filter(o => o.status === 'FINALIZADA').length, token: 'st-final' },
     ].filter(s => s.value > 0)
      .map(s => ({ ...s, pct: this.total ? (s.value / this.total) * 100 : 0 }));
 

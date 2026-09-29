@@ -52,7 +52,11 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   mapFilterNeighborhood = '';
   mapFilterType         = '';
   mapFilterStatus       = '';
-  readonly mapStatusOptions = ['PENDENTE', 'EM_ANDAMENTO', 'CONCLUIDA', 'INDEFERIDA'];
+  // Finalizada só chega ao Super Administrador; o filtro dela só aparece para ele.
+  get mapStatusOptions(): string[] {
+    return this.auth.isSuperAdmin() ? [...HomeComponent.STATUSES, 'FINALIZADA'] : HomeComponent.STATUSES;
+  }
+  private static readonly STATUSES = ['PENDENTE', 'EM_ANDAMENTO', 'CONCLUIDA', 'INDEFERIDA'];
 
   get totalOccurrences() { return this.inCity.length; }
 
@@ -73,10 +77,11 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
     EM_ANDAMENTO: 'em andamento',
     CONCLUIDA:    'concluídas',
     INDEFERIDA:   'indeferidas',
+    FINALIZADA:   'finalizadas',
   };
 
   get statusBreakdown() {
-    return ['PENDENTE', 'EM_ANDAMENTO', 'CONCLUIDA', 'INDEFERIDA']
+    return ['PENDENTE', 'EM_ANDAMENTO', 'CONCLUIDA', 'INDEFERIDA', 'FINALIZADA']
       .map(status => ({
         status,
         count: this.inCity.filter(o => o.status === status).length,
@@ -169,7 +174,11 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
     }, 0);
   }
 
-  ngOnDestroy() { if (this.map) this.map.remove(); }
+  ngOnDestroy() {
+    this.stopGps();
+    if (this.gpsPermission) this.gpsPermission.onchange = null;
+    if (this.map) this.map.remove();
+  }
 
   private initMap() {
     this.map = L.map('incident-map', { zoomControl: true })
@@ -197,7 +206,7 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
       this.occurrences = [];
     }
 
-    const conhecido = this.locality.choice ?? await this.locality.ofCurrentUser();
+    const conhecido = await this.locality.startingMunicipality(this.auth.isAnonymous());
 
     this.municipalityOptions = LocalityPreferenceService.options(this.occurrences, [conhecido]);
     if (conhecido) this.filterCity = LocalityPreferenceService.fold(conhecido.city);
@@ -205,21 +214,55 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
     await this.refreshMarkers();
     await this.frameSelection();
 
-    void this.seguirGps(conhecido);
+    void this.followGps();
   }
 
-  private async seguirGps(conhecido: Municipality | null) {
-    const detectado = await this.locality.ensure();
-    if (!detectado) return;
-    const mesmo = conhecido && LocalityPreferenceService.fold(conhecido.city)
-                            === LocalityPreferenceService.fold(detectado.city);
-    if (mesmo) return;
+  private gpsWatch?: number;
+  private gpsOn = false;
+  private gpsPermission?: PermissionStatus;
 
-    this.municipalityOptions = LocalityPreferenceService.options(
-      this.occurrences, [detectado, conhecido]);
-    this.filterCity = LocalityPreferenceService.fold(detectado.city);
-    await this.refreshMarkers();
-    await this.frameSelection();
+  /**
+   * O mapa abre no município da conta; quando o GPS passa a responder — já ligado ao
+   * abrir ou ligado depois, a qualquer momento — ele vai para a posição do aparelho.
+   * watchPosition continua escutando com o GPS desligado e dispara quando ele volta.
+   */
+  private async followGps() {
+    if (!navigator.geolocation || this.gpsWatch !== undefined) return;
+    this.gpsWatch = navigator.geolocation.watchPosition(
+      position => { if (!this.gpsOn) { this.gpsOn = true; void this.goToGps(position); } },
+      // Timeout é passageiro; só desligar o GPS ou negar a permissão "rearma" o redirecionamento.
+      error => { if (error.code !== error.TIMEOUT) this.gpsOn = false; },
+      { enableHighAccuracy: false, maximumAge: 60000 });
+
+    // Permissão negada encerra a escuta; se liberarem depois nas configurações, recomeça.
+    try {
+      this.gpsPermission = await navigator.permissions?.query({ name: 'geolocation' as PermissionName });
+      if (this.gpsPermission) this.gpsPermission.onchange = () => {
+        if (this.gpsPermission?.state !== 'granted') return;
+        this.stopGps();
+        void this.followGps();
+      };
+    } catch { }
+  }
+
+  private stopGps() {
+    if (this.gpsWatch !== undefined) navigator.geolocation.clearWatch(this.gpsWatch);
+    this.gpsWatch = undefined;
+    this.gpsOn = false;
+  }
+
+  private async goToGps(position: GeolocationPosition) {
+    const { latitude, longitude } = position.coords;
+    const municipio = await this.locality.municipalityAt(latitude, longitude);
+    await this.ngZone.run(async () => {
+      if (municipio && LocalityPreferenceService.fold(municipio.city) !== this.filterCity) {
+        this.municipalityOptions = LocalityPreferenceService.options(
+          this.occurrences, [municipio, ...this.municipalityOptions]);
+        this.filterCity = LocalityPreferenceService.fold(municipio.city);
+        await this.refreshMarkers();
+      }
+      this.map?.setView([latitude, longitude], 15);
+    });
   }
 
   private async frameSelection() {

@@ -19,6 +19,8 @@
   --st-progress: #14487e;  --st-progress-bg: #e4edf7;  --st-progress-line: #b7cce4;
   --st-done:     #176242;   --st-done-bg:    #e2f0e8;  --st-done-line:     #b2d7c4;
   --st-refused:  #8b3a2d;  --st-refused-bg:  #f6e8e5;  --st-refused-line:  #e1c1ba;
+  /* Finalizada (excluída pelo Super Administrador): preto, só ele a vê. */
+  --st-final:    #111111;
 
   --pr-high: #a2352a;  --pr-medium: #8a5800;  --pr-low: #176242;
 

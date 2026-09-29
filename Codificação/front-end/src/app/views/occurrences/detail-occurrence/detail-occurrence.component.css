@@ -134,6 +134,7 @@
 .badge-em_andamento { background: var(--st-progress-bg); color: var(--st-progress); }
 .badge-concluida    { background: var(--st-done-bg);     color: var(--st-done); }
 .badge-indeferida   { background: var(--st-refused-bg);  color: var(--st-refused); }
+.badge-finalizada   { background: var(--st-final); color: #fff; }
 
 .badge-anonymous {
   display: inline-flex;
@@ -561,4 +562,15 @@
 @media (max-width: 640px) {
   .forward-panel { width: 100%; }
   .forward-list { max-height: 12rem; }
+}
+
+.finalized-label {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 0.875rem;
+  border-radius: var(--r-ctl);
+  background: var(--st-final);
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 600;
 }

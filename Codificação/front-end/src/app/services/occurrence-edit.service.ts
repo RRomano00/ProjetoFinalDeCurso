@@ -19,6 +19,10 @@ export class OccurrenceEditService {
     );
   }
 
+  delete(id: number): Promise<void> {
+    return firstValueFrom(this.http.delete<void>(`${environment.api_endpoint}/occurrence/${id}`));
+  }
+
   updateStatus(id: string, newStatus: string, observation?: string, collective = false): Promise<any> {
     return firstValueFrom(
       this.http.put<any>(`${environment.api_endpoint}/occurrence/${id}/status`, { newStatus, observation, collective })

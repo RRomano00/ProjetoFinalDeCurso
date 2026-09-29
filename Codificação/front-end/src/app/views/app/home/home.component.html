@@ -63,6 +63,7 @@
           <span class="legend-item"><span class="dot em-andamento"></span> Em Andamento</span>
           <span class="legend-item"><span class="dot done"></span> Concluída</span>
           <span class="legend-item"><span class="dot refused"></span> Indeferida</span>
+          <span *ngIf="auth.isSuperAdmin()" class="legend-item"><span class="dot finalized"></span> Finalizada</span>
         </div>
       </div>
 
@@ -95,7 +96,8 @@
                 'badge-open':     o.status === 'PENDENTE',
                 'badge-progress': o.status === 'EM_ANDAMENTO',
                 'badge-done':     o.status === 'CONCLUIDA',
-                'badge-rejected': o.status === 'INDEFERIDA'
+                'badge-rejected': o.status === 'INDEFERIDA',
+                'badge-finalized': o.status === 'FINALIZADA'
               }">
               <span class="badge-dot"></span>
               {{ statusLabel(o.status) }}

@@ -101,6 +101,7 @@
 .load-seg.st-progress { background: var(--st-progress); }
 .load-seg.st-done     { background: var(--st-done);     }
 .load-seg.st-refused  { background: var(--st-refused);  }
+.load-seg.st-final    { background: var(--st-final);    }
 
 .load-keys {
   display: flex;
@@ -124,6 +125,7 @@
 .load-keys li.st-progress { color: var(--st-progress); }
 .load-keys li.st-done     { color: var(--st-done);     }
 .load-keys li.st-refused  { color: var(--st-refused);  }
+.load-keys li.st-final    { color: var(--st-final);    }
 .key-num { font-size: 1.5rem; font-weight: 600; color: var(--ink); line-height: 1.1; }
 .key-lbl { font-size: 0.8125rem; color: var(--ink-mute); }
 

@@ -40,9 +40,10 @@ export const appConfig: ApplicationConfig = {
     provideAnimationsAsync(),
     provideHttpClient(withInterceptors([authInterceptor])),
     provideToastr({
-      timeOut: 3000,
-      positionClass: 'toast-top-right',
+      timeOut: 4500,
+      positionClass: 'toast-top-center',
       preventDuplicates: true,
+      progressBar: true,
     }), provideServiceWorker('ngsw-worker.js', {
             enabled: !isDevMode(),
             registrationStrategy: 'registerWithDelay:3000'

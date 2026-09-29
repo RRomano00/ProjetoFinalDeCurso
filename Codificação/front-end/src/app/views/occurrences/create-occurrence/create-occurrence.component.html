@@ -154,41 +154,6 @@
         <input type="text" formControlName="addressReference"
                placeholder="Ex.: Em frente ao mercado X, próximo ao parque..." />
       </div>
-
-      <div class="duplicates-panel" *ngIf="nearbyDuplicates.length > 0">
-        <div class="duplicates-title">
-          ⚠️ Já existe{{ nearbyDuplicates.length > 1 ? 'm' : '' }}
-          {{ nearbyDuplicates.length }} ocorrência{{ nearbyDuplicates.length > 1 ? 's' : '' }}
-          desse tipo perto desse local
-        </div>
-        <p class="duplicates-hint">
-          Você pode <strong>apoiar</strong> uma ocorrência existente em vez de registrar outra igual —
-          isso ajuda a prefeitura a priorizar o problema.
-        </p>
-        <div class="duplicate-item" *ngFor="let d of nearbyDuplicates">
-          <div class="duplicate-info">
-            <a class="duplicate-protocol" [routerLink]="['/occurrence/detail', d.id]"
-               target="_blank" rel="noopener"
-               [attr.aria-label]="'Abrir a ocorrência ' + d.protocolNumber + ' em uma nova aba'">
-              {{ d.protocolNumber }}
-            </a>
-            <span class="duplicate-desc">{{ d.title || (d.description | slice:0:60) }}</span>
-          </div>
-          <div class="duplicate-actions">
-            <button type="button" class="btn-support btn-support--sm"
-                    [class.supported]="isSupported(d.id)"
-                    [disabled]="supportingId === d.id"
-                    [attr.aria-label]="(isSupported(d.id)
-                      ? 'Você apoia a ocorrência ' + d.protocolNumber + '; clique para remover o apoio'
-                      : 'Apoiar a ocorrência ' + d.protocolNumber)"
-                    (click)="toggleSupportDuplicate(d)">
-              <span class="btn-support__state">{{ supportingId === d.id ? 'Salvando...'
-                : (isSupported(d.id) ? '✓ Você apoia' : '🤝 Apoiar') }}</span>
-              <span class="btn-support__undo">Não apoiar</span>
-            </button>
-          </div>
-        </div>
-      </div>
     </div>
 
     <div class="form-section">
@@ -238,15 +203,4 @@
       </button>
     </div>
   </form>
-
-  <div class="login-prompt-overlay" *ngIf="showLoginPrompt" (click)="showLoginPrompt = false">
-    <div class="login-prompt-card" (click)="$event.stopPropagation()">
-      <h2>🤝 Quer apoiar esta ocorrência?</h2>
-      <p>Para apoiar é preciso ter uma conta. Entre ou cadastre-se — leva menos de um minuto.</p>
-      <div class="login-prompt-actions">
-        <button type="button" class="btn-secondary" (click)="showLoginPrompt = false">Agora não</button>
-        <button type="button" class="btn-primary" (click)="goToLogin()">Fazer login</button>
-      </div>
-    </div>
-  </div>
 </div>
