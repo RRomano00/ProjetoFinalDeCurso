@@ -306,17 +306,21 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
     if (center) this.map.setView([center.lat, center.lng], center.zoom);
   }
 
+  private static readonly MAX_GEOCODE = 30;
+
   async refreshMarkers() {
     this.loadingMap = true;
     this.markers.forEach(m => m.remove());
     this.markers = [];
     this.markerById.clear();
 
+    // Com coordenadas entram todas; sem elas, só as 30 mais recentes, porque cada
+    // geocodificação espera ~1 s (limite do Nominatim).
     const pendentes: Occurrence[] = [];
-    for (const o of this.filteredForMap.slice(0, 20)) {
+    for (const o of this.filteredForMap) {
       const coords = this.knownCoords(o);
       if (coords) this.plot(o, coords);
-      else pendentes.push(o);
+      else if (pendentes.length < HomeComponent.MAX_GEOCODE) pendentes.push(o);
     }
 
     for (const o of pendentes) {
