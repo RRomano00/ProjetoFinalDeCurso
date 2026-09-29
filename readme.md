@@ -32,12 +32,14 @@ O **Fala, Cidade!** é uma solução digital desenvolvida para estreitar a comun
   * Cadastro em etapas, com barra de progresso; um celular por conta.
   * Verificação em duas etapas por e-mail, aplicativo autenticador ou SMS.
   * Registro de notificações com geolocalização e fotos.
+  * Relatos do mesmo tipo a até 50 metros agrupados automaticamente; "Apoiar" funciona como curtida em qualquer ocorrência.
   * Acompanhamento de status via número de protocolo único.
   * Opção de envio anônimo (Conformidade com LGPD).
 
 * **Administração Municipal:**
   * Painel de Gestão (Dashboard) com indicadores de demandas.
   * Gestão de usuários (Funcionários e Administradores).
+  * Exclusão de ocorrências pelo Super Administrador: a ocorrência passa a **Finalizada** (definitiva, visível só para ele), as fotos são apagadas, o autor é avisado e a ação fica nos Logs.
   * Atualização de status e relatórios de desempenho por categoria.
 
 ---
