@@ -85,8 +85,9 @@ html.dark-theme .logo-full { background: #000; }
   transition: border-color 0.2s, box-shadow 0.2s;
   box-sizing: border-box;
 }
-/* Sem ícone à esquerda (ex.: UF), o recuo reservado para ele sobra como espaço em branco. */
-.input-wrapper input:first-child { padding-left: 0.875rem; }
+/* Sem ícone à esquerda (ex.: UF), o recuo reservado para ele sobra como espaço em branco.
+   Filho direto: o campo de senha fica dentro do <span> do olhinho e continua com o ícone. */
+.input-wrapper > input:first-child { padding-left: 0.875rem; }
 .input-wrapper input:focus {
   outline: none;
   border-color: var(--plate);
