@@ -311,9 +311,11 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
     const color = statusColor(o.status);
     const icon = L.divIcon({
       className: '',
-      html: `<div style="width:14px;height:14px;background:${color};border:2px solid #fff;
-             border-radius:50%;box-shadow:0 1px 3px rgb(18 32 51 / .45)"></div>`,
-      iconSize: [14, 14], iconAnchor: [7, 7]
+      // Ponto de 14px dentro de uma área de toque de 32px.
+      html: `<div style="width:32px;height:32px;display:flex;align-items:center;justify-content:center">
+             <div style="width:14px;height:14px;background:${color};border:2px solid #fff;
+             border-radius:50%;box-shadow:0 1px 3px rgb(18 32 51 / .45)"></div></div>`,
+      iconSize: [32, 32], iconAnchor: [16, 16]
     });
 
     const marker = L.marker([lat, lng], { icon }).addTo(this.map)

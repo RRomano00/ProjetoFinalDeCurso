@@ -62,7 +62,7 @@
         <div class="map-hint" [class.loading]="geocodeStatus === 'loading'" [class.success]="geocodeStatus === 'success'"
              [class.partial]="geocodeStatus === 'partial'" [class.error]="geocodeStatus === 'error'">
           <span *ngIf="geocodeStatus === 'loading'" class="spinner-sm"></span>
-          <span *ngIf="geocodeStatus === 'idle'">📍 Clique no mapa para marcar o local da ocorrência.</span>
+          <span *ngIf="geocodeStatus === 'idle'">📍 Toque no mapa (ou clique) para marcar o local da ocorrência.</span>
           <span *ngIf="geocodeStatus === 'loading'">Buscando endereço...</span>
           <span *ngIf="geocodeStatus === 'success'">✓ Endereço preenchido. Confira e informe o número.</span>
           <span *ngIf="geocodeStatus === 'partial'">Este ponto não tem logradouro cadastrado no mapa. Confira a rua antes de enviar.</span>
