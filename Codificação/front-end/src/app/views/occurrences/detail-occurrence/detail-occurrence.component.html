@@ -110,7 +110,7 @@
               <span class="history-obs" *ngIf="h.observation">Mensagem do departamento: {{ h.observation }}</span>
               <div class="request-actions">
                 <a *ngIf="h.attachmentUrl" [href]="h.attachmentUrl" target="_blank" rel="noopener" class="btn-secondary btn-sm">Ver anexo</a>
-                <button *ngIf="occurrence.status === 'PENDENTE' || occurrence.status === 'EM_ANDAMENTO'"
+                <button *ngIf="h === pendingRequest && (occurrence.status === 'PENDENTE' || occurrence.status === 'EM_ANDAMENTO')"
                         type="button" class="btn-action btn-success btn-sm" [disabled]="updating"
                         (click)="concludeFromRequest(h)">✓ Marcar como concluída</button>
               </div>

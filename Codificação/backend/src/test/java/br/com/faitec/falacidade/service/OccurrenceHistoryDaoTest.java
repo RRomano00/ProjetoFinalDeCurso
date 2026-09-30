@@ -34,13 +34,14 @@ class OccurrenceHistoryDaoTest {
     void insertsCompletionRequest() throws Exception {
         when(connection.prepareStatement(contains("INSERT INTO occurrence_history"))).thenReturn(ps);
 
-        sut.insertCompletionRequest(10, 3, "Buraco tapado", "https://img/x.jpg");
+        sut.insertCompletionRequest(10, 3, "Buraco tapado", "https://img/x.jpg", "pid");
 
         verify(connection).prepareStatement(contains("'COMPLETION_REQUEST'"));
         verify(ps).setString(1, "Buraco tapado");
         verify(ps).setInt(2, 3);
         verify(ps).setString(3, "https://img/x.jpg");
-        verify(ps).setInt(4, 10);
+        verify(ps).setString(4, "pid");
+        verify(ps).setInt(5, 10);
         verify(ps).execute();
     }
 
@@ -62,5 +63,19 @@ class OccurrenceHistoryDaoTest {
         assertThat(h.getAttachmentUrl()).isEqualTo("https://img/x.jpg");
         assertThat(h.getDepartmentName()).isEqualTo("Secretaria de Obras");
         assertThat(h.getDepartmentId()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("a exclusão também leva a foto da solicitação de conclusão")
+    void deletionIncludesAttachment() throws Exception {
+        when(connection.prepareStatement(anyString())).thenReturn(ps);
+        when(ps.executeQuery()).thenReturn(rs);
+
+        sut.readMediaPublicIds(10);
+        verify(connection).prepareStatement(contains("attachment_public_id FROM occurrence_history"));
+        verify(ps, times(3)).setInt(anyInt(), eq(10));
+
+        sut.clearMedia(10);
+        verify(connection).prepareStatement(contains("UPDATE occurrence_history SET attachment_url=NULL"));
     }
 }

@@ -278,6 +278,8 @@ ALTER TABLE occurrence_history ADD COLUMN IF NOT EXISTS department_id
 -- histórico sem mudar o status e só a equipe a vê (com a foto do serviço feito).
 ALTER TABLE occurrence_history ADD COLUMN IF NOT EXISTS kind VARCHAR(30) NOT NULL DEFAULT 'STATUS';
 ALTER TABLE occurrence_history ADD COLUMN IF NOT EXISTS attachment_url VARCHAR(500);
+-- Para a exclusão pelo Super Administrador apagar também essa foto do Cloudinary.
+ALTER TABLE occurrence_history ADD COLUMN IF NOT EXISTS attachment_public_id VARCHAR(255);
 
 -- Mesma renomeação de ATENDIDA para CONCLUIDA na linha do tempo já gravada.
 UPDATE occurrence_history SET old_status = 'CONCLUIDA' WHERE old_status = 'ATENDIDA';

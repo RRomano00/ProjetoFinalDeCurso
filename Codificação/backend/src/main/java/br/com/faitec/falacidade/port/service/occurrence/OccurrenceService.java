@@ -47,5 +47,6 @@ public interface OccurrenceService extends ReadService<GetOccurrenceDto> {
             String appUrl, java.util.List<String> contactEmails);
 
     /** Departamento pede a conclusão (foto do serviço): entra no histórico, só a equipe vê. */
-    void requestCompletion(int occurrenceId, int departmentId, String message, String attachmentUrl);
+    void requestCompletion(int occurrenceId, int departmentId, String message, String attachmentUrl,
+                           String attachmentPublicId);
 }

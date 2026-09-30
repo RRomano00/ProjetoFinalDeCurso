@@ -208,7 +208,7 @@ class EmailServiceImplTest {
             assertThat(mime.getAllRecipients()[0].toString()).isEqualTo("carlos@pref.br");
             assertThat(mime.getSubject()).contains("FC-26-ABCDE").contains("Conclusão solicitada");
             assertThat(textOf(mime.getContent())).contains("https://app.exemplo/occurrence/detail/10")
-                                                 .contains("Obras");
+                                                 .contains("O departamento <strong>Obras</strong>");
         }
     }
 }

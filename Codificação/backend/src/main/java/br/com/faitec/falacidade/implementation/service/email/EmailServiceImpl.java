@@ -453,7 +453,7 @@ public class EmailServiceImpl implements EmailService {
                       ".\nConfira a foto do serviço no histórico e marque como concluída: " + occurrenceLink;
         String content =
             "<h2 style='margin:0 0 12px; font-size:20px; color:#111;'>Conclusão solicitada</h2>" +
-            "<p style='font-size:15px; color:#333;'>O <strong>" + esc(departmentName) + "</strong> solicitou a " +
+            "<p style='font-size:15px; color:#333;'>O departamento <strong>" + esc(departmentName) + "</strong> solicitou a " +
             "  conclusão da ocorrência <strong>" + esc(protocol) + "</strong>.</p>" +
             "<p style='font-size:15px; color:#333;'>Confira a foto do serviço no histórico e marque como concluída.</p>" +
             "<p><a href='" + esc(occurrenceLink) + "' style='display:inline-block; padding:12px 22px; background:" +

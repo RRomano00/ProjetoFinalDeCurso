@@ -158,6 +158,67 @@ class DepartmentAccessRestControllerTest {
     }
 
     @Test
+    @DisplayName("a ocorrência aberta vem completa (todas as fotos), mascarada")
+    void targetHasAllPhotos() {
+        GetOccurrenceDto doGrupo = occ(10, Occurrence.OccurrenceStatus.EM_ANDAMENTO);   // readGroup não traz media
+        GetOccurrenceDto completa = occ(10, Occurrence.OccurrenceStatus.EM_ANDAMENTO);
+        completa.setMedia(List.of(new br.com.faitec.falacidade.domain.OccurrenceMedia()));
+        when(occurrenceService.getGroup(10)).thenReturn(List.of(doGrupo, agrupada));
+        when(occurrenceService.findById(10)).thenReturn(completa);
+
+        var body = (DepartmentOccurrenceViewDto) sut.view("TOKEN", null).getBody();
+
+        assertThat(body.getOccurrence().getMedia()).hasSize(1);
+        assertThat(body.getOccurrence().getEmail()).isNull();
+        assertThat(body.getOccurrence().getFullname()).isNull();
+    }
+
+    @Test
+    @DisplayName("histórico: só a nota dos encaminhamentos chega ao departamento; mensagens ao cidadão não")
+    void onlyForwardNotes() {
+        LocalDateTime t = LocalDateTime.of(2026, 9, 1, 10, 0);
+        OccurrenceHistoryDto encaminhamento = hist("STATUS", "PENDENTE", "EM_ANDAMENTO", t, 3);
+        encaminhamento.setObservation("Ocorrência encaminhada — Obras.");
+        OccurrenceHistoryDto resposta = hist("STATUS", "EM_ANDAMENTO", "EM_ANDAMENTO", t.plusHours(1), null);
+        resposta.setObservation("Olá Maria, já vamos resolver.");
+        when(occurrenceService.getHistory(10)).thenReturn(List.of(resposta, encaminhamento));
+
+        var body = (DepartmentOccurrenceViewDto) sut.view("TOKEN", null).getBody();
+
+        assertThat(body.getHistory()).extracting(OccurrenceHistoryDto::getObservation)
+            .containsExactly(null, "Ocorrência encaminhada — Obras.");
+    }
+
+    @Test
+    @DisplayName("solicitar: outra solicitação chegou durante o upload — 409 e a foto enviada é apagada")
+    void raceDuringUpload() {
+        var foto = new MockMultipartFile("file", "f.jpg", "image/jpeg", new byte[]{1});
+        LocalDateTime t = LocalDateTime.of(2026, 9, 1, 10, 0);
+        when(occurrenceService.getHistory(10)).thenReturn(
+            List.of(hist("STATUS", "PENDENTE", "EM_ANDAMENTO", t, 3)),
+            List.of(hist("COMPLETION_REQUEST", "EM_ANDAMENTO", "EM_ANDAMENTO", t.plusDays(1), 3),
+                    hist("STATUS", "PENDENTE", "EM_ANDAMENTO", t, 3)));
+        when(mediaUploadService.uploadSync(any(), any()))
+            .thenReturn(new MediaUploadService.UploadResult("pid", "https://img/x.jpg", false, false, null));
+
+        assertThat(sut.requestCompletion("TOKEN", 10, null, foto, request).getStatusCode().value()).isEqualTo(409);
+        verify(mediaUploadService).delete("pid");
+        verify(occurrenceService, never()).requestCompletion(anyInt(), anyInt(), any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("solicitar: o provedor não processa o arquivo — mensagem pede imagem válida")
+    void unprocessableFile() {
+        var foto = new MockMultipartFile("file", "f.jpg", "image/jpeg", new byte[]{1});
+        when(mediaUploadService.uploadSync(any(), any())).thenThrow(new RuntimeException("Invalid image file"));
+
+        var resp = sut.requestCompletion("TOKEN", 10, null, foto, request);
+
+        assertThat(resp.getStatusCode().value()).isEqualTo(502);
+        assertThat(resp.getBody().toString()).contains("imagem válida");
+    }
+
+    @Test
     @DisplayName("grupo inteiro encerrado: 410")
     void allClosed() {
         raiz.setStatus(Occurrence.OccurrenceStatus.CONCLUIDA);
@@ -177,7 +238,7 @@ class DepartmentAccessRestControllerTest {
         var resp = sut.requestCompletion("TOKEN", 10, "Buraco tapado", file, request);
 
         assertThat(resp.getStatusCode().value()).isEqualTo(201);
-        verify(occurrenceService).requestCompletion(10, 3, "Buraco tapado", "https://img/x.jpg");
+        verify(occurrenceService).requestCompletion(10, 3, "Buraco tapado", "https://img/x.jpg", "pid");
         // O link do aviso vem do token (emitido no encaminhamento autenticado), nunca do Origin desta requisição.
         verify(emailService).sendCompletionRequestEmail("carlos@pref.br", "FC-26-10", "Obras",
                                                         "https://real/occurrence/detail/10");
@@ -194,7 +255,7 @@ class DepartmentAccessRestControllerTest {
             .thenReturn(new MediaUploadService.UploadResult(null, null, true, true, "Imagem imprópria"));
         assertThat(sut.requestCompletion("TOKEN", 10, null, foto, request).getStatusCode().value()).isEqualTo(422);
 
-        verify(occurrenceService, never()).requestCompletion(anyInt(), anyInt(), any(), any());
+        verify(occurrenceService, never()).requestCompletion(anyInt(), anyInt(), any(), any(), any());
     }
 
     @Test

@@ -13,6 +13,7 @@ export interface OccurrenceHistory {
     kind?:           'STATUS' | 'COMPLETION_REQUEST';
     attachmentUrl?:  string;
     departmentName?: string;
+    departmentId?:   number;
 }
 
 export interface Occurrence {

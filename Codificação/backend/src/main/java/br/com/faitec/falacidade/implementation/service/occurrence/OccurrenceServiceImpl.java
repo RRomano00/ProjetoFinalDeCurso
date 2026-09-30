@@ -256,9 +256,10 @@ public class OccurrenceServiceImpl implements OccurrenceService {
     }
 
     @Override
-    public void requestCompletion(int occurrenceId, int departmentId, String message, String attachmentUrl) {
+    public void requestCompletion(int occurrenceId, int departmentId, String message, String attachmentUrl,
+                                  String attachmentPublicId) {
         occurrenceDao.insertCompletionRequest(occurrenceId, departmentId,
-            message == null || message.isBlank() ? null : message.trim(), attachmentUrl);
+            message == null || message.isBlank() ? null : message.trim(), attachmentUrl, attachmentPublicId);
     }
 
     private void notifyAuthor(GetOccurrenceDto o, String newStatus, String message) {

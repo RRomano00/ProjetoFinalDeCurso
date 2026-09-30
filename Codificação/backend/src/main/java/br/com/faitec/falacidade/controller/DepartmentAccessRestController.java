@@ -72,10 +72,17 @@ public class DepartmentAccessRestController {
         DepartmentOccurrenceViewDto body = new DepartmentOccurrenceViewDto();
         Department department = departmentService.findById(s.access().departmentId());
         body.setDepartmentName(department != null ? department.getName() : null);
-        body.setOccurrence(mask(s.target()));
+        // readGroup não traz as fotos adicionais; a ocorrência aberta vem completa.
+        GetOccurrenceDto full = occurrenceService.findById(s.target().getId());
+        body.setOccurrence(mask(full != null ? full : s.target()));
         body.setGroup(s.group().stream().map(DepartmentAccessRestController::mask).toList());
-        body.setHistory(all.stream().filter(h -> !h.isCompletionRequest())
-                           .peek(h -> h.setChangedByName(null)).toList());
+        body.setHistory(all.stream().filter(h -> !h.isCompletionRequest()).map(h -> {
+            h.setChangedByName(null);
+            // Mensagens da equipe são escritas ao cidadão e podem ter dados dele; só a nota
+            // do encaminhamento (que tem departamento) chega aqui.
+            if (h.getDepartmentId() == null) h.setObservation(null);
+            return h;
+        }).toList());
         body.setPendingRequestAt(pending);
         body.setCanRequestCompletion(isOpen(s.target()) && pending == null);
         return ResponseEntity.ok(body);
@@ -100,13 +107,19 @@ public class DepartmentAccessRestController {
         MediaUploadService.UploadResult upload;
         try { upload = mediaUploadService.uploadSync(file.getBytes(), s.target().getType()); }
         catch (IOException | RuntimeException e) {
-            return error(HttpStatus.BAD_GATEWAY, "Não foi possível enviar a foto. Tente de novo.");
+            return error(HttpStatus.BAD_GATEWAY,
+                "Não foi possível processar a foto. Confira se é uma imagem válida e tente de novo.");
         }
         if (upload == null || upload.rejected())
             return error(HttpStatus.UNPROCESSABLE_ENTITY, upload != null && upload.rejectionReason() != null
                 ? upload.rejectionReason() : "A foto foi recusada. Envie outra.");
 
-        occurrenceService.requestCompletion(id, s.access().departmentId(), message, upload.url());
+        // O upload leva segundos: outra solicitação pode ter chegado nesse meio tempo.
+        if (pendingRequestAt(occurrenceService.getHistory(id), s.access().departmentId()) != null) {
+            if (upload.publicId() != null) mediaUploadService.delete(upload.publicId());
+            return error(HttpStatus.CONFLICT, "Já existe uma solicitação aguardando confirmação da prefeitura.");
+        }
+        occurrenceService.requestCompletion(id, s.access().departmentId(), message, upload.url(), upload.publicId());
         notifyForwarder(s);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }

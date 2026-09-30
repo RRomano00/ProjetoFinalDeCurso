@@ -17,6 +17,7 @@ import { LocalityPreferenceService } from '../../../services/local/locality-pref
 import { DepartmentService } from '../../../services/department.service';
 import { OccurrenceForwardService } from '../../../services/occurrence-forward.service';
 import { Department } from '../../../domain/model/department';
+import { pendingCompletionRequest } from '../../../domain/completion-request';
 import { CopyProtocolComponent } from '../../../shared/copy-protocol.component';
 import { DeleteOccurrenceDialogComponent } from '../../../shared/delete-occurrence-dialog.component';
 
@@ -294,6 +295,9 @@ export class DetailOccurrenceComponent implements OnInit, OnDestroy {
     if (ids.includes(this.occurrence!.id!)) { this.occurrence!.status = 'FINALIZADA'; this.occurrence!.media = []; this.occurrence!.urlMedia = undefined; }
     this.afterStatusChange();
   }
+
+  // Só a solicitação que ainda vale ganha o botão; as antigas ficam como registro.
+  get pendingRequest(): OccurrenceHistory | null { return pendingCompletionRequest(this.history); }
 
   async concludeFromRequest(h: OccurrenceHistory) {
     if (!this.occurrence?.id) return;
