@@ -37,7 +37,7 @@
 
       <div class="field-group">
         <label for="dep-state">UF</label>
-        <input id="dep-state" type="text" formControlName="state" list="dep-uf-options" maxlength="2"
+        <input id="dep-state" type="text" formControlName="state" appMask="uf" list="dep-uf-options"
                placeholder="MG" autocapitalize="characters" spellcheck="false" autocomplete="off"
                class="input-uf">
         <datalist id="dep-uf-options">
@@ -51,7 +51,7 @@
 
       <div class="field-group">
         <label for="dep-city">Município</label>
-        <input id="dep-city" type="text" formControlName="city" list="dep-city-options"
+        <input id="dep-city" type="text" formControlName="city" maxlength="100" list="dep-city-options"
                [readOnly]="!canChooseCity && !cityOptions.ready" spellcheck="false" autocomplete="off"
                [placeholder]="!canChooseCity || cityOptions.ready ? 'Santa Rita do Sapucaí' : 'Informe a UF primeiro'">
         <datalist id="dep-city-options">

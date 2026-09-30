@@ -1,3 +1,5 @@
+import { MaskDirective } from '../../../shared/mask.directive';
+import { cepValidator, mobileValidator, personNameValidator } from '../../../shared/br-mask';
 import { ClipboardCodeDirective } from '../../../shared/clipboard-code.directive';
 import { Component } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
@@ -17,7 +19,7 @@ import { AuthenticationService } from '../../../services/security/authentication
 @Component({
   selector: 'app-my-profile',
   standalone: true,
-  imports: [RouterModule, CommonModule, FormsModule, ReactiveFormsModule, PasswordRevealDirective, ClipboardCodeDirective],
+  imports: [RouterModule, CommonModule, FormsModule, ReactiveFormsModule, PasswordRevealDirective, ClipboardCodeDirective, MaskDirective],
   templateUrl: './my-profile.component.html',
   styleUrl: './my-profile.component.css'
 })
@@ -42,6 +44,7 @@ export class MyProfileComponent {
   smsResendIn = 0;
   private smsResendTimer?: ReturnType<typeof setInterval>;
   smsPhone = '';
+  get smsPhoneValid(): boolean { return !!this.smsPhone && !mobileValidator({ value: this.smsPhone } as any); }
   smsEnableCode = '';
   disablingSms = false;
   smsDisableCode = '';
@@ -462,9 +465,9 @@ export class MyProfileComponent {
       confirmPassword: ['', [Validators.required]]
     });
     this.profileForm = this.formBuilder.group({
-      fullname:     ['', [Validators.required, Validators.minLength(3)]],
-      phoneNumber:  [''],
-      cep:          [''],
+      fullname:     ['', [Validators.required, Validators.minLength(3), personNameValidator]],
+      phoneNumber:  ['', [mobileValidator]],
+      cep:          ['', [cepValidator]],
       street:       [''],
       number:       [''],
       neighborhood: [''],

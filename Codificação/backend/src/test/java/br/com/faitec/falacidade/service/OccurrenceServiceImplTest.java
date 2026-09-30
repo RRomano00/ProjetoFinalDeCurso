@@ -234,10 +234,10 @@ class OccurrenceServiceImplTest {
         }
 
         @Test
-        @DisplayName("entra no grupo da ocorrência aberta do mesmo tipo a até 50 m, sem perguntar ao usuário")
+        @DisplayName("entra no grupo da ocorrência aberta do mesmo tipo a até 70 m, sem perguntar ao usuário")
         void joinsNearbyOccurrence() {
-            when(occurrenceDao.findNearby(-22.25, -45.70, "BURACO_NA_RUA_OU_CALCADA", 50.0))
-                .thenReturn(List.of(dtoWith(5, "FC-26-AAAAA")));
+            when(occurrenceDao.findNearby(-22.25, -45.70, "BURACO_NA_RUA_OU_CALCADA", 70.0))
+                .thenReturn(List.of(at(5, "FC-26-AAAAA", 0, 0)));
 
             var resposta = sut.createOccurrence(locatedAt(), null);
 
@@ -248,14 +248,45 @@ class OccurrenceServiceImplTest {
         @Test
         @DisplayName("se a vizinha já faz parte de um grupo, entra no mesmo grupo")
         void joinsExistingGroup() {
-            GetOccurrenceDto vizinha = dtoWith(5, "FC-26-AAAAA");
+            GetOccurrenceDto vizinha = at(5, "FC-26-AAAAA", 10, 0);
             vizinha.setGroupId(3);
-            when(occurrenceDao.findNearby(-22.25, -45.70, "BURACO_NA_RUA_OU_CALCADA", 50.0))
+            when(occurrenceDao.findNearby(-22.25, -45.70, "BURACO_NA_RUA_OU_CALCADA", 70.0))
                 .thenReturn(List.of(vizinha));
 
             sut.createOccurrence(locatedAt(), null);
 
             assertThat(created().getGroupId()).isEqualTo(3);
+        }
+
+        private GetOccurrenceDto at(int id, String protocol, double metersNorth, double metersEast) {
+            GetOccurrenceDto g = dtoWith(id, protocol);
+            g.setLatitude(-22.25 + metersNorth / 111_111.0);
+            g.setLongitude(-45.70 + metersEast / (111_111.0 * Math.cos(Math.toRadians(-22.25))));
+            return g;
+        }
+
+        @Test
+        @DisplayName("70 m em linha reta: a 65 m agrupa; a ~85 m na diagonal (dentro do quadrado da busca) não")
+        void usesRealDistance() {
+            when(occurrenceDao.findNearby(-22.25, -45.70, "BURACO_NA_RUA_OU_CALCADA", 70.0))
+                .thenReturn(List.of(at(8, "FC-26-LONGE", 60, 60), at(9, "FC-26-PERTO", 65, 0)));
+
+            var resposta = sut.createOccurrence(locatedAt(), null);
+
+            assertThat(created().getGroupId()).isEqualTo(9);
+            assertThat(resposta.getGroupedWithProtocol()).isEqualTo("FC-26-PERTO");
+        }
+
+        @Test
+        @DisplayName("só vizinha além de 70 m em linha reta: fica sozinha")
+        void farNeighborStaysAlone() {
+            when(occurrenceDao.findNearby(-22.25, -45.70, "BURACO_NA_RUA_OU_CALCADA", 70.0))
+                .thenReturn(List.of(at(8, "FC-26-LONGE", 60, 60)));
+
+            var resposta = sut.createOccurrence(locatedAt(), null);
+
+            assertThat(created().getGroupId()).isNull();
+            assertThat(resposta.getGroupedWithProtocol()).isNull();
         }
 
         @Test

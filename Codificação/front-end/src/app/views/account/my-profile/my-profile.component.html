@@ -25,38 +25,40 @@
         <form [formGroup]="profileForm" (ngSubmit)="saveProfile()" class="form-fields">
           <div class="field-group">
             <label>Nome completo</label>
-            <input type="text" formControlName="fullname" class="form-input" placeholder="Seu nome completo" />
-            <span class="field-error" *ngIf="profileForm.controls['fullname'].touched && profileForm.controls['fullname'].invalid">Informe seu nome completo</span>
+            <input type="text" formControlName="fullname" maxlength="150" class="form-input" placeholder="Seu nome completo" />
+            <span class="field-error" *ngIf="profileForm.controls['fullname'].touched && profileForm.controls['fullname'].invalid">{{ profileForm.controls['fullname'].hasError('personName') ? 'Use só letras no nome' : 'Informe seu nome completo' }}</span>
           </div>
           <div class="profile-grid">
             <div class="field-group">
               <label>Telefone</label>
-              <input type="tel" formControlName="phoneNumber" class="form-input" placeholder="(35) 99999-9999" />
+              <input type="tel" formControlName="phoneNumber" appMask="phone" class="form-input" placeholder="(35) 99999-9999" />
+              <span class="field-error" *ngIf="profileForm.controls['phoneNumber'].touched && profileForm.controls['phoneNumber'].invalid">Celular completo com DDD: (35) 99999-9999</span>
             </div>
             <div class="field-group">
               <label>CEP</label>
-              <input type="text" formControlName="cep" class="form-input" placeholder="37540-000" />
+              <input type="text" formControlName="cep" appMask="cep" class="form-input" placeholder="37540-000" />
+              <span class="field-error" *ngIf="profileForm.controls['cep'].touched && profileForm.controls['cep'].invalid">CEP com 8 números: 37540-000</span>
             </div>
           </div>
           <div class="profile-grid">
             <div class="field-group">
               <label>Logradouro</label>
-              <input type="text" formControlName="street" class="form-input" placeholder="Rua, avenida..." />
+              <input type="text" formControlName="street" maxlength="200" class="form-input" placeholder="Rua, avenida..." />
             </div>
             <div class="field-group">
               <label>Número</label>
-              <input type="text" formControlName="number" class="form-input" placeholder="123" />
+              <input type="text" formControlName="number" maxlength="10" class="form-input" placeholder="123" />
             </div>
           </div>
           <div class="profile-grid">
             <div class="field-group">
               <label>Bairro</label>
-              <input type="text" formControlName="neighborhood" class="form-input" placeholder="Centro" />
+              <input type="text" formControlName="neighborhood" maxlength="100" class="form-input" placeholder="Centro" />
             </div>
             <div class="field-group">
               <label>UF</label>
-              <input type="text" formControlName="state" class="form-input input-uf" list="profile-uf-options"
-                     placeholder="MG" maxlength="2" autocapitalize="characters" spellcheck="false" />
+              <input type="text" formControlName="state" appMask="uf" class="form-input input-uf" list="profile-uf-options"
+                     placeholder="MG" autocapitalize="characters" spellcheck="false" />
               <datalist id="profile-uf-options">
                 <option *ngFor="let u of units" [value]="u.uf">{{ u.name }}</option>
               </datalist>
@@ -65,7 +67,7 @@
           <div class="profile-grid">
             <div class="field-group">
               <label>Município</label>
-              <input type="text" formControlName="city" class="form-input" list="profile-city-options"
+              <input type="text" formControlName="city" maxlength="100" class="form-input" list="profile-city-options"
                      [readOnly]="!cityOptions.ready" spellcheck="false"
                      [placeholder]="cityOptions.ready ? 'Santa Rita do Sapucaí' : 'Informe a UF primeiro'" />
               <datalist id="profile-city-options">
@@ -198,11 +200,11 @@
 
             <div class="mfa-disable-form" *ngIf="enablingSms && !smsCodeSent">
               <p>Confirme o número do celular que vai receber os códigos.</p>
-              <input type="tel" [(ngModel)]="smsPhone" placeholder="(35) 99999-9999"
-                     (keyup.enter)="savingMfa || sendSmsEnableCode()" class="form-input" />
+              <input type="tel" [(ngModel)]="smsPhone" appMask="phone" placeholder="(35) 99999-9999"
+                     (keyup.enter)="savingMfa || !smsPhoneValid || sendSmsEnableCode()" class="form-input" />
               <div class="qr-actions">
                 <button class="btn-secondary" (click)="cancelEnableSms()">Cancelar</button>
-                <button class="btn-primary" [disabled]="savingMfa || !smsPhone" (click)="sendSmsEnableCode()">
+                <button class="btn-primary" [disabled]="savingMfa || !smsPhoneValid" (click)="sendSmsEnableCode()">
                   Enviar código
                 </button>
               </div>

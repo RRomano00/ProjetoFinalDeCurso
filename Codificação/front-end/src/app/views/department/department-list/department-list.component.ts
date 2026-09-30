@@ -1,3 +1,4 @@
+import { MaskDirective } from '../../../shared/mask.directive';
 import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -11,7 +12,7 @@ import { persistFilters } from '../../../shared/persist-filters';
 
 @Component({
   selector: 'app-department-list',
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, MaskDirective],
   templateUrl: './department-list.component.html',
   styleUrls: ['./department-list.component.css', '../../table-cards.css']
 })

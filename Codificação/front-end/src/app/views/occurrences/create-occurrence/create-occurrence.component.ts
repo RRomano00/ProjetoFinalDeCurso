@@ -1,3 +1,4 @@
+import { MaskDirective } from '../../../shared/mask.directive';
 import { CopyProtocolComponent } from '../../../shared/copy-protocol.component';
 import { Component, OnInit, AfterViewInit, OnDestroy, NgZone } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
@@ -25,7 +26,7 @@ L.Icon.Default.mergeOptions({
 
 @Component({
   selector: 'app-create-occurrence',
-  imports: [RouterModule, CommonModule, FormsModule, ReactiveFormsModule, CopyProtocolComponent],
+  imports: [RouterModule, CommonModule, FormsModule, ReactiveFormsModule, CopyProtocolComponent, MaskDirective],
   templateUrl: './create-occurrence.component.html',
   styleUrl: './create-occurrence.component.css'
 })

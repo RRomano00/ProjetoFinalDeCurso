@@ -3,12 +3,13 @@ import { CommonModule } from '@angular/common';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { LocalityPreferenceService, Municipality } from '../services/local/locality-preference.service';
 import { LocalityService, CityOptions, FederativeUnit } from '../services/local/locality.service';
+import { MaskDirective } from './mask.directive';
 
 // Escolha obrigatória do município do visitante: ao entrar como anônimo e no "Alterar município".
 @Component({
   selector: 'app-municipality-dialog',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, MaskDirective],
   template: `
     <div class="modal-overlay modal-overlay--blur">
       <form class="modal-card" role="dialog" aria-modal="true" aria-labelledby="municipio-titulo"
@@ -23,8 +24,8 @@ import { LocalityService, CityOptions, FederativeUnit } from '../services/local/
         <div class="field-row">
           <div class="field-group">
             <label for="md-state">UF</label>
-            <input type="text" id="md-state" formControlName="state" list="md-uf-options"
-                   placeholder="MG" maxlength="2" autocomplete="address-level1"
+            <input type="text" id="md-state" formControlName="state" appMask="uf" list="md-uf-options"
+                   placeholder="MG" autocomplete="address-level1"
                    autocapitalize="characters" spellcheck="false">
             <datalist id="md-uf-options">
               <option *ngFor="let u of units" [value]="u.uf">{{ u.name }}</option>
@@ -32,7 +33,7 @@ import { LocalityService, CityOptions, FederativeUnit } from '../services/local/
           </div>
           <div class="field-group">
             <label for="md-city">Município</label>
-            <input type="text" id="md-city" formControlName="city" list="md-city-options"
+            <input type="text" id="md-city" formControlName="city" list="md-city-options" maxlength="100"
                    [readOnly]="!cityOptions.ready" autocomplete="address-level2" spellcheck="false"
                    [placeholder]="cityOptions.ready ? 'Comece a digitar' : 'Informe a UF primeiro'">
             <datalist id="md-city-options">

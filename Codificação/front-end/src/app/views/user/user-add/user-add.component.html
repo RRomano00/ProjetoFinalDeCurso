@@ -14,17 +14,17 @@
       <div class="form-grid">
         <div class="field-group">
           <label>Nome completo <span class="required">*</span></label>
-          <input type="text" formControlName="fullname" placeholder="Nome completo" class="form-input"
+          <input type="text" formControlName="fullname" maxlength="150" placeholder="Nome completo" class="form-input"
             [class.input-error]="form.controls['fullname'].touched && form.controls['fullname'].invalid">
           <span class="field-error"
             *ngIf="form.controls['fullname'].touched && form.controls['fullname'].invalid">
-            Nome é obrigatório (mínimo 2 caracteres).
+            {{ form.controls['fullname'].hasError('personName') ? 'Use só letras no nome.' : 'Nome é obrigatório (mínimo 2 caracteres).' }}
           </span>
         </div>
 
         <div class="field-group">
           <label>E-mail <span class="required">*</span></label>
-          <input type="email" formControlName="email" placeholder="usuario@email.com" class="form-input"
+          <input type="email" formControlName="email" maxlength="150" placeholder="usuario@email.com" class="form-input"
             [class.input-error]="form.controls['email'].touched && form.controls['email'].invalid">
           <span class="field-error"
             *ngIf="form.controls['email'].touched && form.controls['email'].hasError('required')">
@@ -38,8 +38,8 @@
 
         <div class="field-group" *ngIf="!isSuperAdminSelected">
           <label>UF <span class="required">*</span></label>
-          <input type="text" formControlName="state" placeholder="MG" class="form-input input-uf"
-            list="staff-uf-options" maxlength="2" autocapitalize="characters" spellcheck="false"
+          <input type="text" formControlName="state" appMask="uf" placeholder="MG" class="form-input input-uf"
+            list="staff-uf-options" autocapitalize="characters" spellcheck="false"
             autocomplete="off" [readOnly]="localityLocked">
           <datalist id="staff-uf-options">
             <option *ngFor="let u of units" [value]="u.uf">{{ u.name }}</option>
@@ -48,7 +48,7 @@
 
         <div class="field-group" *ngIf="!isSuperAdminSelected">
           <label>Município <span class="required">*</span></label>
-          <input type="text" formControlName="city" class="form-input" list="city-options"
+          <input type="text" formControlName="city" maxlength="100" class="form-input" list="city-options"
             [readOnly]="localityLocked || !cityOptions.ready" autocomplete="off" spellcheck="false"
             [placeholder]="cityOptions.ready ? 'Município de atuação' : 'Informe a UF primeiro'"
             [class.input-error]="form.controls['city'].touched && form.controls['city'].invalid">

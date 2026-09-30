@@ -40,7 +40,7 @@
         <h2>Acompanhar ocorrência anônima</h2>
         <p>Digite o código de acompanhamento gerado ao registrar a ocorrência anônima (ex: UXNLTPSU).</p>
         <!-- Mesmo alfabeto do AnonymousTrackingCodeService. -->
-        <input type="text" [(ngModel)]="trackingCodeInput" placeholder="UXNLTPSU" appClipboardCode="^[A-HJ-NP-Z2-9]{8}$"
+        <input type="text" [(ngModel)]="trackingCodeInput" maxlength="8" autocapitalize="characters" spellcheck="false" placeholder="UXNLTPSU" appClipboardCode="^[A-HJ-NP-Z2-9]{8}$"
                class="filter-input" (keyup.enter)="searchByCode()" />
         <div class="modal-actions">
           <button class="btn-secondary" (click)="closeProtocolModal()">Cancelar</button>
