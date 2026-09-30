@@ -75,10 +75,12 @@ function Espera([string] $nome, [int] $porta, [int] $segundos, $proc) {
 
 function Tunel([int] $porta) {
   if (Get-Command ngrok -ErrorAction SilentlyContinue) {
-    $p = Bg 'tunel' 'ngrok' @('http', "$porta", '--url', "https://$($Dominio -replace '^https://','')", '--log', 'stdout')
+    # --domain (sem https://) funciona nas versoes antigas e novas do ngrok v3; --url so nas novas
+    $p = Bg 'tunel' 'ngrok' @('http', "$porta", '--domain', ($Dominio -replace '^https://',''), '--log', 'stdout')
   } else {
     Write-Host '   (ngrok nao instalado - usando cloudflared, URL aleatoria)'
-    $p = Bg 'tunel' 'npx' @('-y', 'cloudflared', 'tunnel', '--url', "http://127.0.0.1:$porta")
+    # npx.cmd: o Start-Process pega o script 'npx' sem extensao e falha ("nao e um aplicativo Win32 valido")
+    $p = Bg 'tunel' 'npx.cmd' @('-y', 'cloudflared', 'tunnel', '--url', "http://127.0.0.1:$porta")
   }
   for ($i = 0; $i -lt 60; $i++) {
     if ($p.HasExited) { Erro 'o tunel caiu'; MostraErros 'tunel'; exit 1 }
@@ -111,7 +113,10 @@ try {
 
   # 2. build do front (PWA) + servir (a API sai no mesmo endereco, em /api)
   Write-Host '== build do front-end (pode demorar ~1min)'
+  # PowerShell 5.1 com 'Stop' aborta nos warnings que o Angular escreve no stderr; erro real vem no $LASTEXITCODE
+  $ErrorActionPreference = 'Continue'
   & npm.cmd --prefix $Front run build *> "$Log\build.log"
+  $ErrorActionPreference = 'Stop'
   if ($LASTEXITCODE -ne 0) {
     Erro "build do front falhou - veja $Log\build.log"
     Get-Content "$Log\build.log" -Tail 30 | Write-Host

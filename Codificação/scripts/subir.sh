@@ -71,7 +71,8 @@ tunel() { # tunel <nome> <porta> -> devolve a URL https em $URL (sem subshell: o
          #                                cleanup precisa enxergar o PID do tunel)
   local url i log=$LOG/tunel-$1.log
   if [[ -n $DOMINIO && $1 == front ]] && command -v ngrok >/dev/null; then
-    bg "tunel-$1" ngrok http "$2" --url "https://${DOMINIO#https://}" --log stdout
+    # --domain (sem https://) funciona nas versoes antigas e novas do ngrok v3; --url so nas novas
+    bg "tunel-$1" ngrok http "$2" --domain "${DOMINIO#https://}" --log stdout
   else
     [[ -n $DOMINIO && $1 == front ]] && echo "   (ngrok nao instalado — usando cloudflared, URL aleatoria)" >&2
     bg "tunel-$1" npx -y cloudflared tunnel --url "http://127.0.0.1:$2"

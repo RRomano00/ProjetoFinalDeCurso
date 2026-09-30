@@ -1,6 +1,6 @@
 import { ClipboardCodeDirective } from '../../../shared/clipboard-code.directive';
 import { Component } from '@angular/core';
-import { Router, RouterModule, RouterOutlet } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { User } from '../../../domain/model/user';
@@ -17,7 +17,7 @@ import { AuthenticationService } from '../../../services/security/authentication
 @Component({
   selector: 'app-my-profile',
   standalone: true,
-  imports: [RouterOutlet, RouterModule, CommonModule, FormsModule, ReactiveFormsModule, PasswordRevealDirective, ClipboardCodeDirective],
+  imports: [RouterModule, CommonModule, FormsModule, ReactiveFormsModule, PasswordRevealDirective, ClipboardCodeDirective],
   templateUrl: './my-profile.component.html',
   styleUrl: './my-profile.component.css'
 })
