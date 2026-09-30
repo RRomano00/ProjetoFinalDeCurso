@@ -372,6 +372,10 @@ public class EmailServiceImpl implements EmailService {
             ? "https://www.openstreetmap.org/?mlat=" + o.getLatitude() + "&mlon=" + o.getLongitude() + "#map=18/"
               + o.getLatitude() + "/" + o.getLongitude()
             : null;
+        // Rota até o local: no celular abre direto no app do Google Maps.
+        String route = maps != null
+            ? "https://www.google.com/maps/dir/?api=1&destination=" + o.getLatitude() + "," + o.getLongitude()
+            : null;
 
         List<Photo> photos = downloadPhotos(o);
 
@@ -382,7 +386,7 @@ public class EmailServiceImpl implements EmailService {
             "Prioridade: " + priority + "\n" +
             "Registrada em: " + opened + "\n" +
             "Endereço: " + address + "\n" +
-            (maps != null ? "Local no mapa: " + maps + "\n" : "") +
+            (maps != null ? "Local no mapa: " + maps + "\n" + "Rota no Google Maps: " + route + "\n" : "") +
             "\nRelato:\n" + nvl(o.getDescription()) + "\n\n" +
             (photos.isEmpty()
                 ? "Sem fotografias anexadas.\n"
@@ -406,7 +410,9 @@ public class EmailServiceImpl implements EmailService {
             row("Endereço", address) +
             (maps != null
                 ? "<p style='font-size:14px; margin:14px 0 0;'>" +
-                  "<a href='" + maps + "' style='color:" + BRAND_COLOR + ";'>Ver o local no mapa</a></p>"
+                  "<a href='" + maps + "' style='color:" + BRAND_COLOR + ";'>Ver o local no mapa</a></p>" +
+                  "<p style='font-size:14px; margin:6px 0 0;'>" +
+                  "<a href='" + route + "' style='color:" + BRAND_COLOR + ";'>Abrir a rota no Google Maps</a></p>"
                 : "") +
             "<div style='margin:20px 0 0; padding:14px 16px; background:#f9fafb;" +
             "     border-left:4px solid " + BRAND_COLOR + "; border-radius:6px;'>" +
