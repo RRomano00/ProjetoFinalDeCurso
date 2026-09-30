@@ -71,6 +71,7 @@
   overflow-wrap: anywhere;
 }
 .incident-card:hover { border-color: var(--plate); background: var(--plate-wash); }
+.incident-card:focus-visible { outline: var(--focus); outline-offset: 2px; }
 
 .incident-top {
   display: flex;

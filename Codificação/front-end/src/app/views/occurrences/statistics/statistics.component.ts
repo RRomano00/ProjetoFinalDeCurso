@@ -6,6 +6,7 @@ import { OccurrenceReadService } from '../../../services/occurrence-read.service
 import { Occurrence } from '../../../domain/model/occurrence';
 import { typeLabel, typeColor } from '../../../domain/occurrence-labels';
 import { persistFilters } from '../../../shared/persist-filters';
+import { CopyProtocolComponent } from '../../../shared/copy-protocol.component';
 
 export interface ChartBar          { label: string; value: number; color: string; pct: number; }
 export interface NeighborhoodStat  { neighborhood: string; total: number; pct: number; }
@@ -17,7 +18,7 @@ const DIA = 86_400_000;
 
 @Component({
   selector: 'app-statistics',
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, CopyProtocolComponent],
   templateUrl: './statistics.component.html',
   styleUrl: './statistics.component.css'
 })

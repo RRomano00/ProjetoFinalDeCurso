@@ -86,9 +86,9 @@
     <div class="incidents-col">
       <h2 class="col-title">Ocorrências Recentes</h2>
       <div class="incident-list">
-        <a *ngFor="let o of recent"
-           [routerLink]="['/occurrence/detail', o.id]"
-           class="incident-card">
+        <div *ngFor="let o of recent" class="incident-card" role="link" tabindex="0"
+             [attr.aria-label]="'Abrir a ocorrência ' + o.protocolNumber + ': ' + (o.title || 'sem título')"
+             (click)="openCard(o, $event)" (auxclick)="openCard(o, $event)" (keydown.enter)="openCard(o, $event)">
           <div class="incident-top">
             <span class="incident-title">{{ o.title || (o.description | slice:0:60) }}</span>
             <span class="status-badge" [ngClass]="{
@@ -120,10 +120,10 @@
           </span>
 
           <div class="incident-foot">
-            <span class="incident-id">{{ o.protocolNumber }}</span>
+            <span class="incident-id">{{ o.protocolNumber }} <app-copy-protocol [value]="o.protocolNumber" [small]="true" /></span>
             <time *ngIf="o.createdAt">{{ o.createdAt | date:'dd/MM/yyyy, HH:mm' }}</time>
           </div>
-        </a>
+        </div>
 
         <div class="empty-incidents" *ngIf="recent.length === 0 && !loadingMap">
           Nenhuma ocorrência encontrada.

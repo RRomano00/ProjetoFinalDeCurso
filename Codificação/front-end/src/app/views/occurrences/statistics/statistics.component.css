@@ -144,7 +144,7 @@
 .load-figures .unit { font-size: 0.9375rem; font-weight: 500; color: var(--ink-mute); margin-left: 1px; }
 
 .panel-row { display: grid; gap: 1.5rem; align-items: stretch; }
-.panel-row-three { grid-template-columns: repeat(3, 1fr); }
+.panel-row-three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .panel {
   padding: 1.25rem 1.5rem 1.5rem;
   background: var(--surface);
@@ -271,7 +271,7 @@
 }
 
 @media (max-width: 900px) {
-  .panel-row-three { grid-template-columns: 1fr; }
+  .panel-row-three { grid-template-columns: minmax(0, 1fr); }
   .queue-body { grid-template-columns: 1fr; }
 }
 @media (max-width: 600px) {

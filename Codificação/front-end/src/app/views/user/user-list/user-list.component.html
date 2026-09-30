@@ -90,8 +90,9 @@
       <h2>Excluir conta</h2>
       <p>
         A conta de <strong>{{ pendingDelete.fullname }}</strong> ({{ pendingDelete.email }})
-        será apagada do sistema. Esta ação não pode ser desfeita.
+        será apagada do sistema.
       </p>
+      <p><strong>Esta ação não pode ser desfeita.</strong></p>
       <div class="modal-actions">
         <button type="button" class="btn-toggle" (click)="pendingDelete = null"
                 [disabled]="deletingId">Cancelar</button>

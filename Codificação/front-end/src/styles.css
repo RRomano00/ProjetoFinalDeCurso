@@ -209,6 +209,14 @@ html.dark-theme .a11y-controls {
 }
 .occ-popup__support { width: 100%; margin-top: 0.125rem; }
 
+/* Celular: o mapa é estreito; o popup não pode passar da largura dele (o Leaflet fixa até 300px). */
+@media (max-width: 640px) {
+  .leaflet-popup .leaflet-popup-content { margin: 0.625rem 1.5rem 0.625rem 0.75rem; max-width: calc(100vw - 150px); }
+  .occ-popup { min-width: 0; gap: 0.25rem; }
+  .occ-popup__title { font-size: 0.8125rem; }
+  .occ-popup__place { font-size: 0.75rem; }
+}
+
 .btn-support {
   display: inline-flex;
   align-items: center;
@@ -311,3 +319,18 @@ html.dark-theme .a11y-controls {
 .map-locate.locating { cursor: progress; color: var(--ink-faint); }
 .map-locate.locating svg { animation: spin 1.4s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* Botão de ícone para copiar (ex.: protocolo). */
+.btn-copy {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-ctl);
+  background: var(--surface);
+  color: var(--ink-mute);
+  cursor: pointer;
+}
+.btn-copy:hover { color: var(--plate); }
+.btn-copy--sm { width: 22px; height: 22px; }

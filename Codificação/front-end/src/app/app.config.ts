@@ -40,7 +40,8 @@ export const appConfig: ApplicationConfig = {
     provideAnimationsAsync(),
     provideHttpClient(withInterceptors([authInterceptor])),
     provideToastr({
-      timeOut: 4500,
+      timeOut: 8000,
+      extendedTimeOut: 3000,
       positionClass: 'toast-top-center',
       preventDuplicates: true,
       progressBar: true,

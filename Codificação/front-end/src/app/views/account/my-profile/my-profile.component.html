@@ -311,9 +311,9 @@
     <div class="modal-card" (click)="$event.stopPropagation()">
       <h2>Excluir conta</h2>
       <p>
-        Sua conta será apagada do sistema e esta ação não pode ser desfeita. Suas
-        ocorrências continuam registradas, mas sem o seu nome.
+        Sua conta será apagada do sistema. Suas ocorrências continuam registradas, mas sem o seu nome.
       </p>
+      <p><strong>Esta ação não pode ser desfeita.</strong></p>
       <p *ngIf="deleteNeedsCode">
         Para confirmar, digite o código
         {{ deleteCodeSource === 'EMAIL' ? 'enviado ao seu e-mail'

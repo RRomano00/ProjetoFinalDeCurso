@@ -8,6 +8,8 @@ import { OccurrenceSupportService, SupportInfo } from '../../../services/occurre
 import { GeocodingService } from '../../../services/local/geocoding.service';
 import { LocalityPreferenceService, Municipality } from '../../../services/local/locality-preference.service';
 import { Occurrence } from '../../../domain/model/occurrence';
+import { CopyProtocolComponent } from '../../../shared/copy-protocol.component';
+import { openOccurrence } from '../../../shared/open-occurrence';
 import { statusLabel, statusColor, typeLabel, typeColor, OCCURRENCE_TYPES } from '../../../domain/occurrence-labels';
 import { SANTA_RITA_DO_SAPUCAI, DEFAULT_MAP_ZOOM } from '../../../domain/map.constants';
 import { occurrencePopup } from '../../../domain/occurrence-popup';
@@ -24,7 +26,7 @@ L.Icon.Default.mergeOptions({
 
 @Component({
   selector: 'app-home',
-  imports: [RouterLink, CommonModule, FormsModule],
+  imports: [RouterLink, CommonModule, FormsModule, CopyProtocolComponent],
   templateUrl: './home.component.html',
   styleUrl: './home.component.css'
 })
@@ -143,6 +145,8 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
     // Filtro salvo antes, quando a Finalizada ainda era opção aqui.
     if (!this.mapStatusOptions.includes(this.mapFilterStatus)) this.mapFilterStatus = '';
   }
+
+  openCard(o: Occurrence, e: Event) { openOccurrence(this.router, o.id, e); }
 
   goToLogin() { this.router.navigate(['/account/sign-in']); }
 

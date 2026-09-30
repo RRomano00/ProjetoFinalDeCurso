@@ -7,7 +7,10 @@
     <div class="detail-card">
       <header class="record-head">
         <div class="record-id">
-          <span class="protocol-plate">{{ occurrence.protocolNumber }}</span>
+          <span class="protocol-wrap">
+            <span class="protocol-plate">{{ occurrence.protocolNumber }}</span>
+            <app-copy-protocol [value]="occurrence.protocolNumber" />
+          </span>
           <span class="record-id-end">
             <span *ngIf="occurrence.anonymous" class="badge-anonymous">🔒 Anônima</span>
             <span class="badge badge-{{ occurrence.status.toLowerCase() }}">
@@ -125,8 +128,9 @@
           <span *ngIf="g.id === occurrence.id" class="group-protocol current">
             {{ g.protocolNumber }} (atual)
           </span>
+          <app-copy-protocol [value]="g.protocolNumber" [small]="true" />
           <span class="group-title-txt">{{ g.title || (g.description | slice:0:40) }}</span>
-          <span class="badge badge-{{ g.status.toLowerCase() }}">{{ statusLabel(g.status) }}</span>
+          <span class="badge group-badge badge-{{ g.status.toLowerCase() }}">{{ statusLabel(g.status) }}</span>
         </div>
       </div>
 
@@ -202,7 +206,7 @@
                       : 'Encaminhar e iniciar atendimento') }}
               </button>
               <p class="forward-effect">
-                A ocorrência passa a <span class="badge badge-em_andamento">Em Andamento</span>
+                O status altera para <span class="badge badge-em_andamento">Em Andamento</span>
                 e o trâmite entra no histórico.
               </p>
             </div>
@@ -230,6 +234,11 @@
                   (click)="showRejectForm = true" [disabled]="updating" class="btn-action btn-danger btn-end">
             ✕ Indeferir Ocorrência
           </button>
+
+          <button *ngIf="auth.isSuperAdmin() && occurrence.status !== 'FINALIZADA'" type="button"
+                  (click)="showDelete = true" [disabled]="updating" class="btn-action btn-danger">
+            🗑 Excluir Ocorrência
+          </button>
         </div>
 
         <ng-container *ngIf="occurrence.status === 'PENDENTE' || occurrence.status === 'EM_ANDAMENTO'">
@@ -250,6 +259,10 @@
       </div>
     </div>
   </div>
+
+  @if (showDelete && occurrence) {
+    <app-delete-occurrence-dialog [occurrence]="occurrence" (closed)="onDeleted($event)" />
+  }
 
   <div class="login-prompt-overlay" *ngIf="showLoginPrompt" (click)="showLoginPrompt = false">
     <div class="login-prompt-card" (click)="$event.stopPropagation()">

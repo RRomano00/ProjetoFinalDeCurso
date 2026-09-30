@@ -8,9 +8,10 @@
 .toast-container .ngx-toastr {
   --toast-accent: var(--plate);
   --toast-icon: none;
-  width: min(400px, calc(100vw - 24px));
+  width: min(540px, calc(100vw - 24px));
   margin: 0 auto 10px;
-  padding: 14px 18px 16px 58px;
+  padding: 16px 20px 18px 60px;
+  overflow-wrap: anywhere;
   border: 1px solid var(--line-soft);
   border-radius: 14px;
   background: var(--surface);

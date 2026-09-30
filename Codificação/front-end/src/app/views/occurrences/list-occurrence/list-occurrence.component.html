@@ -58,7 +58,9 @@
 
   <ng-template #occurrenceCard let-o>
     <div class="occurrence-card">
-      <a [routerLink]="['/occurrence/detail', o.id]" class="card-body">
+      <div class="card-body" role="link" tabindex="0"
+           [attr.aria-label]="'Abrir a ocorrência ' + o.protocolNumber + ': ' + (o.title || 'sem título')"
+           (click)="openCard(o, $event)" (auxclick)="openCard(o, $event)" (keydown.enter)="openCard(o, $event)">
         <div class="card-header">
           <h3 class="card-title">{{ o.title || 'Ocorrência' }}</h3>
           <span class="badge" [ngClass]="statusClass(o.status)">{{ statusLabel(o.status) }}</span>
@@ -87,8 +89,9 @@
             {{ o.city }}
           </span>
           <span class="protocol">{{ o.protocolNumber }}</span>
+          <app-copy-protocol [value]="o.protocolNumber" [small]="true" />
         </div>
-      </a>
+      </div>
 
       <div class="card-footer">
         <button *ngIf="auth.canSupport()" type="button" class="btn-support btn-support--sm"
@@ -147,23 +150,6 @@
   </div>
 
   @if (pendingDelete) {
-    <div class="modal-overlay" (click)="deleting || (pendingDelete = null)">
-      <div class="modal-card" role="alertdialog" aria-modal="true" aria-labelledby="excluir-ocorrencia-titulo"
-           (click)="$event.stopPropagation()">
-        <h2 id="excluir-ocorrencia-titulo">Excluir ocorrência</h2>
-        <p>
-          A ocorrência <strong>{{ pendingDelete.protocolNumber }}</strong>
-          ({{ pendingDelete.title || 'sem título' }}) passará a <strong>Finalizada</strong>: some para
-          todos os perfis (só o Super Administrador continua a vê-la), as fotos são apagadas e o autor
-          é avisado por e-mail. Esta ação não pode ser desfeita.
-        </p>
-        <div class="modal-actions">
-          <button type="button" class="btn-secondary" (click)="pendingDelete = null" [disabled]="deleting">Cancelar</button>
-          <button type="button" class="btn-danger" (click)="confirmDelete()" [disabled]="deleting">
-            {{ deleting ? 'Excluindo...' : 'Excluir ocorrência' }}
-          </button>
-        </div>
-      </div>
-    </div>
+    <app-delete-occurrence-dialog [occurrence]="pendingDelete" (closed)="onDeleted($event)" />
   }
 </div>
