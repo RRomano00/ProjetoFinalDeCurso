@@ -242,7 +242,7 @@
           <mxGeometry height="20" width="260" y="566" as="geometry" />
         </mxCell>
         <mxCell id="occurrence_history" parent="1" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;html=1;rounded=0;shadow=0;strokeColor=#1F4E79;fillColor=#DEEBF7;fontColor=#1F4E79;fontSize=12;align=center;collapsible=0;marginBottom=0;" value="occurrence_history" vertex="1">
-          <mxGeometry height="186" width="260" x="1060" y="40" as="geometry" />
+          <mxGeometry height="246" width="260" x="1060" y="40" as="geometry" />
         </mxCell>
         <mxCell id="occurrence_history.id" parent="occurrence_history" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;fontStyle=5;" value="PK id : serial" vertex="1">
           <mxGeometry height="20" width="260" y="26" as="geometry" />
@@ -268,8 +268,17 @@
         <mxCell id="occurrence_history.changed_at" parent="occurrence_history" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" value="changed_at : timestamp" vertex="1">
           <mxGeometry height="20" width="260" y="166" as="geometry" />
         </mxCell>
+        <mxCell id="occurrence_history.kind" parent="occurrence_history" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" value="kind : varchar(30)" vertex="1">
+          <mxGeometry height="20" width="260" y="186" as="geometry" />
+        </mxCell>
+        <mxCell id="occurrence_history.attachment_url" parent="occurrence_history" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" value="attachment_url : varchar(500)" vertex="1">
+          <mxGeometry height="20" width="260" y="206" as="geometry" />
+        </mxCell>
+        <mxCell id="occurrence_history.attachment_public_id" parent="occurrence_history" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;" value="attachment_public_id : varchar(255)" vertex="1">
+          <mxGeometry height="20" width="260" y="226" as="geometry" />
+        </mxCell>
         <mxCell id="occurrence_media" parent="1" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;html=1;rounded=0;shadow=0;strokeColor=#1F4E79;fillColor=#DEEBF7;fontColor=#1F4E79;fontSize=12;align=center;collapsible=0;marginBottom=0;" value="occurrence_media" vertex="1">
-          <mxGeometry height="126" width="260" x="1060" y="240" as="geometry" />
+          <mxGeometry height="126" width="260" x="1060" y="300" as="geometry" />
         </mxCell>
         <mxCell id="occurrence_media.id" parent="occurrence_media" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;fontStyle=5;" value="PK id : serial" vertex="1">
           <mxGeometry height="20" width="260" y="26" as="geometry" />
@@ -287,7 +296,7 @@
           <mxGeometry height="20" width="260" y="106" as="geometry" />
         </mxCell>
         <mxCell id="occurrence_support" parent="1" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;html=1;rounded=0;shadow=0;strokeColor=#1F4E79;fillColor=#DEEBF7;fontColor=#1F4E79;fontSize=12;align=center;collapsible=0;marginBottom=0;" value="occurrence_support" vertex="1">
-          <mxGeometry height="106" width="260" x="1060" y="400" as="geometry" />
+          <mxGeometry height="106" width="260" x="1060" y="460" as="geometry" />
         </mxCell>
         <mxCell id="occurrence_support.id" parent="occurrence_support" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;fontStyle=5;" value="PK id : serial" vertex="1">
           <mxGeometry height="20" width="260" y="26" as="geometry" />
@@ -302,7 +311,7 @@
           <mxGeometry height="20" width="260" y="86" as="geometry" />
         </mxCell>
         <mxCell id="password_reset_token" parent="1" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;html=1;rounded=0;shadow=0;strokeColor=#1F4E79;fillColor=#DEEBF7;fontColor=#1F4E79;fontSize=12;align=center;collapsible=0;marginBottom=0;" value="password_reset_token" vertex="1">
-          <mxGeometry height="146" width="260" x="1060" y="540" as="geometry" />
+          <mxGeometry height="146" width="260" x="1060" y="600" as="geometry" />
         </mxCell>
         <mxCell id="password_reset_token.id" parent="password_reset_token" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;spacingRight=6;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;fontSize=10;fontStyle=5;" value="PK id : serial" vertex="1">
           <mxGeometry height="20" width="260" y="26" as="geometry" />
@@ -367,7 +376,7 @@
               <mxPoint x="650.06" y="76.06" />
               <mxPoint x="650.06" y="20.06" />
               <mxPoint x="1360.06" y="20.06" />
-              <mxPoint x="1360.06" y="596.06" />
+              <mxPoint x="1360.06" y="656.06" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -430,7 +439,7 @@
         <mxCell id="WY3BhaFeklWA1PDB_PA7-13" edge="1" parent="1" source="occurrence_support.citizen_id" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="user.id">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
-              <mxPoint x="1040.06" y="476.06" />
+              <mxPoint x="1040.06" y="536.06" />
               <mxPoint x="1040.06" y="30.06" />
               <mxPoint x="620.06" y="30.06" />
             </Array>

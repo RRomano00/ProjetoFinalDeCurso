@@ -32,15 +32,22 @@ O **Fala, Cidade!** é uma solução digital desenvolvida para estreitar a comun
   * Cadastro em etapas, com barra de progresso; um celular por conta.
   * Verificação em duas etapas por e-mail, aplicativo autenticador ou SMS.
   * Registro de notificações com geolocalização e fotos.
-  * Relatos do mesmo tipo a até 50 metros agrupados automaticamente; "Apoiar" funciona como curtida em qualquer ocorrência.
+  * Relatos do mesmo tipo a até 70 metros agrupados automaticamente (no mapa, viram um ponto que abre em leque); "Apoiar" funciona como curtida em qualquer ocorrência.
+  * Botão de copiar o protocolo e o código anônimo; códigos de verificação preenchidos pela área de transferência.
+  * Campos com máscara e validação (CEP, celular, UF, nome) e limites iguais aos do banco.
   * Acompanhamento de status via número de protocolo único.
-  * Opção de envio anônimo (Conformidade com LGPD).
+  * Opção de envio anônimo (Conformidade com LGPD); o visitante escolhe o município ao entrar e troca pelo botão da barra.
 
 * **Administração Municipal:**
   * Painel de Gestão (Dashboard) com indicadores de demandas.
   * Gestão de usuários (Funcionários e Administradores).
-  * Exclusão de ocorrências pelo Super Administrador: a ocorrência passa a **Finalizada** (definitiva, visível só para ele, e fora da tela inicial e dos mapas), as fotos são apagadas, o autor é avisado e a ação fica nos Logs.
+  * Encaminhamento ao departamento por e-mail, com rota no Google Maps, contatos de quem encaminhou e do administrador do município, e o botão **Ver / responder ocorrência**.
+  * Exclusão de ocorrências pelo Super Administrador: a ocorrência passa a **Finalizada** (definitiva, visível só para ele, e fora da tela inicial e dos mapas), as fotos são apagadas, o autor é avisado e a ação fica nos Logs. Com agrupadas, escolhe quais excluir junto.
   * Atualização de status e relatórios de desempenho por categoria.
+
+* **Departamento municipal (pelo link do e-mail, sem login):**
+  * Vê só a ocorrência encaminhada e as agrupadas, sem dados pessoais, enquanto ela estiver aberta (até 30 dias).
+  * **Solicitar conclusão** com foto: a equipe vê no histórico, abre o anexo e marca como concluída — ou reencaminha para pedir que refaça.
 
 ---
 
@@ -58,6 +65,7 @@ O **Fala, Cidade!** é uma solução digital desenvolvida para estreitar a comun
  * Acesse a pasta `Codificação/backend`.
  * Em `src/main/resources/application.properties`, troque cada `ALTERE_AQUI` pelas credenciais do banco, do Cloudinary, do SMTP, do gateway de SMS (`app.sms.*`) e pelo segredo do JWT (`app.jwt.secret`). Os valores reais ficam só na sua cópia local — não os commite.
  * Execute o projeto via Maven ou sua IDE de preferência.
+ * Opcional: `app.frontend-url` — endereço do app nos links de e-mail quando a requisição não informa (padrão `http://localhost:4173`).
 
 3. Configurar o Frontend:
 
@@ -65,6 +73,8 @@ O **Fala, Cidade!** é uma solução digital desenvolvida para estreitar a comun
  * Execute npm install para as dependências.
 
  * Execute ng serve para iniciar o servidor de desenvolvimento.
+
+4. Tudo de uma vez (backend + build PWA): `./Codificação/scripts/subir.sh` — no PC; `--celular` abre um túnel HTTPS.
 
 👥 Equipe
 Rodrigo Pereira Romano - Desenvolvedor / Documentação
