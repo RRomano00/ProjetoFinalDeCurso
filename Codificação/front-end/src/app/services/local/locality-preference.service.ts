@@ -113,12 +113,11 @@ export class LocalityPreferenceService {
     return municipality;
   }
 
-  static readonly VISITOR_START: Municipality = { city: 'Santa Rita do Sapucaí', state: 'MG' };
-
-  async startingMunicipality(visitor = false): Promise<Municipality | null> {
+  /** `visitor`: município escolhido ao entrar como anônimo; o mapa abre sempre nele. */
+  async startingMunicipality(visitor?: Municipality | null): Promise<Municipality | null> {
     if (visitor) {
-      this.choice = LocalityPreferenceService.VISITOR_START;
-      return LocalityPreferenceService.VISITOR_START;
+      this.choice = visitor;
+      return visitor;
     }
     const cadastro = await this.ofCurrentUser();
     if (cadastro) { this.choice = cadastro; return cadastro; }

@@ -340,3 +340,6 @@ html.dark-theme .a11y-controls {
 @media (prefers-reduced-motion: reduce) {
   .leaflet-marker-icon.occ-spread { transition: none; }
 }
+
+/* Popup obrigatório: fundo desfocado. */
+.modal-overlay--blur { backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
