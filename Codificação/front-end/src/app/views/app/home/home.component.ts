@@ -17,6 +17,12 @@ import { AuthenticationService } from '../../../services/security/authentication
 import { ToastrService } from 'ngx-toastr';
 import { persistFilters } from '../../../shared/persist-filters';
 
+interface MapGroup {
+  hub?: L.Marker;
+  members: { o: Occurrence; marker: L.Marker; real: L.LatLng }[];
+  expanded: boolean;
+}
+
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
@@ -39,6 +45,8 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   private map!: L.Map;
   private markers: L.Marker[] = [];
   private markerById = new Map<number, L.Marker>();
+  // Agrupadas (mesmo problema a até 50 m) viram um ponto só, que abre em leque ao clicar.
+  private groups = new Map<number, MapGroup>();
   private supportInfo = new Map<number, SupportInfo>();
   private supportingId: number | null = null;
 
@@ -191,6 +199,8 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
       attribution: '© OpenStreetMap contributors', maxZoom: 19
     }).addTo(this.map);
     setTimeout(() => this.map.invalidateSize(), 100);
+    // O leque é medido em pixels: refaz ao mudar o zoom.
+    this.map.on('zoomend', () => this.groups.forEach(g => { if (g.expanded) this.spread(g, false); }));
 
     this.map.getContainer().addEventListener('click', (ev: Event) => {
       const alvo = (ev.target as HTMLElement | null)?.closest('[data-occ-support]');
@@ -317,6 +327,8 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
     this.markers.forEach(m => m.remove());
     this.markers = [];
     this.markerById.clear();
+    this.groups.forEach(g => g.hub?.remove());
+    this.groups.clear();
 
     // Com coordenadas entram todas; sem elas, só as 30 mais recentes, porque cada
     // geocodificação espera ~1 s (limite do Nominatim).
@@ -357,10 +369,15 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
       iconSize: [32, 32], iconAnchor: [16, 16]
     });
 
-    const marker = L.marker([lat, lng], { icon }).addTo(this.map)
-      .bindPopup(this.popupHtml(o));
+    const marker = L.marker([lat, lng], { icon }).bindPopup(this.popupHtml(o));
     this.markers.push(marker);
     if (o.id != null) this.markerById.set(o.id, marker);
+
+    const key = o.groupId ?? o.id ?? -this.markers.length;
+    let g = this.groups.get(key);
+    if (!g) this.groups.set(key, g = { members: [], expanded: false });
+    g.members.push({ o, marker, real: L.latLng(lat, lng) });
+    this.renderGroup(g);
 
     marker.on('popupopen', async () => {
       if (o.id == null) return;
@@ -368,6 +385,80 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
         this.supportInfo.set(o.id, await this.occurrenceSupportService.getSupportInfo(o.id));
         marker.setPopupContent(this.popupHtml(o));
       } catch { }
+    });
+  }
+
+  private renderGroup(g: MapGroup) {
+    if (g.members.length === 1) { g.members[0].marker.addTo(this.map); return; }
+    const center = L.latLngBounds(g.members.map(m => m.real)).getCenter();
+    if (!g.hub) {
+      g.hub = L.marker(center).on('click', () => this.toggleGroup(g));
+    }
+    g.hub.setLatLng(center).setIcon(this.hubIcon(g)).addTo(this.map);
+    g.hub.getElement()?.setAttribute('title', `${g.members.length} ocorrências agrupadas: clique para `
+                                               + (g.expanded ? 'juntar' : 'ver cada uma'));
+    if (g.expanded) this.spread(g, false);
+    else g.members.forEach(m => m.marker.remove());
+  }
+
+  private toggleGroup(g: MapGroup) {
+    g.expanded = !g.expanded;
+    g.hub!.setOpacity(g.expanded ? 0.45 : 1);
+    g.hub!.getElement()?.setAttribute('title', `${g.members.length} ocorrências agrupadas: clique para `
+                                                + (g.expanded ? 'juntar' : 'ver cada uma'));
+    if (g.expanded) { this.spread(g, true); return; }
+
+    const hub = g.hub!.getLatLng();
+    g.members.forEach(m => { this.animated(m.marker); m.marker.setLatLng(hub); });
+    setTimeout(() => {
+      if (g.expanded) return;  // reabriu no meio da animação
+      g.members.forEach(m => m.marker.remove().setLatLng(m.real).setZIndexOffset(0));
+    }, HomeComponent.SPREAD_MS);
+  }
+
+  private static readonly SPREAD_MS = 280;
+
+  // Os pontos ficam a até 50 m um do outro, sobrepostos no zoom da cidade: abrem num círculo em volta do centro.
+  private spread(g: MapGroup, animate: boolean) {
+    const hub = g.hub!.getLatLng();
+    const c = this.map.latLngToLayerPoint(hub);
+    const n = g.members.length;
+    const r = Math.max(36, n * 8);
+    g.members.forEach((m, i) => {
+      const a = -Math.PI / 2 + (2 * Math.PI * i) / n;
+      const target = this.map.layerPointToLatLng(c.add(L.point(r * Math.cos(a), r * Math.sin(a))));
+      m.marker.setZIndexOffset(1000);
+      if (!animate) { m.marker.setLatLng(target).addTo(this.map); return; }
+      m.marker.setLatLng(hub).addTo(this.map);
+      this.animated(m.marker);
+      m.marker.setLatLng(target);
+    });
+  }
+
+  // Liga a transição só durante o abrir/fechar, para não atrasar os pontos no arrastar/zoom.
+  private animated(marker: L.Marker) {
+    const el = marker.getElement();
+    if (!el) return;
+    el.classList.add('occ-spread');
+    void el.offsetWidth;  // aplica a posição atual antes de mudar, senão não anima
+    setTimeout(() => el.classList.remove('occ-spread'), HomeComponent.SPREAD_MS + 40);
+  }
+
+  // O mesmo ponto de status do mapa, com borda colorida por fora e o total em cima.
+  // Cor: o status mais frequente no grupo.
+  private hubIcon(g: MapGroup): L.DivIcon {
+    const counts = new Map<string, number>();
+    g.members.forEach(m => counts.set(m.o.status, (counts.get(m.o.status) || 0) + 1));
+    const color = statusColor([...counts].sort((a, b) => b[1] - a[1])[0][0]);
+    return L.divIcon({
+      className: '',
+      html: `<div style="position:relative;width:34px;height:34px;display:flex;align-items:center;justify-content:center">
+             <span style="width:20px;height:20px;box-sizing:border-box;border-radius:50%;background:${color};
+             border:2.5px solid #fff;box-shadow:0 0 0 3px ${color}, 0 2px 5px rgb(18 32 51 / .45)"></span>
+             <span style="position:absolute;left:19px;top:-1px;min-width:16px;height:16px;padding:0 4px;
+             box-sizing:border-box;border-radius:8px;background:#122033;color:#fff;box-shadow:0 0 0 1.5px #fff;
+             font:700 10px/16px var(--font);text-align:center">${g.members.length}</span></div>`,
+      iconSize: [34, 34], iconAnchor: [17, 17]
     });
   }
 

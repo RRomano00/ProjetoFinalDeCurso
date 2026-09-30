@@ -268,6 +268,8 @@
 .dot.em-andamento { background: var(--st-progress); }
 .dot.done    { background: var(--st-done); }
 .dot.refused { background: var(--st-refused); }
+/* Legenda das agrupadas: ponto com borda colorida, como no mapa. */
+.dot.grouped { background: var(--st-progress); box-shadow: inset 0 0 0 2px #fff, 0 0 0 2px var(--st-progress); }
 
 .city-state {
   background: var(--surface);

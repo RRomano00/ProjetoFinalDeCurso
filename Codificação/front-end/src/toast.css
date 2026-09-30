@@ -5,7 +5,9 @@
  */
 .toast-container.toast-top-center { top: max(12px, env(safe-area-inset-top)); }
 
-.toast-container .ngx-toastr {
+/* Mesma especificidade do ".toast-container.toast-top-center .ngx-toastr" do toastr.css
+   (width: 300px); com menos, a largura daqui é ignorada. */
+.toast-container.toast-top-center .ngx-toastr {
   --toast-accent: var(--plate);
   --toast-icon: none;
   width: min(540px, calc(100vw - 24px));

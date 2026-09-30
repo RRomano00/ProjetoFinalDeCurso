@@ -36,6 +36,7 @@ export interface Occurrence {
     email?:          string | null;
     fullname?:       string | null;
     trackingCode?:   string;
+    groupId?:        number | null;
     createdAt?:      string;
     updatedAt?:      string;
 }
