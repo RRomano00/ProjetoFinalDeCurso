@@ -5,7 +5,10 @@
         <div class="modal-icon">🔒</div>
         <h2>Ocorrência Registrada!</h2>
         <p>Como sua ocorrência é anônima, guarde o código abaixo para acompanhar o status:</p>
-        <div class="tracking-code">{{ trackingCode }}</div>
+        <div class="tracking-code-row">
+          <div class="tracking-code">{{ trackingCode }}</div>
+          <app-copy-protocol [value]="trackingCode" label="código" />
+        </div>
         <p class="tracking-warning">⚠️ Este código não será exibido novamente.</p>
         <button class="btn-primary" (click)="dismissTrackingCode()">Entendido</button>
       </div>
@@ -63,7 +66,7 @@
              [class.partial]="geocodeStatus === 'partial'" [class.error]="geocodeStatus === 'error'">
           <span *ngIf="geocodeStatus === 'loading'" class="spinner-sm"></span>
           <span *ngIf="geocodeStatus === 'idle'">📍 Toque no mapa (ou clique) para marcar o local da ocorrência.</span>
-          <span *ngIf="geocodeStatus === 'loading'">Buscando endereço...</span>
+          <span *ngIf="geocodeStatus === 'loading'">Buscando endereço<span class="loading-dots" aria-hidden="true"></span></span>
           <span *ngIf="geocodeStatus === 'success'">✓ Endereço preenchido. Confira e informe o número.</span>
           <span *ngIf="geocodeStatus === 'partial'">Este ponto não tem logradouro cadastrado no mapa. Confira a rua antes de enviar.</span>
           <span *ngIf="geocodeStatus === 'error'">Não foi possível buscar o endereço deste ponto. Preencha os campos à mão.</span>
@@ -199,7 +202,7 @@
     <div class="form-actions">
       <a routerLink="/occurrence/list" class="btn-secondary">Cancelar</a>
       <button type="submit" class="btn-primary" [disabled]="loading">
-        {{ loading ? 'Registrando...' : 'Registrar Ocorrência' }}
+        @if (loading) {Registrando<span class="loading-dots" aria-hidden="true"></span>} @else { {{ 'Registrar Ocorrência' }} }
       </button>
     </div>
   </form>

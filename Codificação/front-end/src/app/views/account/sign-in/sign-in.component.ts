@@ -1,9 +1,11 @@
+import { ClipboardCodeDirective } from '../../../shared/clipboard-code.directive';
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormControl, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { AuthenticationService } from '../../../services/security/authentication.service';
-import { LocalityPreferenceService } from '../../../services/local/locality-preference.service';
+import { LocalityPreferenceService, Municipality } from '../../../services/local/locality-preference.service';
+import { MunicipalityDialogComponent } from '../../../shared/municipality-dialog.component';
 import { ToastrService } from 'ngx-toastr';
 import { PasswordRevealDirective } from '../../../shared/password-reveal.directive';
 import { InstallInviteComponent } from '../../../shared/install-invite.component';
@@ -13,8 +15,8 @@ type MfaMethod = 'APP' | 'EMAIL' | 'SMS';
 
 @Component({
   selector: 'app-sign-in',
-  imports: [RouterModule, CommonModule, FormsModule, ReactiveFormsModule, PasswordRevealDirective,
-            InstallInviteComponent],
+  imports: [RouterModule, CommonModule, FormsModule, ReactiveFormsModule, PasswordRevealDirective, ClipboardCodeDirective,
+            InstallInviteComponent, MunicipalityDialogComponent],
   templateUrl: './sign-in.component.html',
   styleUrls: ['../auth-shell.css', './sign-in.component.css']
 })
@@ -42,10 +44,16 @@ export class SignInComponent implements OnInit, OnDestroy {
     private router: Router,
     private auth: AuthenticationService,
     private locality: LocalityPreferenceService,
+    private route: ActivatedRoute,
     private toastr: ToastrService
   ) {}
 
+  // Visitante: município obrigatório antes de entrar em qualquer tela.
+  municipalityOpen = false;
+  get knownMunicipality() { return this.locality.choice; }  // do GPS, se o login o detectou
+
   async ngOnInit() {
+    if (this.route.snapshot.queryParamMap.has('visitante')) this.enterAnonymous();
     if (this.auth.isAuthenticated()) { this.router.navigate(['']); return; }
     this.askLocation();
   }
@@ -55,8 +63,11 @@ export class SignInComponent implements OnInit, OnDestroy {
     this.locality.detect();
   }
 
-  enterAnonymous() {
-    this.auth.enterAnonymous();
+  enterAnonymous() { this.municipalityOpen = true; }
+
+  onMunicipalityChosen(municipality: Municipality) {
+    this.auth.enterAnonymous(municipality);
+    this.locality.choice = municipality;
     this.router.navigate(['']);
   }
 

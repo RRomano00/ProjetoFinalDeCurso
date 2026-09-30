@@ -11,10 +11,11 @@
     <input type="search" [(ngModel)]="search" (ngModelChange)="applyFilters()"
            aria-label="Pesquisar ocorrência por protocolo ou título"
            placeholder="Pesquisar ocorrência (protocolo ou título)" class="filter-input" />
-    <select [(ngModel)]="filterCity" (ngModelChange)="onCityChange()" class="filter-select filter-select--city"
+    <select *ngIf="!auth.isAnonymous()" [(ngModel)]="filterCity" (ngModelChange)="onCityChange()" class="filter-select filter-select--city"
             aria-label="Município em exibição">
-      <option value="">Todos os municípios</option>
-      <option *ngFor="let m of municipalityOptions" [value]="cityKey(m.city)">{{ municipalityLabel(m) }}</option>
+      <!-- Um município só: sem "Todos"; a opção segue o filtro atual ("" ou ele), que dá o mesmo resultado. -->
+      <option *ngIf="municipalityOptions.length !== 1" value="">Todos os municípios</option>
+      <option *ngFor="let m of municipalityOptions" [value]="municipalityOptions.length === 1 ? filterCity : cityKey(m.city)">{{ municipalityLabel(m) }}</option>
     </select>
     <select [(ngModel)]="filterStatus" (ngModelChange)="applyFilters()" class="filter-select">
       <option value="">Todos os status</option>
@@ -38,19 +39,20 @@
       <div class="modal-card" (click)="$event.stopPropagation()">
         <h2>Acompanhar ocorrência anônima</h2>
         <p>Digite o código de acompanhamento gerado ao registrar a ocorrência anônima (ex: UXNLTPSU).</p>
-        <input type="text" [(ngModel)]="trackingCodeInput" placeholder="UXNLTPSU"
+        <!-- Mesmo alfabeto do AnonymousTrackingCodeService. -->
+        <input type="text" [(ngModel)]="trackingCodeInput" placeholder="UXNLTPSU" appClipboardCode="^[A-HJ-NP-Z2-9]{8}$"
                class="filter-input" (keyup.enter)="searchByCode()" />
         <div class="modal-actions">
           <button class="btn-secondary" (click)="closeProtocolModal()">Cancelar</button>
           <button class="btn-primary" [disabled]="searchingProtocol" (click)="searchByCode()">
-            {{ searchingProtocol ? 'Buscando...' : 'Buscar' }}
+            @if (searchingProtocol) {Buscando<span class="loading-dots" aria-hidden="true"></span>} @else { {{ 'Buscar' }} }
           </button>
         </div>
       </div>
     </div>
   }
 
-  <div *ngIf="loading" class="loading-state">Carregando...</div>
+  <div *ngIf="loading" class="loading-state">Carregando<span class="loading-dots" aria-hidden="true"></span></div>
 
   <div *ngIf="!loading && filtered.length === 0" class="empty-state">
     Nenhuma ocorrência encontrada.
@@ -58,7 +60,9 @@
 
   <ng-template #occurrenceCard let-o>
     <div class="occurrence-card">
-      <a [routerLink]="['/occurrence/detail', o.id]" class="card-body">
+      <div class="card-body" role="link" tabindex="0"
+           [attr.aria-label]="'Abrir a ocorrência ' + o.protocolNumber + ': ' + (o.title || 'sem título')"
+           (click)="openCard(o, $event)" (auxclick)="openCard(o, $event)" (keydown.enter)="openCard(o, $event)">
         <div class="card-header">
           <h3 class="card-title">{{ o.title || 'Ocorrência' }}</h3>
           <span class="badge" [ngClass]="statusClass(o.status)">{{ statusLabel(o.status) }}</span>
@@ -87,8 +91,9 @@
             {{ o.city }}
           </span>
           <span class="protocol">{{ o.protocolNumber }}</span>
+          <app-copy-protocol [value]="o.protocolNumber" [small]="true" />
         </div>
-      </a>
+      </div>
 
       <div class="card-footer">
         <button *ngIf="auth.canSupport()" type="button" class="btn-support btn-support--sm"
@@ -98,8 +103,7 @@
                   ? 'Você apoia a ocorrência ' + o.protocolNumber + '; clique para remover o apoio'
                   : 'Apoiar a ocorrência ' + o.protocolNumber)"
                 (click)="toggleSupport(o)">
-          <span class="btn-support__state">{{ supportingId === o.id ? 'Salvando...'
-            : (isSupported(o.id) ? '✓ Você apoia' : '🤝 Apoiar') }}</span>
+          <span class="btn-support__state">@if (supportingId === o.id) {Salvando<span class="loading-dots" aria-hidden="true"></span>} @else { {{ (isSupported(o.id) ? '✓ Você apoia' : '🤝 Apoiar') }} }</span>
           <span class="btn-support__undo">Não apoiar</span>
         </button>
         <span class="support-count" *ngIf="o.supportCount">
@@ -147,23 +151,6 @@
   </div>
 
   @if (pendingDelete) {
-    <div class="modal-overlay" (click)="deleting || (pendingDelete = null)">
-      <div class="modal-card" role="alertdialog" aria-modal="true" aria-labelledby="excluir-ocorrencia-titulo"
-           (click)="$event.stopPropagation()">
-        <h2 id="excluir-ocorrencia-titulo">Excluir ocorrência</h2>
-        <p>
-          A ocorrência <strong>{{ pendingDelete.protocolNumber }}</strong>
-          ({{ pendingDelete.title || 'sem título' }}) passará a <strong>Finalizada</strong>: some para
-          todos os perfis (só o Super Administrador continua a vê-la), as fotos são apagadas e o autor
-          é avisado por e-mail. Esta ação não pode ser desfeita.
-        </p>
-        <div class="modal-actions">
-          <button type="button" class="btn-secondary" (click)="pendingDelete = null" [disabled]="deleting">Cancelar</button>
-          <button type="button" class="btn-danger" (click)="confirmDelete()" [disabled]="deleting">
-            {{ deleting ? 'Excluindo...' : 'Excluir ocorrência' }}
-          </button>
-        </div>
-      </div>
-    </div>
+    <app-delete-occurrence-dialog [occurrence]="pendingDelete" (closed)="onDeleted($event)" />
   }
 </div>

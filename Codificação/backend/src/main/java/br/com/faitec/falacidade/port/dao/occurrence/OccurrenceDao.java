@@ -30,6 +30,10 @@ public interface OccurrenceDao extends CreateDao<Occurrence>, ReadDao<GetOccurre
 
     List<OccurrenceHistoryDto> readHistory(int occurrenceId);
 
+    /** Solicitação de conclusão do departamento: entra no histórico sem mudar o status. */
+    void insertCompletionRequest(int occurrenceId, int departmentId, String message, String attachmentUrl,
+                                 String attachmentPublicId);
+
     List<GetOccurrenceDto> readGroup(int rootId);
 
     /** Imagens da ocorrência no Cloudinary (a principal e as adicionais). */

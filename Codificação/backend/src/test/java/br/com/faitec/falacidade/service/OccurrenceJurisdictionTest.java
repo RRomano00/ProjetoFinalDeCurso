@@ -150,11 +150,11 @@ class OccurrenceJurisdictionTest {
         ForwardOccurrenceDto dto = new ForwardOccurrenceDto();
         dto.setDepartmentIds(java.util.List.of(3));
 
-        ResponseEntity<?> response = sut.forward(10, dto,
+        ResponseEntity<?> response = sut.forward(10, dto, new org.springframework.mock.web.MockHttpServletRequest(),
             auth("carlos@prefeitura.com", UserModel.UserRole.EMPLOYEE));
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
-        verify(occurrenceService, never()).forwardToDepartment(anyInt(), any(), anyInt());
+        verify(occurrenceService, never()).forwardToDepartment(anyInt(), any(), anyInt(), any(), any());
     }
 
     @Test
@@ -181,5 +181,26 @@ class OccurrenceJurisdictionTest {
             auth("carlos@prefeitura.com", UserModel.UserRole.EMPLOYEE));
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+    }
+
+    @Test
+    @DisplayName("encaminhamento usa o endereço de onde a equipe está e os contatos (quem encaminhou + admins)")
+    void forwardBuildsLinkBaseAndContacts() {
+        when(occurrenceService.findById(10)).thenReturn(occurrence("Santa Rita do Sapucaí", "MG"));
+        when(userService.findByEmail("carlos@prefeitura.com")).thenReturn(staff("Santa Rita do Sapucaí", "MG"));
+        when(userService.findAdministratorEmails("Santa Rita do Sapucaí", "MG"))
+            .thenReturn(java.util.List.of("adm@pref.br", "carlos@prefeitura.com"));
+        when(occurrenceService.forwardToDepartment(anyInt(), any(), anyInt(), any(), any()))
+            .thenReturn(new br.com.faitec.falacidade.domain.dto.occurrence.ForwardResultDto(
+                java.util.List.of("Obras"), java.util.List.of()));
+        var request = new org.springframework.mock.web.MockHttpServletRequest();
+        request.addHeader("Origin", "https://duration.ngrok-free.dev");
+        ForwardOccurrenceDto dto = new ForwardOccurrenceDto();
+        dto.setDepartmentIds(java.util.List.of(3));
+
+        sut.forward(10, dto, request, auth("carlos@prefeitura.com", UserModel.UserRole.EMPLOYEE));
+
+        verify(occurrenceService).forwardToDepartment(eq(10), eq(java.util.List.of(3)), anyInt(),
+            eq("https://duration.ngrok-free.dev"), eq(java.util.List.of("carlos@prefeitura.com", "adm@pref.br")));
     }
 }

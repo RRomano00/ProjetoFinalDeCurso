@@ -10,6 +10,10 @@ export interface OccurrenceHistory {
     observation?:   string;
     changedByName?: string;
     changedAt?:     string;
+    kind?:           'STATUS' | 'COMPLETION_REQUEST';
+    attachmentUrl?:  string;
+    departmentName?: string;
+    departmentId?:   number;
 }
 
 export interface Occurrence {
@@ -36,6 +40,7 @@ export interface Occurrence {
     email?:          string | null;
     fullname?:       string | null;
     trackingCode?:   string;
+    groupId?:        number | null;
     createdAt?:      string;
     updatedAt?:      string;
 }

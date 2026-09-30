@@ -172,7 +172,9 @@
   padding: 1rem 0.875rem;
   margin-bottom: 0.875rem;
 }
-.tracking-warning { font-size: 0.8125rem; color: var(--st-pending); }
+.tracking-warning { font-size: 1rem; font-weight: 700; color: var(--st-pending); }
+.tracking-code-row { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.875rem; }
+.tracking-code-row .tracking-code { flex: 1; margin-bottom: 0; }
 
 .modal-card .btn-primary { margin: 0.5rem 0 0 0; width: 100%; }
 

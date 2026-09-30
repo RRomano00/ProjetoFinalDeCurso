@@ -1,8 +1,8 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { NavigationStart, Router, RouterOutlet } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { SwUpdate } from '@angular/service-worker';
-import { filter } from 'rxjs';
+import { filter, interval } from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -18,17 +18,34 @@ export class AppComponent implements OnInit {
   fontIndex = this.defaultFontIndex;
 
   private readonly swUpdate = inject(SwUpdate);
+  private readonly router = inject(Router);
 
   ngOnInit(): void {
     this.restorePreferences();
     this.applyNewVersion();
   }
   
+
   private applyNewVersion(): void {
     if (!this.swUpdate.isEnabled) return;
+    const openedAt = Date.now();
+    let pending = false;
+
     this.swUpdate.versionUpdates
       .pipe(filter(e => e.type === 'VERSION_READY'))
-      .subscribe(() => document.location.reload());
+      .subscribe(() => {
+        if (Date.now() - openedAt < 10_000) document.location.reload();
+        else pending = true;
+      });
+    this.swUpdate.unrecoverable.subscribe(() => document.location.reload());
+
+    this.router.events
+      .pipe(filter((e): e is NavigationStart => e instanceof NavigationStart && pending))
+      .subscribe(e => document.location.assign(e.url));  // carga completa já na versão nova
+
+    const check = () => this.swUpdate.checkForUpdate().catch(() => {});
+    interval(2 * 60_000).subscribe(check);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) check(); });
   }
 
   toggleTheme(): void {

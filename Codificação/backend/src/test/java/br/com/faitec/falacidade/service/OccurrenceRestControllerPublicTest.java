@@ -333,4 +333,24 @@ class OccurrenceRestControllerPublicTest {
             assertThat(sut.mySupports(auth).getBody()).containsExactly(3, 9);
         }
     }
+
+    @Test
+    @DisplayName("histórico: solicitação de conclusão só para a equipe")
+    void completionRequestOnlyForStaff() {
+        GetOccurrenceDto o = new GetOccurrenceDto();
+        o.setId(10); o.setStatus(Occurrence.OccurrenceStatus.EM_ANDAMENTO);
+        when(occurrenceService.findById(10)).thenReturn(o);
+        var pedido = new br.com.faitec.falacidade.domain.dto.occurrence.OccurrenceHistoryDto();
+        pedido.setKind("COMPLETION_REQUEST"); pedido.setNewStatus("EM_ANDAMENTO");
+        var status = new br.com.faitec.falacidade.domain.dto.occurrence.OccurrenceHistoryDto();
+        status.setNewStatus("EM_ANDAMENTO");
+        when(occurrenceService.getHistory(10)).thenReturn(new java.util.ArrayList<>(List.of(pedido, status)));
+
+        assertThat(sut.getHistory(10, null).getBody()).hasSize(1);
+
+        Authentication staff = new UsernamePasswordAuthenticationToken("f@pref.br", null,
+            List.of(new SimpleGrantedAuthority("ROLE_EMPLOYEE")));
+        when(occurrenceService.getHistory(10)).thenReturn(new java.util.ArrayList<>(List.of(pedido, status)));
+        assertThat(sut.getHistory(10, staff).getBody()).hasSize(2);
+    }
 }

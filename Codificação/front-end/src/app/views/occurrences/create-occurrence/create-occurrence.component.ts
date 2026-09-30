@@ -1,3 +1,4 @@
+import { CopyProtocolComponent } from '../../../shared/copy-protocol.component';
 import { Component, OnInit, AfterViewInit, OnDestroy, NgZone } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -24,7 +25,7 @@ L.Icon.Default.mergeOptions({
 
 @Component({
   selector: 'app-create-occurrence',
-  imports: [RouterModule, CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [RouterModule, CommonModule, FormsModule, ReactiveFormsModule, CopyProtocolComponent],
   templateUrl: './create-occurrence.component.html',
   styleUrl: './create-occurrence.component.css'
 })
@@ -305,7 +306,7 @@ export class CreateOccurrenceComponent implements OnInit, AfterViewInit, OnDestr
       if (res?.groupedWithProtocol) {
         this.toastr.info(
           `Já havia um relato do mesmo problema a até 50 metros (${res.groupedWithProtocol}). `
-          + 'Sua ocorrência foi agrupada a ele, e a prefeitura acompanha os dois juntos.',
+          + 'Sua ocorrência foi agrupada',
           'Ocorrência agrupada', { timeOut: 10000 });
       }
       if (res?.trackingCode) {

@@ -92,6 +92,8 @@ public class JwtSecurityConfiguration {
                 .requestMatchers(HttpMethod.POST, "/api/contact").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/occurrence/upload-media").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/occurrence/upload-status/**").permitAll()
+                // Link do encaminhamento: o controller valida o próprio token (cabeçalho X-Department-Access).
+                .requestMatchers("/api/department-access/**").permitAll()
                 .requestMatchers("/api/mfa/**").authenticated()
                 .requestMatchers(
                     "/api/occurrence/*/status",

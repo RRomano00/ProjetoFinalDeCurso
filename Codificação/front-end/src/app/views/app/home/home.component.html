@@ -20,9 +20,10 @@
       <h2 class="col-title">Mapa de Ocorrências</h2>
 
       <div class="map-filters">
-        <select class="select-city" [(ngModel)]="filterCity" (ngModelChange)="onCityChange()">
-          <option value="">Todos os municípios</option>
-          <option *ngFor="let m of municipalityOptions" [value]="cityKey(m.city)">{{ municipalityLabel(m) }}</option>
+        <select *ngIf="!auth.isAnonymous()" class="select-city" [(ngModel)]="filterCity" (ngModelChange)="onCityChange()">
+          <!-- Um município só: sem "Todos"; a opção segue o filtro atual ("" ou ele), que dá o mesmo resultado. -->
+          <option *ngIf="municipalityOptions.length !== 1" value="">Todos os municípios</option>
+          <option *ngFor="let m of municipalityOptions" [value]="municipalityOptions.length === 1 ? filterCity : cityKey(m.city)">{{ municipalityLabel(m) }}</option>
         </select>
         <select [(ngModel)]="mapFilterNeighborhood" (ngModelChange)="refreshMarkers()">
           <option value="">Todos os bairros</option>
@@ -56,13 +57,14 @@
         </button>
         <div class="map-loading" *ngIf="loadingMap">
           <div class="spinner"></div>
-          <span>Carregando marcadores...</span>
+          <span>Carregando marcadores<span class="loading-dots" aria-hidden="true"></span></span>
         </div>
         <div class="map-legend">
           <span class="legend-item"><span class="dot pending"></span> Pendente</span>
           <span class="legend-item"><span class="dot em-andamento"></span> Em Andamento</span>
           <span class="legend-item"><span class="dot done"></span> Concluída</span>
           <span class="legend-item"><span class="dot refused"></span> Indeferida</span>
+          <span class="legend-item"><span class="dot grouped"></span> Agrupadas (clique para abrir)</span>
         </div>
       </div>
 
@@ -86,9 +88,9 @@
     <div class="incidents-col">
       <h2 class="col-title">Ocorrências Recentes</h2>
       <div class="incident-list">
-        <a *ngFor="let o of recent"
-           [routerLink]="['/occurrence/detail', o.id]"
-           class="incident-card">
+        <div *ngFor="let o of recent" class="incident-card" role="link" tabindex="0"
+             [attr.aria-label]="'Abrir a ocorrência ' + o.protocolNumber + ': ' + (o.title || 'sem título')"
+             (click)="openCard(o, $event)" (auxclick)="openCard(o, $event)" (keydown.enter)="openCard(o, $event)">
           <div class="incident-top">
             <span class="incident-title">{{ o.title || (o.description | slice:0:60) }}</span>
             <span class="status-badge" [ngClass]="{
@@ -120,10 +122,10 @@
           </span>
 
           <div class="incident-foot">
-            <span class="incident-id">{{ o.protocolNumber }}</span>
+            <span class="incident-id">{{ o.protocolNumber }} <app-copy-protocol [value]="o.protocolNumber" [small]="true" /></span>
             <time *ngIf="o.createdAt">{{ o.createdAt | date:'dd/MM/yyyy, HH:mm' }}</time>
           </div>
-        </a>
+        </div>
 
         <div class="empty-incidents" *ngIf="recent.length === 0 && !loadingMap">
           Nenhuma ocorrência encontrada.

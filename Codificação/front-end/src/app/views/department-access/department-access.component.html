@@ -1,0 +1,87 @@
+<div class="dept-page">
+  <header class="dept-header">
+    <img src="logo-marca.png" alt="" aria-hidden="true" />
+    <div>
+      <strong>Fala, Cidade!</strong>
+      <span *ngIf="view?.departmentName">Departamento: {{ view?.departmentName }}</span>
+    </div>
+  </header>
+
+  <div *ngIf="loading" class="dept-state">Carregando<span class="loading-dots" aria-hidden="true"></span></div>
+  <div *ngIf="!loading && errorMessage" class="dept-state dept-state--error">{{ errorMessage }}</div>
+
+  @if (!loading && view) {
+    <article class="dept-card">
+      <div class="dept-id">
+        <span class="protocol-plate">{{ view.occurrence.protocolNumber }}</span>
+        <app-copy-protocol [value]="view.occurrence.protocolNumber" />
+        <span class="dept-status">{{ statusLabel(view.occurrence.status) }}</span>
+      </div>
+      <h1>{{ view.occurrence.title || 'Ocorrência' }}</h1>
+      <p class="dept-meta">{{ typeLabel(view.occurrence.type || 'OUTROS_PROBLEMAS') }}</p>
+      <p class="dept-address">
+        {{ view.occurrence.street }}{{ view.occurrence.number ? ', ' + view.occurrence.number : '' }}
+        {{ view.occurrence.neighborhood ? '— ' + view.occurrence.neighborhood : '' }}, {{ view.occurrence.city }}
+        <a *ngIf="mapsRoute" [href]="mapsRoute" target="_blank" rel="noopener">Abrir a rota no Google Maps</a>
+      </p>
+      <p class="dept-description">{{ view.occurrence.description }}</p>
+
+      <div class="dept-photos" *ngIf="view.occurrence.media?.length || view.occurrence.urlMedia">
+        <img *ngFor="let m of (view.occurrence.media?.length ? view.occurrence.media : [{ url: view.occurrence.urlMedia! }])"
+             [src]="m.url" alt="Foto da ocorrência" />
+      </div>
+
+      <section class="dept-request">
+        @if (view.pendingRequestAt) {
+          <p class="dept-pending">Conclusão solicitada em {{ view.pendingRequestAt | date:'dd/MM/yyyy HH:mm' }} —
+            aguardando a prefeitura confirmar.</p>
+        } @else if (view.canRequestCompletion) {
+          <button type="button" class="btn-primary" (click)="requestOpen = true">Solicitar conclusão</button>
+        }
+      </section>
+    </article>
+
+    <section class="dept-card" *ngIf="view.group.length > 1">
+      <h2>Ocorrências agrupadas ({{ view.group.length }})</h2>
+      <button type="button" class="dept-group-item" *ngFor="let g of view.group"
+              [class.current]="g.id === view.occurrence.id" (click)="load(g.id)">
+        <span class="dept-group-protocol">{{ g.protocolNumber }}</span>
+        <span class="dept-group-title">{{ g.title || 'Ocorrência' }}</span>
+        <span class="dept-status">{{ statusLabel(g.status) }}</span>
+      </button>
+    </section>
+
+    <section class="dept-card" *ngIf="view.history.length">
+      <h2>Histórico</h2>
+      <div class="dept-history" *ngFor="let h of view.history">
+        <strong>{{ historyLabel(h) }}</strong>
+        <span>{{ h.changedAt | date:'dd/MM/yyyy HH:mm' }}</span>
+        <span *ngIf="h.observation">{{ h.observation }}</span>
+      </div>
+    </section>
+  }
+
+  @if (requestOpen) {
+    <div class="modal-overlay modal-overlay--blur" (click)="closeRequest()">
+      <form class="modal-card" role="dialog" aria-modal="true" aria-labelledby="solicitar-titulo"
+            (click)="$event.stopPropagation()" (ngSubmit)="sendRequest()">
+        <h2 id="solicitar-titulo">Solicitar conclusão</h2>
+        <p>Envie uma foto do serviço feito. A prefeitura confere e marca a ocorrência como concluída.</p>
+        <label class="dept-file">
+          <input type="file" accept="image/*" capture="environment" (change)="onFile($event)" required />
+          {{ file ? 'Trocar foto' : 'Escolher ou tirar foto' }}
+        </label>
+        <img *ngIf="preview" [src]="preview" alt="Prévia da foto" class="dept-preview" />
+        <label for="dept-msg">Mensagem (opcional)</label>
+        <textarea id="dept-msg" name="message" [(ngModel)]="message" rows="3" maxlength="1000"
+                  placeholder="Ex.: buraco tapado e asfalto refeito."></textarea>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" (click)="closeRequest()" [disabled]="sending">Cancelar</button>
+          <button type="submit" class="btn-primary" [disabled]="!file || sending">
+            @if (sending) {Enviando<span class="loading-dots" aria-hidden="true"></span>} @else { Enviar solicitação }
+          </button>
+        </div>
+      </form>
+    </div>
+  }
+</div>

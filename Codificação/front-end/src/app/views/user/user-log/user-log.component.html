@@ -20,15 +20,16 @@
       <option *ngFor="let r of roleOptions" [value]="r">{{ roleLabel(r) }}</option>
     </select>
     <select *ngIf="isSuperAdmin" [(ngModel)]="filterCity" class="filter-select" aria-label="Município">
-      <option value="">Todos os municípios</option>
-      <option *ngFor="let c of cityOptions" [value]="c">{{ c }}</option>
+      <!-- Um município só: sem "Todos"; a opção segue o filtro atual ("" ou ele), que dá o mesmo resultado. -->
+      <option *ngIf="cityOptions.length !== 1" value="">Todos os municípios</option>
+      <option *ngFor="let c of cityOptions" [value]="cityOptions.length === 1 ? filterCity : c">{{ c }}</option>
     </select>
     <input type="date" [(ngModel)]="dateFrom" class="filter-select" aria-label="A partir de" title="A partir de" />
     <input type="date" [(ngModel)]="dateTo" class="filter-select" aria-label="Até" title="Até" />
     <button type="button" class="btn-toggle" (click)="clearFilters()" [disabled]="!hasFilters">Limpar</button>
   </div>
 
-  <div *ngIf="loading" class="loading-state">Carregando...</div>
+  <div *ngIf="loading" class="loading-state">Carregando<span class="loading-dots" aria-hidden="true"></span></div>
 
   <div class="table-card" *ngIf="!loading">
     <table class="user-table">

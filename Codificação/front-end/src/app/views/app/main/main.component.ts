@@ -6,10 +6,12 @@ import { ToastrService } from 'ngx-toastr';
 import { InstallService } from '../../../services/local/install.service';
 import { SessionWatchService } from '../../../services/security/session-watch.service';
 import { InstallInviteComponent } from '../../../shared/install-invite.component';
+import { MunicipalityDialogComponent } from '../../../shared/municipality-dialog.component';
+import { LocalityPreferenceService, Municipality } from '../../../services/local/locality-preference.service';
 
 @Component({
   selector: 'app-main',
-  imports: [RouterModule, CommonModule, InstallInviteComponent],
+  imports: [RouterModule, CommonModule, InstallInviteComponent, MunicipalityDialogComponent],
   templateUrl: './main.component.html',
   styleUrl: './main.component.css'
 })
@@ -25,6 +27,16 @@ export class MainComponent implements OnInit {
   get isCitizen() { return this.auth.isCitizen(); }
   get isAnonymous() { return this.auth.isAnonymous(); }
 
+  // O visitante troca o município por aqui, não pelos filtros das telas.
+  municipalityOpen = false;
+  get visitorMunicipality() { return this.auth.anonymousMunicipality(); }
+
+  changeMunicipality(municipality: Municipality) {
+    this.auth.setAnonymousMunicipality(municipality);
+    this.locality.choice = municipality;
+    document.location.reload();  // cada tela carrega de novo já no município novo
+  }
+
   get roleLabel(): string {
     const map: Record<string, string> = {
       'ADMINISTRATOR': 'Administrador',
@@ -37,7 +49,7 @@ export class MainComponent implements OnInit {
 
   constructor(public auth: AuthenticationService, private router: Router,
               public install: InstallService, private toastr: ToastrService,
-              public session: SessionWatchService) {}
+              public session: SessionWatchService, private locality: LocalityPreferenceService) {}
 
   async instalarApp() {
     const instrucao = await this.install.instalar();

@@ -17,6 +17,9 @@ import { LocalityPreferenceService } from '../../../services/local/locality-pref
 import { DepartmentService } from '../../../services/department.service';
 import { OccurrenceForwardService } from '../../../services/occurrence-forward.service';
 import { Department } from '../../../domain/model/department';
+import { pendingCompletionRequest } from '../../../domain/completion-request';
+import { CopyProtocolComponent } from '../../../shared/copy-protocol.component';
+import { DeleteOccurrenceDialogComponent } from '../../../shared/delete-occurrence-dialog.component';
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -27,7 +30,7 @@ L.Icon.Default.mergeOptions({
 
 @Component({
   selector: 'app-detail-occurrence',
-  imports: [RouterModule, CommonModule, FormsModule],
+  imports: [RouterModule, CommonModule, FormsModule, DeleteOccurrenceDialogComponent, CopyProtocolComponent],
   templateUrl: './detail-occurrence.component.html',
   styleUrl: './detail-occurrence.component.css'
 })
@@ -279,6 +282,31 @@ export class DetailOccurrenceComponent implements OnInit, OnDestroy {
       this.toastr.success(this.applyToGroup
         ? `Grupo de ${this.groupSize} ocorrências marcado como Concluída.`
         : 'Ocorrência marcada como Concluída.');
+      this.afterStatusChange();
+    } catch { this.toastr.error('Erro ao atualizar status.'); }
+    finally { this.updating = false; }
+  }
+
+  showDelete = false;
+
+  onDeleted(ids: number[]) {
+    this.showDelete = false;
+    if (!ids.length) return;
+    if (ids.includes(this.occurrence!.id!)) { this.occurrence!.status = 'FINALIZADA'; this.occurrence!.media = []; this.occurrence!.urlMedia = undefined; }
+    this.afterStatusChange();
+  }
+
+  // Só a solicitação que ainda vale ganha o botão; as antigas ficam como registro.
+  get pendingRequest(): OccurrenceHistory | null { return pendingCompletionRequest(this.history); }
+
+  async concludeFromRequest(h: OccurrenceHistory) {
+    if (!this.occurrence?.id) return;
+    this.updating = true;
+    try {
+      await this.occurrenceEditService.updateToConclude(String(this.occurrence.id),
+        `Conclusão confirmada (solicitada por ${h.departmentName || 'departamento'}).`, this.applyToGroup);
+      this.occurrence!.status = 'CONCLUIDA';
+      this.toastr.success('Ocorrência marcada como Concluída.');
       this.afterStatusChange();
     } catch { this.toastr.error('Erro ao atualizar status.'); }
     finally { this.updating = false; }

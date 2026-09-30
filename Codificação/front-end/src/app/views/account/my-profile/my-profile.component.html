@@ -81,7 +81,7 @@
           </div>
           <div class="form-actions">
             <button type="submit" class="btn-primary" [disabled]="profileForm.invalid || savingProfile">
-              {{ savingProfile ? 'Salvando...' : 'Salvar dados' }}
+              @if (savingProfile) {Salvando<span class="loading-dots" aria-hidden="true"></span>} @else { {{ 'Salvar dados' }} }
             </button>
           </div>
         </form>
@@ -156,7 +156,7 @@
 
           <div class="mfa-disable-form" *ngIf="enablingEmail">
             <p>Digite o código que enviamos ao seu e-mail para ativar.</p>
-            <input type="text" [(ngModel)]="emailEnableCode" maxlength="6" inputmode="numeric"
+            <input type="text" [(ngModel)]="emailEnableCode" maxlength="6" inputmode="numeric" appClipboardCode autocomplete="one-time-code"
              (keyup.enter)="savingMfa || confirmEnableEmail()"
                    placeholder="000000" class="form-input qr-code-input" />
             <div class="qr-actions">
@@ -169,7 +169,7 @@
 
           <div class="mfa-disable-form" *ngIf="disablingEmail">
             <p>Digite o código que enviamos ao seu e-mail para desativar.</p>
-            <input type="text" [(ngModel)]="emailDisableCode" maxlength="6" inputmode="numeric"
+            <input type="text" [(ngModel)]="emailDisableCode" maxlength="6" inputmode="numeric" appClipboardCode autocomplete="one-time-code"
              (keyup.enter)="savingMfa || confirmDisableEmail()"
                    placeholder="000000" class="form-input qr-code-input" />
             <div class="qr-actions">
@@ -210,7 +210,7 @@
 
             <div class="mfa-disable-form" *ngIf="enablingSms && smsCodeSent">
               <p>Digite o código que enviamos por SMS para {{ smsPhone }}.</p>
-              <input type="text" [(ngModel)]="smsEnableCode" maxlength="6" inputmode="numeric"
+              <input type="text" [(ngModel)]="smsEnableCode" maxlength="6" inputmode="numeric" appClipboardCode autocomplete="one-time-code"
                      (keyup.enter)="savingMfa || confirmEnableSms()"
                      placeholder="000000" class="form-input qr-code-input" />
               <div class="qr-actions">
@@ -227,7 +227,7 @@
 
             <div class="mfa-disable-form" *ngIf="disablingSms">
               <p>Digite o código que enviamos por SMS para desativar.</p>
-              <input type="text" [(ngModel)]="smsDisableCode" maxlength="6" inputmode="numeric"
+              <input type="text" [(ngModel)]="smsDisableCode" maxlength="6" inputmode="numeric" appClipboardCode autocomplete="one-time-code"
                      (keyup.enter)="savingMfa || confirmDisableSms()"
                      placeholder="000000" class="form-input qr-code-input" />
               <div class="qr-actions">
@@ -257,7 +257,7 @@
 
           <div class="mfa-disable-form" *ngIf="disablingApp">
             <p>Digite o código atual do seu aplicativo autenticador para desativar.</p>
-            <input type="text" [(ngModel)]="appDisableCode" maxlength="6" inputmode="numeric"
+            <input type="text" [(ngModel)]="appDisableCode" maxlength="6" inputmode="numeric" appClipboardCode autocomplete="one-time-code"
              (keyup.enter)="savingMfa || confirmDisableApp()"
                    placeholder="000000" class="form-input qr-code-input" />
             <div class="qr-actions">
@@ -275,19 +275,19 @@
               <summary>Não consigo escanear</summary>
               <code>{{ secret }}</code>
             </details>
-            <input type="text" [(ngModel)]="confirmCode" maxlength="6" inputmode="numeric"
+            <input type="text" [(ngModel)]="confirmCode" maxlength="6" inputmode="numeric" appClipboardCode autocomplete="one-time-code"
              (keyup.enter)="savingMfa || confirmAppSetup()"
                    placeholder="000000" class="form-input qr-code-input" />
             <div class="qr-actions">
               <button class="btn-secondary" (click)="cancelAppSetup()">Cancelar</button>
               <button class="btn-primary" [disabled]="savingMfa" (click)="confirmAppSetup()">
-                {{ savingMfa ? 'Ativando...' : 'Confirmar' }}
+                @if (savingMfa) {Ativando<span class="loading-dots" aria-hidden="true"></span>} @else { {{ 'Confirmar' }} }
               </button>
             </div>
           </div>
         </div>
 
-        <p class="mfa-desc" *ngIf="loadingMfa">Carregando configuração de segurança...</p>
+        <p class="mfa-desc" *ngIf="loadingMfa">Carregando configuração de segurança<span class="loading-dots" aria-hidden="true"></span></p>
       </div>
     </div>
 
@@ -311,22 +311,22 @@
     <div class="modal-card" (click)="$event.stopPropagation()">
       <h2>Excluir conta</h2>
       <p>
-        Sua conta será apagada do sistema e esta ação não pode ser desfeita. Suas
-        ocorrências continuam registradas, mas sem o seu nome.
+        Sua conta será apagada do sistema. Suas ocorrências continuam registradas, mas sem o seu nome.
       </p>
+      <p><strong>Esta ação não pode ser desfeita.</strong></p>
       <p *ngIf="deleteNeedsCode">
         Para confirmar, digite o código
         {{ deleteCodeSource === 'EMAIL' ? 'enviado ao seu e-mail'
          : deleteCodeSource === 'SMS' ? 'enviado por SMS para o seu celular'
          : 'do seu aplicativo autenticador' }}.
       </p>
-      <input *ngIf="deleteNeedsCode" type="text" [(ngModel)]="deleteCode" maxlength="6" inputmode="numeric"
+      <input *ngIf="deleteNeedsCode" type="text" [(ngModel)]="deleteCode" maxlength="6" inputmode="numeric" appClipboardCode autocomplete="one-time-code"
              (keyup.enter)="deletingNow || confirmDeleteAccount()"
              placeholder="000000" class="form-input qr-code-input" />
       <div class="modal-actions">
         <button class="btn-secondary" [disabled]="deletingNow" (click)="cancelDeleteAccount()">Cancelar</button>
         <button class="btn-danger" [disabled]="deletingNow" (click)="confirmDeleteAccount()">
-          {{ deletingNow ? 'Excluindo...' : 'Excluir definitivamente' }}
+          @if (deletingNow) {Excluindo<span class="loading-dots" aria-hidden="true"></span>} @else { {{ 'Excluir definitivamente' }} }
         </button>
       </div>
     </div>

@@ -4,17 +4,20 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { OccurrenceReadService } from '../../../services/occurrence-read.service';
 import { OccurrenceSupportService } from '../../../services/occurrence-support.service';
-import { OccurrenceEditService } from '../../../services/occurrence-edit.service';
 import { Occurrence } from '../../../domain/model/occurrence';
 import { typeLabel, typeColor, statusLabel, statusClass, priorityLabel } from '../../../domain/occurrence-labels';
 import { ToastrService } from 'ngx-toastr';
 import { persistFilters } from '../../../shared/persist-filters';
 import { AuthenticationService } from '../../../services/security/authentication.service';
 import { LocalityPreferenceService, Municipality } from '../../../services/local/locality-preference.service';
+import { DeleteOccurrenceDialogComponent } from '../../../shared/delete-occurrence-dialog.component';
+import { CopyProtocolComponent } from '../../../shared/copy-protocol.component';
+import { ClipboardCodeDirective } from '../../../shared/clipboard-code.directive';
+import { openOccurrence } from '../../../shared/open-occurrence';
 
 @Component({
   selector: 'app-list-occurrence',
-  imports: [RouterModule, CommonModule, FormsModule],
+  imports: [RouterModule, CommonModule, FormsModule, DeleteOccurrenceDialogComponent, CopyProtocolComponent, ClipboardCodeDirective],
   templateUrl: './list-occurrence.component.html',
   styleUrl: './list-occurrence.component.css'
 })
@@ -54,7 +57,6 @@ export class ListOccurrenceComponent implements OnInit {
   constructor(
     private occurrenceReadService: OccurrenceReadService,
     private occurrenceSupportService: OccurrenceSupportService,
-    private occurrenceEditService: OccurrenceEditService,
     private router: Router,
     public  auth: AuthenticationService,
     private locality: LocalityPreferenceService,
@@ -70,28 +72,14 @@ export class ListOccurrenceComponent implements OnInit {
   private readonly defaultGroupBy: '';
 
   pendingDelete: Occurrence | null = null;
-  deleting = false;
 
   askDelete(o: Occurrence) { this.pendingDelete = o; }
 
-  async confirmDelete() {
-    const o = this.pendingDelete;
-    if (!o?.id || this.deleting) return;
-    this.deleting = true;
-    try {
-      await this.occurrenceEditService.delete(o.id);
-      // Continua na lista do Super Administrador, agora como Finalizada (preta).
-      o.status = 'FINALIZADA';
-      o.urlMedia = undefined;
-      this.toastr.success(`Ocorrência ${o.protocolNumber} excluída: agora ela está Finalizada.`);
-      this.pendingDelete = null;
-    } catch (err: any) {
-      this.toastr.error(err?.status === 403 ? 'Apenas o Super Administrador pode excluir ocorrências.'
-                      : err?.status === 404 ? 'Esta ocorrência já tinha sido excluída (finalizada).'
-                      : 'Não foi possível excluir a ocorrência.');
-      if (err?.status === 404) this.pendingDelete = null;
-    } finally {
-      this.deleting = false;
+  // Continuam na lista do Super Administrador, agora como Finalizadas (pretas).
+  onDeleted(ids: number[]) {
+    this.pendingDelete = null;
+    for (const o of [...this.occurrences, ...(this.mine || [])]) {
+      if (o.id != null && ids.includes(o.id)) { o.status = 'FINALIZADA'; o.urlMedia = undefined; }
     }
   }
 
@@ -112,7 +100,8 @@ export class ListOccurrenceComponent implements OnInit {
   }
 
   private async loadMunicipalities() {
-    const chosen = this.locality.choice;
+    // Visitante fica sempre no município que escolheu ao entrar (troca pelo "Alterar município").
+    const chosen = this.auth.anonymousMunicipality() ?? this.locality.choice;
     this.municipalityOptions = LocalityPreferenceService.options(
       this.occurrences, [chosen, await this.locality.ofCurrentUser()]);
     if (chosen) this.filterCity = LocalityPreferenceService.fold(chosen.city);
@@ -140,6 +129,8 @@ export class ListOccurrenceComponent implements OnInit {
   isSupported(id?: number): boolean {
     return id != null && this.supportedIds.has(id);
   }
+
+  openCard(o: Occurrence, e: Event) { openOccurrence(this.router, o.id, e); }
 
   goToLogin() { this.router.navigate(['/account/sign-in']); }
 
@@ -201,12 +192,14 @@ export class ListOccurrenceComponent implements OnInit {
 
   clearFilters() {
     this.search         = '';
-    this.filterCity     = '';
+    if (!this.auth.isAnonymous()) {
+      this.filterCity      = '';
+      this.locality.choice = null;
+    }
     this.filterStatus   = '';
     this.filterType     = '';
     this.filterMine     = false;
     this.groupBy        = this.defaultGroupBy;
-    this.locality.choice = null;
     this.applyFilters();
   }
 

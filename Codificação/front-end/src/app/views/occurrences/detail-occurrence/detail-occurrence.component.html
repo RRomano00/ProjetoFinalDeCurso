@@ -1,5 +1,5 @@
 <div class="page-container">
-  <div *ngIf="loading" class="loading-state">Carregando...</div>
+  <div *ngIf="loading" class="loading-state">Carregando<span class="loading-dots" aria-hidden="true"></span></div>
 
   <div *ngIf="!loading && occurrence">
     <button (click)="back()" class="btn-back">← Ocorrências</button>
@@ -7,7 +7,10 @@
     <div class="detail-card">
       <header class="record-head">
         <div class="record-id">
-          <span class="protocol-plate">{{ occurrence.protocolNumber }}</span>
+          <span class="protocol-wrap">
+            <span class="protocol-plate">{{ occurrence.protocolNumber }}</span>
+            <app-copy-protocol [value]="occurrence.protocolNumber" />
+          </span>
           <span class="record-id-end">
             <span *ngIf="occurrence.anonymous" class="badge-anonymous">🔒 Anônima</span>
             <span class="badge badge-{{ occurrence.status.toLowerCase() }}">
@@ -60,8 +63,7 @@
                     ? 'Você apoia esta ocorrência; clique para remover o apoio'
                     : 'Apoiar esta ocorrência'"
                   (click)="toggleSupport()">
-            <span class="btn-support__state">{{ supporting ? 'Salvando...'
-              : (supportedByMe ? '✓ Você apoia' : '🤝 Apoiar') }}</span>
+            <span class="btn-support__state">@if (supporting) {Salvando<span class="loading-dots" aria-hidden="true"></span>} @else { {{ (supportedByMe ? '✓ Você apoia' : '🤝 Apoiar') }} }</span>
             <span class="btn-support__undo">Não apoiar</span>
           </button>
         </div>
@@ -100,16 +102,30 @@
 
       <div *ngIf="history.length > 0" class="detail-section">
         <h3>Histórico</h3>
-        <div class="history-item" *ngFor="let h of history">
-          <span class="history-status badge badge-{{ h.newStatus.toLowerCase() }}">{{ historyLabel(h) }}</span>
-          <div class="history-info">
-            <span class="history-date">{{ h.changedAt | date:'dd/MM/yyyy HH:mm' }}
-              <ng-container *ngIf="h.changedByName"> — por {{ h.changedByName }}</ng-container>
-            </span>
-            <span class="history-obs" *ngIf="h.observation">
-              {{ h.newStatus === 'INDEFERIDA' ? 'Justificativa' : 'Mensagem da equipe' }}: {{ h.observation }}
-            </span>
-          </div>
+        <div class="history-item" *ngFor="let h of history" [class.history-item--request]="h.kind === 'COMPLETION_REQUEST'">
+          @if (h.kind === 'COMPLETION_REQUEST') {
+            <span class="history-status badge badge-request">Conclusão solicitada</span>
+            <div class="history-info">
+              <span class="history-date">{{ h.changedAt | date:'dd/MM/yyyy HH:mm' }} — por {{ h.departmentName || 'departamento' }}</span>
+              <span class="history-obs" *ngIf="h.observation">Mensagem do departamento: {{ h.observation }}</span>
+              <div class="request-actions">
+                <a *ngIf="h.attachmentUrl" [href]="h.attachmentUrl" target="_blank" rel="noopener" class="btn-secondary btn-sm">Ver anexo</a>
+                <button *ngIf="h === pendingRequest && (occurrence.status === 'PENDENTE' || occurrence.status === 'EM_ANDAMENTO')"
+                        type="button" class="btn-action btn-success btn-sm" [disabled]="updating"
+                        (click)="concludeFromRequest(h)">✓ Marcar como concluída</button>
+              </div>
+            </div>
+          } @else {
+            <span class="history-status badge badge-{{ h.newStatus.toLowerCase() }}">{{ historyLabel(h) }}</span>
+            <div class="history-info">
+              <span class="history-date">{{ h.changedAt | date:'dd/MM/yyyy HH:mm' }}
+                <ng-container *ngIf="h.changedByName"> — por {{ h.changedByName }}</ng-container>
+              </span>
+              <span class="history-obs" *ngIf="h.observation">
+                {{ h.newStatus === 'INDEFERIDA' ? 'Justificativa' : 'Mensagem da equipe' }}: {{ h.observation }}
+              </span>
+            </div>
+          }
         </div>
       </div>
 
@@ -125,8 +141,9 @@
           <span *ngIf="g.id === occurrence.id" class="group-protocol current">
             {{ g.protocolNumber }} (atual)
           </span>
+          <app-copy-protocol [value]="g.protocolNumber" [small]="true" />
           <span class="group-title-txt">{{ g.title || (g.description | slice:0:40) }}</span>
-          <span class="badge badge-{{ g.status.toLowerCase() }}">{{ statusLabel(g.status) }}</span>
+          <span class="badge group-badge badge-{{ g.status.toLowerCase() }}">{{ statusLabel(g.status) }}</span>
         </div>
       </div>
 
@@ -139,7 +156,7 @@
             <textarea id="staffMsg" [(ngModel)]="staffMessage" rows="2" maxlength="300"
                       placeholder="Escreva uma mensagem que será enviada por e-mail ao autor da ocorrência..."></textarea>
             <button (click)="sendReply()" [disabled]="updating || !staffMessage.trim()" class="btn-action">
-              {{ updating ? 'Enviando...' : '✉ Enviar resposta' }}
+              @if (updating) {Enviando<span class="loading-dots" aria-hidden="true"></span>} @else { {{ '✉ Enviar resposta' }} }
             </button>
           </div>
           <div class="preset-chips">
@@ -169,7 +186,7 @@
                       aria-label="Fechar">✕</button>
             </div>
 
-            <p *ngIf="departmentsLoading" class="forward-loading">Carregando departamentos...</p>
+            <p *ngIf="departmentsLoading" class="forward-loading">Carregando departamentos<span class="loading-dots" aria-hidden="true"></span></p>
 
             <p *ngIf="!departmentsLoading && departments.length === 0" class="forward-empty">
               Nenhum departamento cadastrado. Cadastre em Administração &rsaquo; Departamentos.
@@ -196,13 +213,12 @@
               </p>
               <button type="button" class="btn-action btn-forward-confirm"
                       [disabled]="forwardSelectedIds.size === 0 || forwarding" (click)="confirmForward()">
-                {{ forwarding ? 'Encaminhando...'
-                   : (forwardSelectedIds.size > 1
+                @if (forwarding) {Encaminhando<span class="loading-dots" aria-hidden="true"></span>} @else { {{ (forwardSelectedIds.size > 1
                       ? 'Encaminhar aos ' + forwardSelectedIds.size + ' setores e iniciar atendimento'
-                      : 'Encaminhar e iniciar atendimento') }}
+                      : 'Encaminhar e iniciar atendimento') }} }
               </button>
               <p class="forward-effect">
-                A ocorrência passa a <span class="badge badge-em_andamento">Em Andamento</span>
+                O status altera para <span class="badge badge-em_andamento">Em Andamento</span>
                 e o trâmite entra no histórico.
               </p>
             </div>
@@ -212,23 +228,28 @@
         <div class="status-actions">
           <button *ngIf="occurrence.status === 'PENDENTE'"
                   (click)="updateToInProgress()" [disabled]="updating" class="btn-action">
-            {{ updating ? 'Atualizando...' : '▶ Iniciar Atendimento' }}
+            @if (updating) {Atualizando<span class="loading-dots" aria-hidden="true"></span>} @else { {{ '▶ Iniciar Atendimento' }} }
           </button>
           <button *ngIf="occurrence.status === 'EM_ANDAMENTO'"
                   (click)="updateToConclude()" [disabled]="updating" class="btn-action btn-success">
-            {{ updating ? 'Atualizando...' : '✓ Marcar como Concluída' }}
+            @if (updating) {Atualizando<span class="loading-dots" aria-hidden="true"></span>} @else { {{ '✓ Marcar como Concluída' }} }
           </button>
           <span *ngIf="occurrence.status === 'CONCLUIDA'" class="concluded-label">✓ Ocorrência concluída</span>
           <span *ngIf="occurrence.status === 'INDEFERIDA'" class="rejected-label">✕ Ocorrência Indeferida</span>
           <span *ngIf="occurrence.status === 'FINALIZADA'" class="finalized-label">■ Ocorrência finalizada (excluída) — não pode mais ser alterada</span>
 
           <button *ngIf="canReopen" (click)="reopen()" [disabled]="updating" class="btn-action">
-            {{ updating ? 'Reabrindo...' : '↻ Reabrir Ocorrência' }}
+            @if (updating) {Reabrindo<span class="loading-dots" aria-hidden="true"></span>} @else { {{ '↻ Reabrir Ocorrência' }} }
           </button>
 
           <button *ngIf="(occurrence.status === 'PENDENTE' || occurrence.status === 'EM_ANDAMENTO') && !showRejectForm"
                   (click)="showRejectForm = true" [disabled]="updating" class="btn-action btn-danger btn-end">
             ✕ Indeferir Ocorrência
+          </button>
+
+          <button *ngIf="auth.isSuperAdmin() && occurrence.status !== 'FINALIZADA'" type="button"
+                  (click)="showDelete = true" [disabled]="updating" class="btn-action btn-danger">
+            🗑 Excluir Ocorrência
           </button>
         </div>
 
@@ -239,7 +260,7 @@
                       placeholder="Descreva o motivo do indeferimento..."></textarea>
             <div class="reject-form-actions">
               <button (click)="updateToRejected()" [disabled]="updating" class="btn-action btn-danger">
-                {{ updating ? 'Salvando...' : 'Confirmar Indeferimento' }}
+                @if (updating) {Salvando<span class="loading-dots" aria-hidden="true"></span>} @else { {{ 'Confirmar Indeferimento' }} }
               </button>
               <button (click)="showRejectForm = false; rejectObservation = ''" class="btn-secondary">
                 Cancelar
@@ -250,6 +271,10 @@
       </div>
     </div>
   </div>
+
+  @if (showDelete && occurrence) {
+    <app-delete-occurrence-dialog [occurrence]="occurrence" (closed)="onDeleted($event)" />
+  }
 
   <div class="login-prompt-overlay" *ngIf="showLoginPrompt" (click)="showLoginPrompt = false">
     <div class="login-prompt-card" (click)="$event.stopPropagation()">

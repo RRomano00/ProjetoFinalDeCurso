@@ -80,6 +80,15 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public List<String> findAdministratorEmails(String city, String state) {
+        return userDao.readAllUsers().stream()
+            .filter(u -> u.getRole() == UserModel.UserRole.ADMINISTRATOR && u.isActive())
+            .filter(u -> br.com.faitec.falacidade.domain.Municipality.same(u.getCity(), u.getState(), city, state))
+            .map(UserModel::getEmail)
+            .toList();
+    }
+
+    @Override
     public boolean hasStaffInCity(String city, String state) {
         return city != null && !city.isBlank() && userDao.existsStaffInCity(city, state);
     }

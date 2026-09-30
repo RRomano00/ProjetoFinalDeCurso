@@ -140,11 +140,14 @@ public class OccurrencePostgresDao implements OccurrenceDao {
     public List<String> readMediaPublicIds(int id) {
         String sql = "SELECT cloudinary_public_id FROM occurrence WHERE id=? AND cloudinary_public_id IS NOT NULL "
                    + "UNION SELECT cloudinary_public_id FROM occurrence_media "
-                   + "WHERE occurrence_id=? AND cloudinary_public_id IS NOT NULL";
+                   + "WHERE occurrence_id=? AND cloudinary_public_id IS NOT NULL "
+                   + "UNION SELECT attachment_public_id FROM occurrence_history "
+                   + "WHERE occurrence_id=? AND attachment_public_id IS NOT NULL";
         List<String> ids = new ArrayList<>();
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, id);
             ps.setInt(2, id);
+            ps.setInt(3, id);
             ResultSet rs = ps.executeQuery();
             while (rs.next()) ids.add(rs.getString(1));
         } catch (SQLException e) { throw new RuntimeException("Erro ao listar fotos da ocorrência", e); }
@@ -155,11 +158,15 @@ public class OccurrencePostgresDao implements OccurrenceDao {
     public void clearMedia(int id) {
         try (PreparedStatement fotos = connection.prepareStatement("DELETE FROM occurrence_media WHERE occurrence_id=?");
              PreparedStatement principal = connection.prepareStatement(
-                 "UPDATE occurrence SET url_media=NULL, cloudinary_public_id=NULL, updated_at=NOW() WHERE id=?")) {
+                 "UPDATE occurrence SET url_media=NULL, cloudinary_public_id=NULL, updated_at=NOW() WHERE id=?");
+             PreparedStatement anexos = connection.prepareStatement(
+                 "UPDATE occurrence_history SET attachment_url=NULL, attachment_public_id=NULL WHERE occurrence_id=?")) {
             fotos.setInt(1, id);
             fotos.execute();
             principal.setInt(1, id);
             principal.execute();
+            anexos.setInt(1, id);
+            anexos.execute();
         } catch (SQLException e) { throw new RuntimeException("Erro ao remover as fotos da ocorrência", e); }
     }
 
@@ -194,8 +201,10 @@ public class OccurrencePostgresDao implements OccurrenceDao {
     @Override
     public List<OccurrenceHistoryDto> readHistory(int occurrenceId) {
         List<OccurrenceHistoryDto> list = new ArrayList<>();
-        String sql = "SELECT h.old_status, h.new_status, h.observation, h.changed_at, u.fullname " +
+        String sql = "SELECT h.old_status, h.new_status, h.observation, h.changed_at, h.kind, " +
+                     "h.attachment_url, h.department_id, u.fullname, d.name AS department_name " +
                      "FROM occurrence_history h LEFT JOIN \"user\" u ON h.changed_by=u.id " +
+                     "LEFT JOIN department d ON h.department_id=d.id " +
                      "WHERE h.occurrence_id=? ORDER BY h.changed_at DESC";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, occurrenceId);
@@ -206,12 +215,34 @@ public class OccurrencePostgresDao implements OccurrenceDao {
                 h.setNewStatus(rs.getString("new_status"));
                 h.setObservation(rs.getString("observation"));
                 h.setChangedByName(rs.getString("fullname"));
+                h.setKind(rs.getString("kind"));
+                h.setAttachmentUrl(rs.getString("attachment_url"));
+                h.setDepartmentName(rs.getString("department_name"));
+                int dep = rs.getInt("department_id");
+                h.setDepartmentId(rs.wasNull() ? null : dep);
                 Timestamp t = rs.getTimestamp("changed_at");
                 if (t != null) h.setChangedAt(t.toLocalDateTime());
                 list.add(h);
             }
         } catch (SQLException e) { throw new RuntimeException("Erro ao carregar histórico da ocorrência", e); }
         return list;
+    }
+
+    @Override
+    public void insertCompletionRequest(int occurrenceId, int departmentId, String message, String attachmentUrl,
+                                        String attachmentPublicId) {
+        // O status atual é repetido em old/new: a solicitação não muda o status.
+        String sql = "INSERT INTO occurrence_history(occurrence_id,changed_by,old_status,new_status,observation," +
+                     "department_id,kind,attachment_url,attachment_public_id) " +
+                     "SELECT o.id,NULL,o.status,o.status,?,?,'COMPLETION_REQUEST',?,? FROM occurrence o WHERE o.id=?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, message);
+            ps.setInt(2, departmentId);
+            ps.setString(3, attachmentUrl);
+            ps.setString(4, attachmentPublicId);
+            ps.setInt(5, occurrenceId);
+            ps.execute();
+        } catch (SQLException e) { throw new RuntimeException("Erro ao registrar a solicitação de conclusão", e); }
     }
 
     @Override public List<GetOccurrenceDto> readall() {

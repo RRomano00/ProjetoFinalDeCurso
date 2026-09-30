@@ -96,7 +96,7 @@
           <span class="oldest-body">
             <span class="oldest-say">A que espera há mais tempo</span>
             <span class="oldest-title">{{ oldestOpen.title || oldestOpen.neighborhood }}</span>
-            <span class="oldest-proto">{{ oldestOpen.protocolNumber }}</span>
+            <span class="oldest-proto">{{ oldestOpen.protocolNumber }} <app-copy-protocol [value]="oldestOpen.protocolNumber" [small]="true" /></span>
           </span>
         </a>
         </p>
@@ -154,7 +154,7 @@
           <li *ngFor="let s of mostSupported">
             <a [routerLink]="['/occurrence/detail', s.id]">
               <span class="support-title">{{ s.title }}</span>
-              <span class="support-proto">{{ s.protocol }}</span>
+              <span class="support-proto">{{ s.protocol }} <app-copy-protocol *ngIf="s.protocol !== '—'" [value]="s.protocol" [small]="true" /></span>
             </a>
             <span class="support-count">{{ s.supports }}</span>
           </li>
@@ -171,6 +171,6 @@
 <ng-template #loadingTpl>
   <div class="loading-state">
     <div class="spinner"></div>
-    <p>Carregando estatísticas...</p>
+    <p>Carregando estatísticas<span class="loading-dots" aria-hidden="true"></span></p>
   </div>
 </ng-template>

@@ -28,6 +28,9 @@ import java.util.UUID;
 @RequestMapping("/api/occurrence")
 public class OccurrenceRestController {
 
+    @org.springframework.beans.factory.annotation.Value("${app.frontend-url:http://localhost:4173}")
+    private String frontendUrl;
+
     private final OccurrenceService  occurrenceService;
     private final MediaUploadService mediaUploadService;
     private final UserService        userService;
@@ -265,14 +268,21 @@ public class OccurrenceRestController {
 
     @PostMapping("/{id}/forward")
     public ResponseEntity<?> forward(@PathVariable int id,
-            @Valid @RequestBody ForwardOccurrenceDto dto, Authentication auth) {
+            @Valid @RequestBody ForwardOccurrenceDto dto, HttpServletRequest request, Authentication auth) {
         ResponseEntity<Map<String, String>> denied = outOfJurisdiction(auth, id);
         if (denied != null) return denied;
         ResponseEntity<Map<String, String>> finalized = finalizedConflict(id);
         if (finalized != null) return finalized;
+        GetOccurrenceDto occurrence = occurrenceService.findById(id);
+        // Contatos no e-mail: quem encaminhou primeiro, depois os administradores do município.
+        java.util.LinkedHashSet<String> contacts = new java.util.LinkedHashSet<>();
+        if (auth != null) contacts.add(auth.getName());
+        if (occurrence != null)
+            contacts.addAll(userService.findAdministratorEmails(occurrence.getCity(), occurrence.getState()));
         try {
             var resultado = occurrenceService.forwardToDepartment(
-                    id, dto.getDepartmentIds(), getUserId(auth));
+                    id, dto.getDepartmentIds(), getUserId(auth), appUrl(request, frontendUrl),
+                    new java.util.ArrayList<>(contacts));
             if (resultado.nenhumEnviado()) {
                 return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(Map.of(
                     "error", "Não foi possível enviar o e-mail aos departamentos. "
@@ -287,6 +297,13 @@ public class OccurrenceRestController {
         }
     }
 
+    /** Endereço do app para os links de e-mail: o mesmo de onde a equipe está (PC, túnel do celular). */
+    static String appUrl(HttpServletRequest request, String fallback) {
+        String origin = request.getHeader("Origin");
+        String base = origin != null && origin.startsWith("http") ? origin : fallback;
+        return base != null && base.endsWith("/") ? base.substring(0, base.length() - 1) : base;
+    }
+
     @GetMapping("/{id}/group")
     public ResponseEntity<List<GetOccurrenceDto>> getGroup(@PathVariable int id, Authentication auth) {
         List<GetOccurrenceDto> group = visibleTo(occurrenceService.getGroup(id), auth);
@@ -297,8 +314,12 @@ public class OccurrenceRestController {
     @GetMapping("/{id}/history")
     public ResponseEntity<List<OccurrenceHistoryDto>> getHistory(@PathVariable int id, Authentication auth) {
         if (hiddenFrom(occurrenceService.findById(id), auth)) return ResponseEntity.notFound().build();
-        List<OccurrenceHistoryDto> history = occurrenceService.getHistory(id);
-        if (!isPrivileged(auth)) history.forEach(h -> h.setChangedByName(null));
+        List<OccurrenceHistoryDto> history = new java.util.ArrayList<>(occurrenceService.getHistory(id));
+        if (!isPrivileged(auth)) {
+            // Solicitação de conclusão do departamento é assunto interno da equipe.
+            history.removeIf(OccurrenceHistoryDto::isCompletionRequest);
+            history.forEach(h -> h.setChangedByName(null));
+        }
         return ResponseEntity.ok(history);
     }
 

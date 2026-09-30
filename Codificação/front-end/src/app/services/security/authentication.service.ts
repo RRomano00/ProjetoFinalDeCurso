@@ -2,6 +2,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { Municipality } from '../local/locality-preference.service';
 
 @Injectable({ providedIn: 'root' })
 export class AuthenticationService {
@@ -86,9 +87,22 @@ export class AuthenticationService {
 
   canSupport(): boolean { return this.isCitizen() || this.isVisitor(); }
 
-  enterAnonymous() {
+  // O visitante só entra com município definido; sai no logout, junto com a sessão.
+  enterAnonymous(municipality: Municipality) {
     this.endSession();
     localStorage.setItem('anonymous', 'true');
+    this.setAnonymousMunicipality(municipality);
+  }
+
+  setAnonymousMunicipality(municipality: Municipality) {
+    localStorage.setItem('anonymous.municipality', JSON.stringify(municipality));
+  }
+
+  anonymousMunicipality(): Municipality | null {
+    try {
+      const m = JSON.parse(localStorage.getItem('anonymous.municipality') || 'null');
+      return m?.city ? { city: m.city, state: m.state || '' } : null;
+    } catch { return null; }
   }
 
   isAnonymous(): boolean {

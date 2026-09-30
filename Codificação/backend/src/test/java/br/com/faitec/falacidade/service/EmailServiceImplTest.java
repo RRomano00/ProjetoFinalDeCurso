@@ -153,4 +153,62 @@ class EmailServiceImplTest {
             assertThat(mime.getSubject()).doesNotContain("FC-26-CUPHM").contains("Em Andamento");
         }
     }
+
+    // Junta o texto de todas as partes (text/plain e text/html) já decodificado.
+    private static String textOf(Object content) throws Exception {
+        if (content instanceof String s) return s;
+        if (content instanceof jakarta.mail.Multipart mp) {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < mp.getCount(); i++) sb.append(textOf(mp.getBodyPart(i).getContent()));
+            return sb.toString();
+        }
+        return "";
+    }
+
+    @Nested
+    @DisplayName("sendOccurrenceForwardEmail()")
+    class SendForward {
+
+        @Test
+        @DisplayName("traz o botão de acesso e 'Qualquer dúvida entre em contato' com os e-mails")
+        void hasAccessButtonAndContacts() throws Exception {
+            MimeMessage mime = newMime();
+            when(mailSender.createMimeMessage()).thenReturn(mime);
+            var o = new br.com.faitec.falacidade.domain.dto.occurrence.GetOccurrenceDto();
+            o.setProtocolNumber("FC-26-ABCDE");
+            o.setDescription("Buraco");
+
+            sut.sendOccurrenceForwardEmail("obras@pref.br", "Obras", o,
+                "https://app.exemplo/departamento/TOKEN123",
+                java.util.List.of("carlos@pref.br", "admin@pref.br"));
+
+            mime.saveChanges();
+            String body = textOf(mime.getContent());
+            assertThat(body).contains("https://app.exemplo/departamento/TOKEN123")
+                            .contains("Ver / responder ocorrência")
+                            .contains("Qualquer dúvida entre em contato:")
+                            .contains("carlos@pref.br").contains("admin@pref.br");
+        }
+    }
+
+    @Nested
+    @DisplayName("sendCompletionRequestEmail()")
+    class SendCompletionRequest {
+
+        @Test
+        @DisplayName("avisa quem encaminhou, com o link da ocorrência")
+        void notifiesForwarder() throws Exception {
+            MimeMessage mime = newMime();
+            when(mailSender.createMimeMessage()).thenReturn(mime);
+
+            sut.sendCompletionRequestEmail("carlos@pref.br", "FC-26-ABCDE", "Obras",
+                                           "https://app.exemplo/occurrence/detail/10");
+
+            mime.saveChanges();
+            assertThat(mime.getAllRecipients()[0].toString()).isEqualTo("carlos@pref.br");
+            assertThat(mime.getSubject()).contains("FC-26-ABCDE").contains("Conclusão solicitada");
+            assertThat(textOf(mime.getContent())).contains("https://app.exemplo/occurrence/detail/10")
+                                                 .contains("O departamento <strong>Obras</strong>");
+        }
+    }
 }

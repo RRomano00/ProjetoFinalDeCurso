@@ -16,8 +16,9 @@
       <option *ngFor="let r of roleOptions" [value]="r">{{ roleLabel(r) }}</option>
     </select>
     <select [(ngModel)]="filterCity" class="filter-select" aria-label="Município">
-      <option value="">Todos os municípios</option>
-      <option *ngFor="let c of cityOptions" [value]="c">{{ c }}</option>
+      <!-- Um município só: sem "Todos"; a opção segue o filtro atual ("" ou ele), que dá o mesmo resultado. -->
+      <option *ngIf="cityOptions.length !== 1" value="">Todos os municípios</option>
+      <option *ngFor="let c of cityOptions" [value]="cityOptions.length === 1 ? filterCity : c">{{ c }}</option>
     </select>
     <select [(ngModel)]="filterActive" class="filter-select" aria-label="Situação da conta">
       <option value="">Ativas e inativas</option>
@@ -27,7 +28,7 @@
     <button type="button" class="btn-toggle" (click)="clearFilters()" [disabled]="!hasFilters">Limpar</button>
   </div>
 
-  <div *ngIf="loading" class="loading-state">Carregando...</div>
+  <div *ngIf="loading" class="loading-state">Carregando<span class="loading-dots" aria-hidden="true"></span></div>
 
   <div class="table-card" *ngIf="!loading">
     <table class="user-table">
@@ -57,7 +58,7 @@
               </select>
               <button *ngIf="roleChanged(u)" type="button" class="btn-toggle"
                       [disabled]="savingRoleId === u.id" (click)="saveRole(u)">
-                {{ savingRoleId === u.id ? '...' : 'Salvar' }}
+                @if (savingRoleId === u.id) {<span class="loading-dots" aria-hidden="true"></span>} @else { {{ 'Salvar' }} }
               </button>
             </ng-container>
           </td>
@@ -68,11 +69,11 @@
           <td class="cell-actions">
             <button *ngIf="u.id !== myId" class="btn-toggle" [class.danger]="u.active"
                     [disabled]="togglingId === u.id" (click)="toggleActive(u)">
-              {{ togglingId === u.id ? '...' : (u.active ? 'Desativar' : 'Ativar') }}
+              @if (togglingId === u.id) {<span class="loading-dots" aria-hidden="true"></span>} @else { {{ (u.active ? 'Desativar' : 'Ativar') }} }
             </button>
             <button *ngIf="u.id !== myId && !u.active" class="btn-toggle danger"
                     [disabled]="deletingId === u.id" (click)="askRemove(u)">
-              {{ deletingId === u.id ? '...' : 'Excluir' }}
+              @if (deletingId === u.id) {<span class="loading-dots" aria-hidden="true"></span>} @else { {{ 'Excluir' }} }
             </button>
             <span *ngIf="u.id === myId" class="self-label">você</span>
           </td>
@@ -90,13 +91,14 @@
       <h2>Excluir conta</h2>
       <p>
         A conta de <strong>{{ pendingDelete.fullname }}</strong> ({{ pendingDelete.email }})
-        será apagada do sistema. Esta ação não pode ser desfeita.
+        será apagada do sistema.
       </p>
+      <p><strong>Esta ação não pode ser desfeita.</strong></p>
       <div class="modal-actions">
         <button type="button" class="btn-toggle" (click)="pendingDelete = null"
                 [disabled]="deletingId">Cancelar</button>
         <button type="button" class="btn-danger" (click)="confirmRemove()" [disabled]="deletingId">
-          {{ deletingId ? 'Excluindo...' : 'Excluir conta' }}
+          @if (deletingId) {Excluindo<span class="loading-dots" aria-hidden="true"></span>} @else { {{ 'Excluir conta' }} }
         </button>
       </div>
     </div>

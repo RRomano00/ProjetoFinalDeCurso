@@ -29,13 +29,14 @@ class OccurrenceServiceImplTest {
     @Mock AnonymousTrackingCodeService trackingCodeService;
     @Mock br.com.faitec.falacidade.port.service.email.EmailService emailService;
     @Mock br.com.faitec.falacidade.port.service.department.DepartmentService departmentService;
+    @Mock br.com.faitec.falacidade.implementation.service.department.DepartmentAccessTokenService accessTokens;
 
     OccurrenceServiceImpl sut;
 
     @BeforeEach
     void setUp() {
         sut = new OccurrenceServiceImpl(occurrenceDao, supportDao, trackingCodeService, emailService,
-                                        departmentService);
+                                        departmentService, accessTokens);
     }
 
     private Occurrence validAnonymous() {

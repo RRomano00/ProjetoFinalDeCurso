@@ -9,6 +9,7 @@ import br.com.faitec.falacidade.implementation.service.tracking.AnonymousTrackin
 import br.com.faitec.falacidade.port.dao.occurrence.OccurrenceDao;
 import br.com.faitec.falacidade.port.dao.occurrence.OccurrenceSupportDao;
 import br.com.faitec.falacidade.port.service.email.EmailService;
+import br.com.faitec.falacidade.implementation.service.department.DepartmentAccessTokenService;
 import br.com.faitec.falacidade.port.service.department.DepartmentService;
 import br.com.faitec.falacidade.port.service.occurrence.OccurrenceService;
 import org.springframework.stereotype.Service;
@@ -27,17 +28,20 @@ public class OccurrenceServiceImpl implements OccurrenceService {
     private final AnonymousTrackingCodeService  trackingCodeService;
     private final EmailService                  emailService;
     private final DepartmentService             departmentService;
+    private final DepartmentAccessTokenService  accessTokens;
 
     public OccurrenceServiceImpl(OccurrenceDao occurrenceDao,
                                 OccurrenceSupportDao supportDao,
                                 AnonymousTrackingCodeService trackingCodeService,
                                 EmailService emailService,
-                                DepartmentService departmentService) {
+                                DepartmentService departmentService,
+                                DepartmentAccessTokenService accessTokens) {
         this.occurrenceDao      = occurrenceDao;
         this.supportDao         = supportDao;
         this.trackingCodeService = trackingCodeService;
         this.emailService       = emailService;
         this.departmentService  = departmentService;
+        this.accessTokens       = accessTokens;
     }
 
     private static final int MAX_IDENTIFIED_PER_DAY = 5;
@@ -215,9 +219,11 @@ public class OccurrenceServiceImpl implements OccurrenceService {
 
     @Override
     public ForwardResultDto forwardToDepartment(int occurrenceId, List<Integer> departmentIds,
-                                                int changedBy) {
+                                                int changedBy, String appUrl, List<String> contactEmails) {
         GetOccurrenceDto occurrence = findById(occurrenceId);
         if (occurrence == null) throw new IllegalArgumentException("Ocorrência não encontrada");
+        // O link vale para o grupo inteiro: o departamento vê também as agrupadas.
+        int groupRoot = occurrence.getGroupId() != null ? occurrence.getGroupId() : occurrence.getId();
 
         List<Department> destinos = new ArrayList<>();
         for (Integer id : new LinkedHashSet<>(departmentIds)) {
@@ -230,8 +236,9 @@ public class OccurrenceServiceImpl implements OccurrenceService {
         List<String> falharam = new ArrayList<>();
         for (Department department : destinos) {
             try {
+                String link = appUrl + "/departamento/" + accessTokens.issue(groupRoot, occurrenceId, department.getId(), changedBy, appUrl);
                 emailService.sendOccurrenceForwardEmail(
-                        department.getEmail(), department.getName(), occurrence);
+                        department.getEmail(), department.getName(), occurrence, link, contactEmails);
                 occurrenceDao.updateStatus(occurrenceId,
                         Occurrence.OccurrenceStatus.EM_ANDAMENTO.name(), changedBy,
                         FORWARD_NOTE + " — " + department.getName() + ".", department.getId());
@@ -246,6 +253,13 @@ public class OccurrenceServiceImpl implements OccurrenceService {
                          FORWARD_NOTE + " — " + String.join(", ", enviados) + ".");
         }
         return new ForwardResultDto(enviados, falharam);
+    }
+
+    @Override
+    public void requestCompletion(int occurrenceId, int departmentId, String message, String attachmentUrl,
+                                  String attachmentPublicId) {
+        occurrenceDao.insertCompletionRequest(occurrenceId, departmentId,
+            message == null || message.isBlank() ? null : message.trim(), attachmentUrl, attachmentPublicId);
     }
 
     private void notifyAuthor(GetOccurrenceDto o, String newStatus, String message) {

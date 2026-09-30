@@ -238,7 +238,9 @@
   text-decoration: none;
   color: inherit;
   flex: 1;
+  cursor: pointer;
 }
+.card-body:focus-visible { outline: var(--focus); outline-offset: 4px; border-radius: 4px; }
 .card-body .card-description { flex-grow: 1; }
 
 .card-ref {
@@ -333,17 +335,3 @@
   cursor: pointer;
 }
 .btn-delete:hover { border-color: var(--st-refused); }
-
-.btn-danger {
-  padding: 0.5rem 1rem;
-  border: 1px solid var(--st-refused);
-  border-radius: var(--r-ctl);
-  background: var(--st-refused);
-  color: #fff;
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-.btn-danger:hover:not(:disabled) { filter: brightness(0.92); }
-.btn-danger:disabled { opacity: 0.6; cursor: not-allowed; }
-
