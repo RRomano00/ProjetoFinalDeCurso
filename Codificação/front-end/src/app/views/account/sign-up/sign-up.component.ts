@@ -1,3 +1,4 @@
+import { MaskDirective } from '../../../shared/mask.directive';
 import { Component, ElementRef } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -7,10 +8,11 @@ import { LocalityService, CityOptions } from '../../../services/local/locality.s
 import { ToastrService } from 'ngx-toastr';
 import { PasswordRevealDirective } from '../../../shared/password-reveal.directive';
 import { brBirthDateValidator, brDateToIso, maskBrDate } from '../../../shared/br-date';
+import { mobileValidator, personNameValidator } from '../../../shared/br-mask';
 
 @Component({
   selector: 'app-sign-up',
-  imports: [RouterModule, CommonModule, FormsModule, ReactiveFormsModule, PasswordRevealDirective],
+  imports: [RouterModule, CommonModule, FormsModule, ReactiveFormsModule, PasswordRevealDirective, MaskDirective],
   templateUrl: './sign-up.component.html',
   styleUrls: ['../auth-shell.css', './sign-up.component.css']
 })
@@ -58,10 +60,10 @@ export class SignUpComponent {
     private host: ElementRef<HTMLElement>
   ) {
     this.form = this.fb.group({
-      fullname:       ['', [Validators.required, Validators.minLength(2)]],
+      fullname:       ['', [Validators.required, Validators.minLength(2), personNameValidator]],
       email:          ['', [Validators.required, Validators.email]],
       dateOfBirth:    ['', [Validators.required, brBirthDateValidator]],
-      phoneNumber:    [''],
+      phoneNumber:    ['', [mobileValidator]],
       state:          ['', [Validators.required]],
       city:           ['', [Validators.required]],
       password:       ['', [Validators.required, Validators.minLength(8),

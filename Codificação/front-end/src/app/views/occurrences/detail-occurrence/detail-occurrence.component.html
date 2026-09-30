@@ -256,7 +256,7 @@
         <ng-container *ngIf="occurrence.status === 'PENDENTE' || occurrence.status === 'EM_ANDAMENTO'">
           <div *ngIf="showRejectForm" class="reject-form">
             <label for="rejectObs">Justificativa (obrigatória)</label>
-            <textarea id="rejectObs" [(ngModel)]="rejectObservation" rows="3"
+            <textarea id="rejectObs" [(ngModel)]="rejectObservation" maxlength="300" rows="3"
                       placeholder="Descreva o motivo do indeferimento..."></textarea>
             <div class="reject-form-actions">
               <button (click)="updateToRejected()" [disabled]="updating" class="btn-action btn-danger">

@@ -230,7 +230,7 @@ ALTER TABLE occurrence ADD COLUMN IF NOT EXISTS anonymous_tracking_code_hash VAR
 ALTER TABLE occurrence ADD COLUMN IF NOT EXISTS updated_at                   TIMESTAMP NOT NULL DEFAULT NOW();
 ALTER TABLE occurrence ADD COLUMN IF NOT EXISTS ip_address                   VARCHAR(64);
 ALTER TABLE occurrence ADD COLUMN IF NOT EXISTS address_reference            VARCHAR(300);
--- RF12: encadeamento de duplicatas — aponta para a ocorrência "raiz" do grupo (50 m + mesma categoria)
+-- RF12: encadeamento de duplicatas — aponta para a ocorrência "raiz" do grupo (70 m + mesma categoria)
 ALTER TABLE occurrence ADD COLUMN IF NOT EXISTS group_id                     INTEGER REFERENCES occurrence(id) ON DELETE SET NULL;
 -- Fase 3: vínculos com as entidades de domínio do modelo conceitual
 -- O município da ocorrência é o do ENDEREÇO dela, não o do cadastro do autor:
@@ -273,6 +273,13 @@ CREATE TABLE IF NOT EXISTS occurrence_history (
 -- o trâmite fique rastreável mesmo que o departamento seja renomeado depois.
 ALTER TABLE occurrence_history ADD COLUMN IF NOT EXISTS department_id
     INTEGER REFERENCES department(id) ON DELETE SET NULL;
+
+-- Solicitação de conclusão feita pelo departamento pelo link do encaminhamento: entra no
+-- histórico sem mudar o status e só a equipe a vê (com a foto do serviço feito).
+ALTER TABLE occurrence_history ADD COLUMN IF NOT EXISTS kind VARCHAR(30) NOT NULL DEFAULT 'STATUS';
+ALTER TABLE occurrence_history ADD COLUMN IF NOT EXISTS attachment_url VARCHAR(500);
+-- Para a exclusão pelo Super Administrador apagar também essa foto do Cloudinary.
+ALTER TABLE occurrence_history ADD COLUMN IF NOT EXISTS attachment_public_id VARCHAR(255);
 
 -- Mesma renomeação de ATENDIDA para CONCLUIDA na linha do tempo já gravada.
 UPDATE occurrence_history SET old_status = 'CONCLUIDA' WHERE old_status = 'ATENDIDA';

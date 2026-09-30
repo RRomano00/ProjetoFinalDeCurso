@@ -230,7 +230,7 @@ ALTER TABLE occurrence ADD COLUMN IF NOT EXISTS anonymous_tracking_code_hash VAR
 ALTER TABLE occurrence ADD COLUMN IF NOT EXISTS updated_at                   TIMESTAMP NOT NULL DEFAULT NOW();
 ALTER TABLE occurrence ADD COLUMN IF NOT EXISTS ip_address                   VARCHAR(64);
 ALTER TABLE occurrence ADD COLUMN IF NOT EXISTS address_reference            VARCHAR(300);
--- RF12: encadeamento de duplicatas — aponta para a ocorrência "raiz" do grupo (50 m + mesma categoria)
+-- RF12: encadeamento de duplicatas — aponta para a ocorrência "raiz" do grupo (70 m + mesma categoria)
 ALTER TABLE occurrence ADD COLUMN IF NOT EXISTS group_id                     INTEGER REFERENCES occurrence(id) ON DELETE SET NULL;
 -- Fase 3: vínculos com as entidades de domínio do modelo conceitual
 -- O município da ocorrência é o do ENDEREÇO dela, não o do cadastro do autor:

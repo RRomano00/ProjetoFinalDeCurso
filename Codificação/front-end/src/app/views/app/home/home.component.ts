@@ -45,7 +45,7 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   private map!: L.Map;
   private markers: L.Marker[] = [];
   private markerById = new Map<number, L.Marker>();
-  // Agrupadas (mesmo problema a até 50 m) viram um ponto só, que abre em leque ao clicar.
+  // Agrupadas (mesmo problema a até 70 m) viram um ponto só, que abre em leque ao clicar.
   private groups = new Map<number, MapGroup>();
   private supportInfo = new Map<number, SupportInfo>();
   private supportingId: number | null = null;
@@ -419,7 +419,7 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private static readonly SPREAD_MS = 280;
 
-  // Os pontos ficam a até 50 m um do outro, sobrepostos no zoom da cidade: abrem num círculo em volta do centro.
+  // Os pontos ficam a até 70 m um do outro, sobrepostos no zoom da cidade: abrem num círculo em volta do centro.
   private spread(g: MapGroup, animate: boolean) {
     const hub = g.hub!.getLatLng();
     const c = this.map.latLngToLayerPoint(hub);

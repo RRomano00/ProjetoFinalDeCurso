@@ -27,9 +27,13 @@
                   <circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/>
                 </svg>
               </span>
-              <input type="text" id="fullname" formControlName="fullname"
+              <input type="text" id="fullname" formControlName="fullname" maxlength="150"
                 placeholder="Seu nome completo" autocomplete="name">
             </div>
+            <span class="field-error"
+              *ngIf="form.controls['fullname'].touched && form.controls['fullname'].hasError('personName')">
+              Use só letras no nome.
+            </span>
             <span class="field-error"
               *ngIf="form.controls['fullname'].touched && form.controls['fullname'].hasError('required')">
               Nome é obrigatório.
@@ -52,7 +56,7 @@
                   <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
                 </svg>
               </span>
-              <input type="email" id="email" formControlName="email"
+              <input type="email" id="email" formControlName="email" maxlength="150"
                 placeholder="seu@email.com" autocomplete="email">
             </div>
             <span class="field-error"
@@ -105,9 +109,12 @@
                            19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92Z"/>
                 </svg>
               </span>
-              <input type="tel" id="phoneNumber" formControlName="phoneNumber"
+              <input type="tel" id="phoneNumber" formControlName="phoneNumber" appMask="phone"
                 placeholder="(35) 99999-9999" autocomplete="tel">
             </div>
+            <span class="field-error" *ngIf="form.controls['phoneNumber'].touched && form.controls['phoneNumber'].hasError('mobile')">
+              Informe um celular completo com DDD: (35) 99999-9999.
+            </span>
             <span class="field-error" *ngIf="form.controls['phoneNumber'].hasError('taken')">
               Este celular já está cadastrado em outra conta.
             </span>
@@ -120,8 +127,8 @@
             <div class="field-group field-uf">
               <label for="state">UF</label>
               <div class="input-wrapper">
-                <input type="text" id="state" formControlName="state" list="uf-options"
-                  placeholder="MG" maxlength="2" autocomplete="address-level1"
+                <input type="text" id="state" formControlName="state" appMask="uf" list="uf-options"
+                  placeholder="MG" autocomplete="address-level1"
                   autocapitalize="characters" spellcheck="false">
               </div>
               <datalist id="uf-options">
@@ -142,7 +149,7 @@
                     <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
                   </svg>
                 </span>
-                <input type="text" id="city" formControlName="city" list="city-options"
+                <input type="text" id="city" formControlName="city" maxlength="100" list="city-options"
                   [readOnly]="!cityOptions.ready" autocomplete="address-level2" spellcheck="false"
                   [placeholder]="cityOptions.ready ? 'Comece a digitar o município' : 'Informe a UF primeiro'">
               </div>

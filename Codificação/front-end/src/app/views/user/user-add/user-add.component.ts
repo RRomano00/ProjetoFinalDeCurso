@@ -1,3 +1,5 @@
+import { MaskDirective } from '../../../shared/mask.directive';
+import { personNameValidator } from '../../../shared/br-mask';
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -11,7 +13,7 @@ import { Router, RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-user-add',
-  imports: [RouterModule, CommonModule, FormsModule, ReactiveFormsModule, PasswordRevealDirective],
+  imports: [RouterModule, CommonModule, FormsModule, ReactiveFormsModule, PasswordRevealDirective, MaskDirective],
   templateUrl: './user-add.component.html',
   styleUrl: './user-add.component.css'
 })
@@ -40,7 +42,7 @@ export class UserAddComponent implements OnInit {
     private userReadService: UserReadService
   ) {
     this.form = this.fb.group({
-      fullname:       ['', [Validators.required, Validators.minLength(2)]],
+      fullname:       ['', [Validators.required, Validators.minLength(2), personNameValidator]],
       email:          ['', [Validators.required, Validators.email]],
       state:          ['', [Validators.required]],
       city:           ['', [Validators.required]],

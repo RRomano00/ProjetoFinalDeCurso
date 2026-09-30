@@ -27,7 +27,7 @@
 
       <div class="form-group">
         <label>Título *</label>
-        <input type="text" formControlName="title"
+        <input type="text" formControlName="title" maxlength="120"
                placeholder="Ex.: Buraco na Rua das Flores perto da escola" />
         <span *ngIf="form.get('title')?.touched && form.get('title')?.invalid" class="field-error">
           Título é obrigatório (mínimo 5 caracteres).
@@ -36,7 +36,7 @@
 
       <div class="form-group" style="margin-top:1rem">
         <label>Descreva a situação *</label>
-        <textarea formControlName="description" rows="4"
+        <textarea formControlName="description" maxlength="2000" rows="4"
           placeholder="Descreva a ocorrência com o máximo de detalhes possível..."></textarea>
         <span *ngIf="form.get('description')?.touched && form.get('description')?.invalid" class="field-error">
           Descrição deve ter ao menos 10 caracteres.
@@ -90,28 +90,28 @@
       <div class="form-row">
         <div class="form-group">
           <label>Logradouro *</label>
-          <input type="text" formControlName="street" placeholder="Rua das Flores" />
+          <input type="text" formControlName="street" maxlength="200" placeholder="Rua das Flores" />
           <span *ngIf="form.get('street')?.touched && form.get('street')?.invalid" class="field-error">
             Logradouro é obrigatório.
           </span>
         </div>
         <div class="form-group form-group-sm">
           <label>Número</label>
-          <input type="text" formControlName="number" placeholder="100" />
+          <input type="text" formControlName="number" maxlength="10" placeholder="100" />
         </div>
       </div>
 
       <div class="form-row" style="margin-top:1rem">
         <div class="form-group">
           <label>Bairro *</label>
-          <input type="text" formControlName="neighborhood" placeholder="Centro" />
+          <input type="text" formControlName="neighborhood" maxlength="100" placeholder="Centro" />
           <span *ngIf="form.get('neighborhood')?.touched && form.get('neighborhood')?.invalid" class="field-error">
             Bairro é obrigatório.
           </span>
         </div>
         <div class="form-group form-group--uf">
           <label>UF *</label>
-          <input type="text" formControlName="state" list="occ-uf-options" maxlength="2"
+          <input type="text" formControlName="state" appMask="uf" list="occ-uf-options"
                  placeholder="MG" autocapitalize="characters" spellcheck="false" autocomplete="off"
                  class="input-uf" />
           <datalist id="occ-uf-options">
@@ -123,7 +123,7 @@
         </div>
         <div class="form-group">
           <label>Cidade *</label>
-          <input type="text" formControlName="city" list="occ-city-options"
+          <input type="text" formControlName="city" maxlength="100" list="occ-city-options"
                  [readOnly]="!cityOptions.ready" spellcheck="false" autocomplete="off"
                  [placeholder]="cityOptions.ready ? 'Comece a digitar o município' : 'Informe a UF primeiro'" />
           <datalist id="occ-city-options">
@@ -154,7 +154,7 @@
 
       <div class="form-group" style="margin-top:1rem">
         <label>Referência</label>
-        <input type="text" formControlName="addressReference"
+        <input type="text" formControlName="addressReference" maxlength="300"
                placeholder="Ex.: Em frente ao mercado X, próximo ao parque..." />
       </div>
     </div>

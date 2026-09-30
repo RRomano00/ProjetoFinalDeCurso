@@ -21,7 +21,7 @@ import java.util.List;
 @Service
 public class OccurrenceServiceImpl implements OccurrenceService {
 
-    private static final double DUPLICATE_RADIUS_METERS = 50.0;
+    private static final double DUPLICATE_RADIUS_METERS = 70.0;
 
     private final OccurrenceDao                occurrenceDao;
     private final OccurrenceSupportDao          supportDao;
@@ -78,15 +78,19 @@ public class OccurrenceServiceImpl implements OccurrenceService {
                                                groupedWith);
     }
 
-    // Mesmo tipo, aberta e a até 50 m: entra no grupo sem perguntar ao usuário. O DAO
-    // busca num quadrado de ±50 m, então nos cantos a distância real chega a ~70 m.
+    // Mesmo tipo, aberta e a até 70 m em linha reta: entra no grupo sem perguntar ao usuário.
+    // O DAO busca num quadrado de ±70 m (usa o índice); aqui fica só quem está no círculo, a mais perto.
     /** Devolve o protocolo da ocorrência à qual a nova foi agrupada, para a tela avisar; null se ficou sozinha. */
     private String assignGroup(Occurrence entity) {
         if (entity.getLatitude() == null || entity.getLongitude() == null || entity.getType() == null) return null;
-        List<GetOccurrenceDto> nearby = occurrenceDao.findNearby(
-            entity.getLatitude(), entity.getLongitude(), entity.getType().name(), DUPLICATE_RADIUS_METERS);
-        if (nearby.isEmpty()) return null;
-        GetOccurrenceDto first = nearby.get(0);
+        double lat = entity.getLatitude(), lon = entity.getLongitude();
+        GetOccurrenceDto first = occurrenceDao.findNearby(lat, lon, entity.getType().name(), DUPLICATE_RADIUS_METERS)
+            .stream()
+            .filter(o -> o.getLatitude() != null && o.getLongitude() != null)
+            .filter(o -> distanceMeters(lat, lon, o.getLatitude(), o.getLongitude()) <= DUPLICATE_RADIUS_METERS)
+            .min(java.util.Comparator.comparingDouble(o -> distanceMeters(lat, lon, o.getLatitude(), o.getLongitude())))
+            .orElse(null);
+        if (first == null) return null;
         entity.setGroupId(first.getGroupId() != null ? first.getGroupId() : first.getId());
         return first.getProtocolNumber();
     }
@@ -268,6 +272,14 @@ public class OccurrenceServiceImpl implements OccurrenceService {
             emailService.sendStatusChangeEmail(o.getEmail(), o.getFullname(),
                 o.getProtocolNumber(), newStatus, message);
         } catch (Exception ignored) { }
+    }
+
+    /** Distância em metros entre dois pontos (haversine). */
+    static double distanceMeters(double lat1, double lon1, double lat2, double lon2) {
+        double r = 6_371_000, dLat = Math.toRadians(lat2 - lat1), dLon = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
+                 + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        return 2 * r * Math.asin(Math.sqrt(a));
     }
 
     private boolean isBlank(String s) { return s == null || s.isBlank(); }
