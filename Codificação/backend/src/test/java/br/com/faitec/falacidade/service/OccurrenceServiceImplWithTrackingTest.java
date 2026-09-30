@@ -31,13 +31,14 @@ class OccurrenceServiceImplWithTrackingTest {
     @Mock AnonymousTrackingCodeService trackingCodeService;
     @Mock br.com.faitec.falacidade.port.service.email.EmailService emailService;
     @Mock br.com.faitec.falacidade.port.service.department.DepartmentService departmentService;
+    @Mock br.com.faitec.falacidade.implementation.service.department.DepartmentAccessTokenService accessTokens;
 
     OccurrenceServiceImpl sut;
 
     @BeforeEach
     void setUp() {
         sut = new OccurrenceServiceImpl(occurrenceDao, supportDao, trackingCodeService, emailService,
-                                        departmentService);
+                                        departmentService, accessTokens);
     }
 
     private Occurrence anonymousOccurrence() {
@@ -338,17 +339,32 @@ class OccurrenceServiceImplWithTrackingTest {
         }
 
         @Test
+        @DisplayName("cada departamento recebe um link próprio para o grupo, e os contatos")
+        void sendsAccessLinkAndContacts() {
+            GetOccurrenceDto o = ocorrencia();
+            o.setGroupId(7);   // agrupada: o link vale para o grupo inteiro (raiz 7)
+            when(occurrenceDao.readById(10)).thenReturn(o);
+            when(departmentService.findById(3)).thenReturn(departamento());
+            when(accessTokens.issue(7, 10, 3, 5, "https://app")).thenReturn("TOKEN");
+
+            sut.forwardToDepartment(10, List.of(3), 5, "https://app", List.of("carlos@pref.br", "adm@pref.br"));
+
+            verify(emailService).sendOccurrenceForwardEmail(eq("obras@prefeitura.exemplo.br"), eq("Secretaria de Obras"),
+                any(), eq("https://app/departamento/TOKEN"), eq(List.of("carlos@pref.br", "adm@pref.br")));
+        }
+
+        @Test
         @DisplayName("envia ao e-mail do departamento e passa a ocorrência para EM_ANDAMENTO")
         void forwardsAndMovesToInProgress() {
             when(occurrenceDao.readById(10)).thenReturn(ocorrencia());
             when(departmentService.findById(3)).thenReturn(departamento());
 
-            var resultado = sut.forwardToDepartment(10, List.of(3), 5);
+            var resultado = sut.forwardToDepartment(10, List.of(3), 5, "https://app", List.of("carlos@pref.br"));
 
             assertThat(resultado.enviados()).containsExactly("Secretaria de Obras");
             assertThat(resultado.falharam()).isEmpty();
             verify(emailService).sendOccurrenceForwardEmail(
-                eq("obras@prefeitura.exemplo.br"), eq("Secretaria de Obras"), any());
+                eq("obras@prefeitura.exemplo.br"), eq("Secretaria de Obras"), any(), anyString(), anyList());
             verify(occurrenceDao).updateStatus(eq(10), eq("EM_ANDAMENTO"), eq(5),
                 contains("Ocorrência encaminhada para departamento responsável"), eq(3));
         }
@@ -359,7 +375,7 @@ class OccurrenceServiceImplWithTrackingTest {
             when(occurrenceDao.readById(10)).thenReturn(ocorrencia());
             when(departmentService.findById(3)).thenReturn(departamento());
 
-            sut.forwardToDepartment(10, List.of(3), 5);
+            sut.forwardToDepartment(10, List.of(3), 5, "https://app", List.of("carlos@pref.br"));
 
             ArgumentCaptor<String> nota = ArgumentCaptor.forClass(String.class);
             verify(occurrenceDao).updateStatus(anyInt(), anyString(), anyInt(), nota.capture(), eq(3));
@@ -373,9 +389,9 @@ class OccurrenceServiceImplWithTrackingTest {
             when(occurrenceDao.readById(10)).thenReturn(ocorrencia());
             when(departmentService.findById(3)).thenReturn(departamento());
             doThrow(new RuntimeException("SMTP fora do ar"))
-                .when(emailService).sendOccurrenceForwardEmail(anyString(), anyString(), any());
+                .when(emailService).sendOccurrenceForwardEmail(anyString(), anyString(), any(), anyString(), anyList());
 
-            var resultado = sut.forwardToDepartment(10, List.of(3), 5);
+            var resultado = sut.forwardToDepartment(10, List.of(3), 5, "https://app", List.of("carlos@pref.br"));
 
             assertThat(resultado.enviados()).isEmpty();
             assertThat(resultado.falharam()).containsExactly("Secretaria de Obras");
@@ -393,14 +409,14 @@ class OccurrenceServiceImplWithTrackingTest {
             iluminacao.setEmail("luz@prefeitura.exemplo.br");
             when(departmentService.findById(4)).thenReturn(iluminacao);
 
-            var resultado = sut.forwardToDepartment(10, List.of(3, 4), 5);
+            var resultado = sut.forwardToDepartment(10, List.of(3, 4), 5, "https://app", List.of("carlos@pref.br"));
 
             assertThat(resultado.enviados())
                 .containsExactly("Secretaria de Obras", "Secretaria de Iluminação");
             verify(emailService).sendOccurrenceForwardEmail(
-                eq("obras@prefeitura.exemplo.br"), eq("Secretaria de Obras"), any());
+                eq("obras@prefeitura.exemplo.br"), eq("Secretaria de Obras"), any(), anyString(), anyList());
             verify(emailService).sendOccurrenceForwardEmail(
-                eq("luz@prefeitura.exemplo.br"), eq("Secretaria de Iluminação"), any());
+                eq("luz@prefeitura.exemplo.br"), eq("Secretaria de Iluminação"), any(), anyString(), anyList());
             verify(occurrenceDao).updateStatus(eq(10), eq("EM_ANDAMENTO"), eq(5), anyString(), eq(3));
             verify(occurrenceDao).updateStatus(eq(10), eq("EM_ANDAMENTO"), eq(5), anyString(), eq(4));
         }
@@ -411,27 +427,27 @@ class OccurrenceServiceImplWithTrackingTest {
             when(occurrenceDao.readById(10)).thenReturn(ocorrencia());
             when(departmentService.findById(3)).thenReturn(departamento());
 
-            var resultado = sut.forwardToDepartment(10, List.of(3, 3, 3), 5);
+            var resultado = sut.forwardToDepartment(10, List.of(3, 3, 3), 5, "https://app", List.of("carlos@pref.br"));
 
             assertThat(resultado.enviados()).containsExactly("Secretaria de Obras");
-            verify(emailService, times(1)).sendOccurrenceForwardEmail(anyString(), anyString(), any());
+            verify(emailService, times(1)).sendOccurrenceForwardEmail(anyString(), anyString(), any(), anyString(), anyList());
         }
 
         @Test
         @DisplayName("recusa ocorrência ou departamento inexistentes, sem enviar e-mail")
         void rejectsUnknownOccurrenceOrDepartment() {
             when(occurrenceDao.readById(99)).thenReturn(null);
-            assertThatThrownBy(() -> sut.forwardToDepartment(99, List.of(3), 5))
+            assertThatThrownBy(() -> sut.forwardToDepartment(99, List.of(3), 5, "https://app", List.of("carlos@pref.br")))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Ocorrência");
 
             when(occurrenceDao.readById(10)).thenReturn(ocorrencia());
             when(departmentService.findById(77)).thenReturn(null);
-            assertThatThrownBy(() -> sut.forwardToDepartment(10, List.of(77), 5))
+            assertThatThrownBy(() -> sut.forwardToDepartment(10, List.of(77), 5, "https://app", List.of("carlos@pref.br")))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Departamento");
 
-            verify(emailService, never()).sendOccurrenceForwardEmail(anyString(), anyString(), any());
+            verify(emailService, never()).sendOccurrenceForwardEmail(anyString(), anyString(), any(), anyString(), anyList());
         }
     }
 }

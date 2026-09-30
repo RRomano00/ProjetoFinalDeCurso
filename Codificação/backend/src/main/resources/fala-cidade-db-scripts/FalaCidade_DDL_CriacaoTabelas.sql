@@ -274,6 +274,11 @@ CREATE TABLE IF NOT EXISTS occurrence_history (
 ALTER TABLE occurrence_history ADD COLUMN IF NOT EXISTS department_id
     INTEGER REFERENCES department(id) ON DELETE SET NULL;
 
+-- Solicitação de conclusão feita pelo departamento pelo link do encaminhamento: entra no
+-- histórico sem mudar o status e só a equipe a vê (com a foto do serviço feito).
+ALTER TABLE occurrence_history ADD COLUMN IF NOT EXISTS kind VARCHAR(30) NOT NULL DEFAULT 'STATUS';
+ALTER TABLE occurrence_history ADD COLUMN IF NOT EXISTS attachment_url VARCHAR(500);
+
 -- Mesma renomeação de ATENDIDA para CONCLUIDA na linha do tempo já gravada.
 UPDATE occurrence_history SET old_status = 'CONCLUIDA' WHERE old_status = 'ATENDIDA';
 UPDATE occurrence_history SET new_status = 'CONCLUIDA' WHERE new_status = 'ATENDIDA';

@@ -9,7 +9,10 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const session = inject(SessionWatchService);
   const token   = auth.getToken();
 
-  const handled = token
+  // O link do departamento tem credencial própria; mandar o login de quem usa o navegador
+  // poderia derrubar essa sessão (SESSION_SUPERSEDED) sem motivo.
+  const departmentLink = req.url.includes('/department-access/');
+  const handled = token && !departmentLink
     ? next(req.clone({ setHeaders: { Authorization: `Bearer ${token}` } }))
     : next(req);
 

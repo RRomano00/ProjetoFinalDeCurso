@@ -43,5 +43,9 @@ public interface OccurrenceService extends ReadService<GetOccurrenceDto> {
                       String message, boolean collective);
 
     br.com.faitec.falacidade.domain.dto.occurrence.ForwardResultDto forwardToDepartment(
-            int occurrenceId, java.util.List<Integer> departmentIds, int changedBy);
+            int occurrenceId, java.util.List<Integer> departmentIds, int changedBy,
+            String appUrl, java.util.List<String> contactEmails);
+
+    /** Departamento pede a conclusão (foto do serviço): entra no histórico, só a equipe vê. */
+    void requestCompletion(int occurrenceId, int departmentId, String message, String attachmentUrl);
 }

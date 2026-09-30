@@ -295,6 +295,19 @@ export class DetailOccurrenceComponent implements OnInit, OnDestroy {
     this.afterStatusChange();
   }
 
+  async concludeFromRequest(h: OccurrenceHistory) {
+    if (!this.occurrence?.id) return;
+    this.updating = true;
+    try {
+      await this.occurrenceEditService.updateToConclude(String(this.occurrence.id),
+        `Conclusão confirmada (solicitada por ${h.departmentName || 'departamento'}).`, this.applyToGroup);
+      this.occurrence!.status = 'CONCLUIDA';
+      this.toastr.success('Ocorrência marcada como Concluída.');
+      this.afterStatusChange();
+    } catch { this.toastr.error('Erro ao atualizar status.'); }
+    finally { this.updating = false; }
+  }
+
   private afterStatusChange() {
     this.staffMessage = '';
     const id = String(this.occurrence!.id);

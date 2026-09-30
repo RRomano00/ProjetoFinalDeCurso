@@ -19,6 +19,13 @@ export const routes: Routes = [
   },
 
   {
+    // Link do e-mail de encaminhamento: sem login, o token traz as permissões.
+    path: 'departamento/:token',
+    loadComponent: () =>
+      import('./views/department-access/department-access.component').then(m => m.DepartmentAccessComponent)
+  },
+
+  {
     path: '',
     loadComponent: () =>
       import('./views/app/main/main.component').then(m => m.MainComponent),

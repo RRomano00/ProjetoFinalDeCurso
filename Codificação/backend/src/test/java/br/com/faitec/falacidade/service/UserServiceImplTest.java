@@ -221,4 +221,20 @@ class UserServiceImplTest {
             verify(userDao, never()).updateInformation(anyInt(), any());
         }
     }
+
+    @Test
+    @DisplayName("findAdministratorEmails: só administradores ativos do município")
+    void administratorEmails() {
+        UserModel adm = new UserModel(); adm.setEmail("adm@pref.br"); adm.setRole(UserModel.UserRole.ADMINISTRATOR);
+        adm.setActive(true); adm.setCity("Santa Rita do Sapucaí"); adm.setState("MG");
+        UserModel inativo = new UserModel(); inativo.setEmail("x@pref.br"); inativo.setRole(UserModel.UserRole.ADMINISTRATOR);
+        inativo.setActive(false); inativo.setCity("Santa Rita do Sapucaí"); inativo.setState("MG");
+        UserModel outraCidade = new UserModel(); outraCidade.setEmail("y@pref.br"); outraCidade.setRole(UserModel.UserRole.ADMINISTRATOR);
+        outraCidade.setActive(true); outraCidade.setCity("Itajubá"); outraCidade.setState("MG");
+        UserModel funcionario = new UserModel(); funcionario.setEmail("z@pref.br"); funcionario.setRole(UserModel.UserRole.EMPLOYEE);
+        funcionario.setActive(true); funcionario.setCity("Santa Rita do Sapucaí"); funcionario.setState("MG");
+        when(userDao.readAllUsers()).thenReturn(List.of(adm, inativo, outraCidade, funcionario));
+
+        assertThat(sut.findAdministratorEmails("santa rita do sapucai", "mg")).containsExactly("adm@pref.br");
+    }
 }

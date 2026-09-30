@@ -15,7 +15,10 @@ public interface EmailService {
     void sendOccurrenceCreatedEmail(String toEmail, String fullname, String protocol, String title);
 
     void sendOccurrenceForwardEmail(String toEmail, String departmentName,
-                                    br.com.faitec.falacidade.domain.dto.occurrence.GetOccurrenceDto occurrence);
+                                    br.com.faitec.falacidade.domain.dto.occurrence.GetOccurrenceDto occurrence,
+                                    String accessLink, java.util.List<String> contactEmails);
+
+    void sendCompletionRequestEmail(String toEmail, String protocol, String departmentName, String occurrenceLink);
 
     void sendAccountChangedEmail(String toEmail, String fullname, java.util.List<String> changes,
                                  String changedByName, String changedByEmail);

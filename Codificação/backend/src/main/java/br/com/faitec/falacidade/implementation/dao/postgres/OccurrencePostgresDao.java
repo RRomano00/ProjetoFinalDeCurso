@@ -194,8 +194,10 @@ public class OccurrencePostgresDao implements OccurrenceDao {
     @Override
     public List<OccurrenceHistoryDto> readHistory(int occurrenceId) {
         List<OccurrenceHistoryDto> list = new ArrayList<>();
-        String sql = "SELECT h.old_status, h.new_status, h.observation, h.changed_at, u.fullname " +
+        String sql = "SELECT h.old_status, h.new_status, h.observation, h.changed_at, h.kind, " +
+                     "h.attachment_url, h.department_id, u.fullname, d.name AS department_name " +
                      "FROM occurrence_history h LEFT JOIN \"user\" u ON h.changed_by=u.id " +
+                     "LEFT JOIN department d ON h.department_id=d.id " +
                      "WHERE h.occurrence_id=? ORDER BY h.changed_at DESC";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, occurrenceId);
@@ -206,12 +208,32 @@ public class OccurrencePostgresDao implements OccurrenceDao {
                 h.setNewStatus(rs.getString("new_status"));
                 h.setObservation(rs.getString("observation"));
                 h.setChangedByName(rs.getString("fullname"));
+                h.setKind(rs.getString("kind"));
+                h.setAttachmentUrl(rs.getString("attachment_url"));
+                h.setDepartmentName(rs.getString("department_name"));
+                int dep = rs.getInt("department_id");
+                h.setDepartmentId(rs.wasNull() ? null : dep);
                 Timestamp t = rs.getTimestamp("changed_at");
                 if (t != null) h.setChangedAt(t.toLocalDateTime());
                 list.add(h);
             }
         } catch (SQLException e) { throw new RuntimeException("Erro ao carregar histórico da ocorrência", e); }
         return list;
+    }
+
+    @Override
+    public void insertCompletionRequest(int occurrenceId, int departmentId, String message, String attachmentUrl) {
+        // O status atual é repetido em old/new: a solicitação não muda o status.
+        String sql = "INSERT INTO occurrence_history(occurrence_id,changed_by,old_status,new_status,observation," +
+                     "department_id,kind,attachment_url) " +
+                     "SELECT o.id,NULL,o.status,o.status,?,?,'COMPLETION_REQUEST',? FROM occurrence o WHERE o.id=?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, message);
+            ps.setInt(2, departmentId);
+            ps.setString(3, attachmentUrl);
+            ps.setInt(4, occurrenceId);
+            ps.execute();
+        } catch (SQLException e) { throw new RuntimeException("Erro ao registrar a solicitação de conclusão", e); }
     }
 
     @Override public List<GetOccurrenceDto> readall() {

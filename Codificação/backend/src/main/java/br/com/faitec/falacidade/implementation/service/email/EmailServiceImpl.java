@@ -361,7 +361,7 @@ public class EmailServiceImpl implements EmailService {
      * que não aconteceu.
      */
     public void sendOccurrenceForwardEmail(String toEmail, String departmentName,
-                                           GetOccurrenceDto o) {
+                                           GetOccurrenceDto o, String accessLink, List<String> contactEmails) {
         String protocol = o.getProtocolNumber();
         String category = label(o.getType() == null ? null : o.getType().name());
         String priority = o.getPriority() == null ? "—" : label(o.getPriority().name());
@@ -387,10 +387,12 @@ public class EmailServiceImpl implements EmailService {
             "Registrada em: " + opened + "\n" +
             "Endereço: " + address + "\n" +
             (maps != null ? "Local no mapa: " + maps + "\n" + "Rota no Google Maps: " + route + "\n" : "") +
+            "Ver / responder ocorrência: " + accessLink + "\n" +
             "\nRelato:\n" + nvl(o.getDescription()) + "\n\n" +
             (photos.isEmpty()
                 ? "Sem fotografias anexadas.\n"
                 : photos.size() + " fotografia(s) em anexo.\n") +
+            (contactEmails.isEmpty() ? "" : "\nQualquer dúvida entre em contato: " + String.join(", ", contactEmails) + "\n") +
             "\nEste encaminhamento não contém dados pessoais do autor da ocorrência.";
 
         String content =
@@ -404,6 +406,12 @@ public class EmailServiceImpl implements EmailService {
             "  <p style='font-size:20px; font-weight:bold; letter-spacing:1px; color:" + BRAND_COLOR + "; margin:0;'>" +
                  esc(protocol) + "</p>" +
             "</div>" +
+            "<p style='margin:0 0 20px;'>" +
+            "  <a href='" + esc(accessLink) + "' style='display:inline-block; padding:12px 22px; background:" +
+                 BRAND_COLOR + "; color:#fff; border-radius:6px; font-size:15px; font-weight:bold;" +
+            "     text-decoration:none;'>Ver / responder ocorrência</a></p>" +
+            "<p style='font-size:12px; color:#777; margin:-12px 0 20px;'>O link dá acesso só a esta " +
+            "  ocorrência, sem dados do autor, enquanto ela estiver aberta (até 30 dias).</p>" +
             row("Categoria", category) +
             row("Prioridade", priority) +
             row("Registrada em", opened) +
@@ -424,12 +432,35 @@ public class EmailServiceImpl implements EmailService {
                 ? "<p style='font-size:13px; color:#777; margin:18px 0 0;'>Sem fotografias anexadas.</p>"
                 : "<p style='font-size:13px; color:#777; margin:18px 0 0;'>" + photos.size() +
                   " fotografia(s) em anexo, com rostos e placas desfocados.</p>") +
+            (contactEmails.isEmpty() ? "" :
+             "<p style='font-size:14px; color:#333; margin:18px 0 0;'>Qualquer dúvida entre em contato: " +
+             String.join(", ", contactEmails.stream()
+                 .map(e -> "<a href='mailto:" + esc(e) + "' style='color:" + BRAND_COLOR + ";'>" + esc(e) + "</a>")
+                 .toList()) + "</p>") +
             "<p style='font-size:12px; color:#aaa; margin:14px 0 0;'>" +
             "  Este encaminhamento não contém dados pessoais do autor da ocorrência (LGPD).</p>";
 
         sendWithAttachments(toEmail, "Fala, Cidade! – Ocorrência " + protocol + " encaminhada",
             withFooter(text), layout(content), photos,
             "Falha ao encaminhar a ocorrência ao departamento");
+    }
+
+    @Override
+    @Async("emailExecutor")
+    public void sendCompletionRequestEmail(String toEmail, String protocol, String departmentName,
+                                           String occurrenceLink) {
+        String text = "O departamento " + departmentName + " solicitou a conclusão da ocorrência " + protocol +
+                      ".\nConfira a foto do serviço no histórico e marque como concluída: " + occurrenceLink;
+        String content =
+            "<h2 style='margin:0 0 12px; font-size:20px; color:#111;'>Conclusão solicitada</h2>" +
+            "<p style='font-size:15px; color:#333;'>O <strong>" + esc(departmentName) + "</strong> solicitou a " +
+            "  conclusão da ocorrência <strong>" + esc(protocol) + "</strong>.</p>" +
+            "<p style='font-size:15px; color:#333;'>Confira a foto do serviço no histórico e marque como concluída.</p>" +
+            "<p><a href='" + esc(occurrenceLink) + "' style='display:inline-block; padding:12px 22px; background:" +
+                 BRAND_COLOR + "; color:#fff; border-radius:6px; font-weight:bold; text-decoration:none;'>" +
+            "  Abrir ocorrência</a></p>";
+        send(toEmail, null, "Fala, Cidade! – Conclusão solicitada na ocorrência " + protocol,
+             withFooter(text), layout(content), "Falha ao avisar a solicitação de conclusão");
     }
 
     private String row(String label, String value) {

@@ -10,6 +10,9 @@ export interface OccurrenceHistory {
     observation?:   string;
     changedByName?: string;
     changedAt?:     string;
+    kind?:           'STATUS' | 'COMPLETION_REQUEST';
+    attachmentUrl?:  string;
+    departmentName?: string;
 }
 
 export interface Occurrence {
