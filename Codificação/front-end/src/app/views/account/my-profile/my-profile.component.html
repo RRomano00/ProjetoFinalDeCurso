@@ -156,7 +156,7 @@
 
           <div class="mfa-disable-form" *ngIf="enablingEmail">
             <p>Digite o código que enviamos ao seu e-mail para ativar.</p>
-            <input type="text" [(ngModel)]="emailEnableCode" maxlength="6" inputmode="numeric"
+            <input type="text" [(ngModel)]="emailEnableCode" maxlength="6" inputmode="numeric" appClipboardCode autocomplete="one-time-code"
              (keyup.enter)="savingMfa || confirmEnableEmail()"
                    placeholder="000000" class="form-input qr-code-input" />
             <div class="qr-actions">
@@ -169,7 +169,7 @@
 
           <div class="mfa-disable-form" *ngIf="disablingEmail">
             <p>Digite o código que enviamos ao seu e-mail para desativar.</p>
-            <input type="text" [(ngModel)]="emailDisableCode" maxlength="6" inputmode="numeric"
+            <input type="text" [(ngModel)]="emailDisableCode" maxlength="6" inputmode="numeric" appClipboardCode autocomplete="one-time-code"
              (keyup.enter)="savingMfa || confirmDisableEmail()"
                    placeholder="000000" class="form-input qr-code-input" />
             <div class="qr-actions">
@@ -210,7 +210,7 @@
 
             <div class="mfa-disable-form" *ngIf="enablingSms && smsCodeSent">
               <p>Digite o código que enviamos por SMS para {{ smsPhone }}.</p>
-              <input type="text" [(ngModel)]="smsEnableCode" maxlength="6" inputmode="numeric"
+              <input type="text" [(ngModel)]="smsEnableCode" maxlength="6" inputmode="numeric" appClipboardCode autocomplete="one-time-code"
                      (keyup.enter)="savingMfa || confirmEnableSms()"
                      placeholder="000000" class="form-input qr-code-input" />
               <div class="qr-actions">
@@ -227,7 +227,7 @@
 
             <div class="mfa-disable-form" *ngIf="disablingSms">
               <p>Digite o código que enviamos por SMS para desativar.</p>
-              <input type="text" [(ngModel)]="smsDisableCode" maxlength="6" inputmode="numeric"
+              <input type="text" [(ngModel)]="smsDisableCode" maxlength="6" inputmode="numeric" appClipboardCode autocomplete="one-time-code"
                      (keyup.enter)="savingMfa || confirmDisableSms()"
                      placeholder="000000" class="form-input qr-code-input" />
               <div class="qr-actions">
@@ -257,7 +257,7 @@
 
           <div class="mfa-disable-form" *ngIf="disablingApp">
             <p>Digite o código atual do seu aplicativo autenticador para desativar.</p>
-            <input type="text" [(ngModel)]="appDisableCode" maxlength="6" inputmode="numeric"
+            <input type="text" [(ngModel)]="appDisableCode" maxlength="6" inputmode="numeric" appClipboardCode autocomplete="one-time-code"
              (keyup.enter)="savingMfa || confirmDisableApp()"
                    placeholder="000000" class="form-input qr-code-input" />
             <div class="qr-actions">
@@ -275,7 +275,7 @@
               <summary>Não consigo escanear</summary>
               <code>{{ secret }}</code>
             </details>
-            <input type="text" [(ngModel)]="confirmCode" maxlength="6" inputmode="numeric"
+            <input type="text" [(ngModel)]="confirmCode" maxlength="6" inputmode="numeric" appClipboardCode autocomplete="one-time-code"
              (keyup.enter)="savingMfa || confirmAppSetup()"
                    placeholder="000000" class="form-input qr-code-input" />
             <div class="qr-actions">
@@ -320,7 +320,7 @@
          : deleteCodeSource === 'SMS' ? 'enviado por SMS para o seu celular'
          : 'do seu aplicativo autenticador' }}.
       </p>
-      <input *ngIf="deleteNeedsCode" type="text" [(ngModel)]="deleteCode" maxlength="6" inputmode="numeric"
+      <input *ngIf="deleteNeedsCode" type="text" [(ngModel)]="deleteCode" maxlength="6" inputmode="numeric" appClipboardCode autocomplete="one-time-code"
              (keyup.enter)="deletingNow || confirmDeleteAccount()"
              placeholder="000000" class="form-input qr-code-input" />
       <div class="modal-actions">

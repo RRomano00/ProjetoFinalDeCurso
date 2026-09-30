@@ -1,3 +1,4 @@
+import { ClipboardCodeDirective } from '../../../shared/clipboard-code.directive';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { FormControl, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -13,7 +14,7 @@ type MfaMethod = 'APP' | 'EMAIL' | 'SMS';
 
 @Component({
   selector: 'app-sign-in',
-  imports: [RouterModule, CommonModule, FormsModule, ReactiveFormsModule, PasswordRevealDirective,
+  imports: [RouterModule, CommonModule, FormsModule, ReactiveFormsModule, PasswordRevealDirective, ClipboardCodeDirective,
             InstallInviteComponent],
   templateUrl: './sign-in.component.html',
   styleUrls: ['../auth-shell.css', './sign-in.component.css']

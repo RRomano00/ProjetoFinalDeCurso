@@ -5,7 +5,10 @@
         <div class="modal-icon">🔒</div>
         <h2>Ocorrência Registrada!</h2>
         <p>Como sua ocorrência é anônima, guarde o código abaixo para acompanhar o status:</p>
-        <div class="tracking-code">{{ trackingCode }}</div>
+        <div class="tracking-code-row">
+          <div class="tracking-code">{{ trackingCode }}</div>
+          <app-copy-protocol [value]="trackingCode" label="código" />
+        </div>
         <p class="tracking-warning">⚠️ Este código não será exibido novamente.</p>
         <button class="btn-primary" (click)="dismissTrackingCode()">Entendido</button>
       </div>

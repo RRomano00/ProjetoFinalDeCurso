@@ -5,12 +5,13 @@ import { CommonModule } from '@angular/common';
 import { PasswordResetService } from '../../../services/security/password-reset.service';
 import { ToastrService } from 'ngx-toastr';
 import { PasswordRevealDirective } from '../../../shared/password-reveal.directive';
+import { ClipboardCodeDirective } from '../../../shared/clipboard-code.directive';
 
 type ResetStep = 'request' | 'code' | 'password';
 
 @Component({
   selector: 'app-recover-password',
-  imports: [RouterModule, CommonModule, FormsModule, ReactiveFormsModule, PasswordRevealDirective],
+  imports: [RouterModule, CommonModule, FormsModule, ReactiveFormsModule, PasswordRevealDirective, ClipboardCodeDirective],
   templateUrl: './recover-password.component.html',
   styleUrls: ['../auth-shell.css', './recover-password.component.css']
 })

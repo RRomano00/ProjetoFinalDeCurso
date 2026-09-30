@@ -12,11 +12,12 @@ import { AuthenticationService } from '../../../services/security/authentication
 import { LocalityPreferenceService, Municipality } from '../../../services/local/locality-preference.service';
 import { DeleteOccurrenceDialogComponent } from '../../../shared/delete-occurrence-dialog.component';
 import { CopyProtocolComponent } from '../../../shared/copy-protocol.component';
+import { ClipboardCodeDirective } from '../../../shared/clipboard-code.directive';
 import { openOccurrence } from '../../../shared/open-occurrence';
 
 @Component({
   selector: 'app-list-occurrence',
-  imports: [RouterModule, CommonModule, FormsModule, DeleteOccurrenceDialogComponent, CopyProtocolComponent],
+  imports: [RouterModule, CommonModule, FormsModule, DeleteOccurrenceDialogComponent, CopyProtocolComponent, ClipboardCodeDirective],
   templateUrl: './list-occurrence.component.html',
   styleUrl: './list-occurrence.component.css'
 })
