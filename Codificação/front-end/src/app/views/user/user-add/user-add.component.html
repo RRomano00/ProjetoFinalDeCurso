@@ -117,7 +117,7 @@
     <div class="form-actions">
       <a routerLink="/" class="btn-secondary">Cancelar</a>
       <button type="submit" class="btn-primary" [disabled]="loading">
-        {{ loading ? 'Criando...' : 'Criar Usuário' }}
+        @if (loading) {Criando<span class="loading-dots" aria-hidden="true"></span>} @else { {{ 'Criar Usuário' }} }
       </button>
     </div>
 

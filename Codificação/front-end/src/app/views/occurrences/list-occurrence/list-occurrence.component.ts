@@ -100,7 +100,8 @@ export class ListOccurrenceComponent implements OnInit {
   }
 
   private async loadMunicipalities() {
-    const chosen = this.locality.choice;
+    // Visitante fica sempre no município que escolheu ao entrar (troca pelo "Alterar município").
+    const chosen = this.auth.anonymousMunicipality() ?? this.locality.choice;
     this.municipalityOptions = LocalityPreferenceService.options(
       this.occurrences, [chosen, await this.locality.ofCurrentUser()]);
     if (chosen) this.filterCity = LocalityPreferenceService.fold(chosen.city);
@@ -191,12 +192,14 @@ export class ListOccurrenceComponent implements OnInit {
 
   clearFilters() {
     this.search         = '';
-    this.filterCity     = '';
+    if (!this.auth.isAnonymous()) {
+      this.filterCity      = '';
+      this.locality.choice = null;
+    }
     this.filterStatus   = '';
     this.filterType     = '';
     this.filterMine     = false;
     this.groupBy        = this.defaultGroupBy;
-    this.locality.choice = null;
     this.applyFilters();
   }
 

@@ -343,3 +343,20 @@ html.dark-theme .a11y-controls {
 
 /* Popup obrigatório: fundo desfocado. */
 .modal-overlay--blur { backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+
+/* Reticências animadas dos estados de espera ("Salvando..."): aparecem uma a uma.
+   O recorte mantém a largura fixa, então o texto do botão não pula. */
+.loading-dots::after {
+  content: '...';
+  display: inline-block;
+  animation: loading-dots 1.2s steps(1, end) infinite;
+}
+@keyframes loading-dots {
+  0%  { clip-path: inset(0 100% 0 0); }
+  25% { clip-path: inset(0 66.6% 0 0); }
+  50% { clip-path: inset(0 33.3% 0 0); }
+  75% { clip-path: inset(0 0 0 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .loading-dots::after { animation: none; }
+}

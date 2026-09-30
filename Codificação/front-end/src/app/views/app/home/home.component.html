@@ -20,7 +20,7 @@
       <h2 class="col-title">Mapa de Ocorrências</h2>
 
       <div class="map-filters">
-        <select class="select-city" [(ngModel)]="filterCity" (ngModelChange)="onCityChange()">
+        <select *ngIf="!auth.isAnonymous()" class="select-city" [(ngModel)]="filterCity" (ngModelChange)="onCityChange()">
           <!-- Um município só: sem "Todos"; a opção segue o filtro atual ("" ou ele), que dá o mesmo resultado. -->
           <option *ngIf="municipalityOptions.length !== 1" value="">Todos os municípios</option>
           <option *ngFor="let m of municipalityOptions" [value]="municipalityOptions.length === 1 ? filterCity : cityKey(m.city)">{{ municipalityLabel(m) }}</option>
@@ -57,7 +57,7 @@
         </button>
         <div class="map-loading" *ngIf="loadingMap">
           <div class="spinner"></div>
-          <span>Carregando marcadores...</span>
+          <span>Carregando marcadores<span class="loading-dots" aria-hidden="true"></span></span>
         </div>
         <div class="map-legend">
           <span class="legend-item"><span class="dot pending"></span> Pendente</span>

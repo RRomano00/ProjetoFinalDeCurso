@@ -221,7 +221,7 @@
       </div>
 
       <button type="submit" class="btn-primary btn-full" [disabled]="loading">
-        {{ isLastStep ? (loading ? 'Criando conta...' : 'Criar conta') : 'Continuar' }}
+        @if (isLastStep && loading) {Criando conta<span class="loading-dots" aria-hidden="true"></span>} @else { {{ isLastStep ? 'Criar conta' : 'Continuar' }} }
       </button>
 
       <div class="signup-progress">

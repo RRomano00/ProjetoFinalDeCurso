@@ -125,7 +125,7 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   clearMapFilters() {
-    this.filterCity = '';
+    if (!this.auth.isAnonymous()) this.filterCity = '';  // visitante troca pelo "Alterar município"
     this.mapFilterNeighborhood = '';
     this.mapFilterType = '';
     this.mapFilterStatus = '';
@@ -297,6 +297,7 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private async goToGps(position: GeolocationPosition) {
     const { latitude, longitude } = position.coords;
+    if (this.auth.isAnonymous()) return;  // o mapa do visitante fica no município que ele escolheu
     const municipio = await this.locality.municipalityAt(latitude, longitude);
     await this.ngZone.run(async () => {
       if (municipio && LocalityPreferenceService.fold(municipio.city) !== this.filterCity) {
@@ -500,7 +501,7 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
               aria-label="${apoiado
                 ? 'Você apoia esta ocorrência; clique para remover o apoio'
                 : 'Apoiar esta ocorrência'}">
-        <span class="btn-support__state">${salvando ? 'Salvando...' : (apoiado ? '✓ Você apoia' : '🤝 Apoiar')}</span>
+        <span class="btn-support__state">${salvando ? 'Salvando<span class="loading-dots" aria-hidden="true"></span>' : (apoiado ? '✓ Você apoia' : '🤝 Apoiar')}</span>
         <span class="btn-support__undo">Não apoiar</span>
       </button>` : '';
 

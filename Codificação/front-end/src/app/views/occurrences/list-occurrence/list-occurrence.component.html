@@ -11,7 +11,7 @@
     <input type="search" [(ngModel)]="search" (ngModelChange)="applyFilters()"
            aria-label="Pesquisar ocorrência por protocolo ou título"
            placeholder="Pesquisar ocorrência (protocolo ou título)" class="filter-input" />
-    <select [(ngModel)]="filterCity" (ngModelChange)="onCityChange()" class="filter-select filter-select--city"
+    <select *ngIf="!auth.isAnonymous()" [(ngModel)]="filterCity" (ngModelChange)="onCityChange()" class="filter-select filter-select--city"
             aria-label="Município em exibição">
       <!-- Um município só: sem "Todos"; a opção segue o filtro atual ("" ou ele), que dá o mesmo resultado. -->
       <option *ngIf="municipalityOptions.length !== 1" value="">Todos os municípios</option>
@@ -45,14 +45,14 @@
         <div class="modal-actions">
           <button class="btn-secondary" (click)="closeProtocolModal()">Cancelar</button>
           <button class="btn-primary" [disabled]="searchingProtocol" (click)="searchByCode()">
-            {{ searchingProtocol ? 'Buscando...' : 'Buscar' }}
+            @if (searchingProtocol) {Buscando<span class="loading-dots" aria-hidden="true"></span>} @else { {{ 'Buscar' }} }
           </button>
         </div>
       </div>
     </div>
   }
 
-  <div *ngIf="loading" class="loading-state">Carregando...</div>
+  <div *ngIf="loading" class="loading-state">Carregando<span class="loading-dots" aria-hidden="true"></span></div>
 
   <div *ngIf="!loading && filtered.length === 0" class="empty-state">
     Nenhuma ocorrência encontrada.
@@ -103,8 +103,7 @@
                   ? 'Você apoia a ocorrência ' + o.protocolNumber + '; clique para remover o apoio'
                   : 'Apoiar a ocorrência ' + o.protocolNumber)"
                 (click)="toggleSupport(o)">
-          <span class="btn-support__state">{{ supportingId === o.id ? 'Salvando...'
-            : (isSupported(o.id) ? '✓ Você apoia' : '🤝 Apoiar') }}</span>
+          <span class="btn-support__state">@if (supportingId === o.id) {Salvando<span class="loading-dots" aria-hidden="true"></span>} @else { {{ (isSupported(o.id) ? '✓ Você apoia' : '🤝 Apoiar') }} }</span>
           <span class="btn-support__undo">Não apoiar</span>
         </button>
         <span class="support-count" *ngIf="o.supportCount">

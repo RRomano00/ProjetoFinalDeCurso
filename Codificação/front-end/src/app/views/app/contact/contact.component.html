@@ -42,7 +42,7 @@
 
     <div class="form-actions">
       <button type="submit" class="btn-primary" [disabled]="loading">
-        {{ loading ? 'Enviando...' : 'Enviar mensagem' }}
+        @if (loading) {Enviando<span class="loading-dots" aria-hidden="true"></span>} @else { {{ 'Enviar mensagem' }} }
       </button>
     </div>
   </form>

@@ -91,6 +91,10 @@ export class AuthenticationService {
   enterAnonymous(municipality: Municipality) {
     this.endSession();
     localStorage.setItem('anonymous', 'true');
+    this.setAnonymousMunicipality(municipality);
+  }
+
+  setAnonymousMunicipality(municipality: Municipality) {
     localStorage.setItem('anonymous.municipality', JSON.stringify(municipality));
   }
 

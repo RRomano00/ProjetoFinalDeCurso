@@ -1,11 +1,11 @@
 import { ClipboardCodeDirective } from '../../../shared/clipboard-code.directive';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormControl, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { AuthenticationService } from '../../../services/security/authentication.service';
-import { LocalityPreferenceService } from '../../../services/local/locality-preference.service';
-import { LocalityService, CityOptions, FederativeUnit } from '../../../services/local/locality.service';
+import { LocalityPreferenceService, Municipality } from '../../../services/local/locality-preference.service';
+import { MunicipalityDialogComponent } from '../../../shared/municipality-dialog.component';
 import { ToastrService } from 'ngx-toastr';
 import { PasswordRevealDirective } from '../../../shared/password-reveal.directive';
 import { InstallInviteComponent } from '../../../shared/install-invite.component';
@@ -16,7 +16,7 @@ type MfaMethod = 'APP' | 'EMAIL' | 'SMS';
 @Component({
   selector: 'app-sign-in',
   imports: [RouterModule, CommonModule, FormsModule, ReactiveFormsModule, PasswordRevealDirective, ClipboardCodeDirective,
-            InstallInviteComponent],
+            InstallInviteComponent, MunicipalityDialogComponent],
   templateUrl: './sign-in.component.html',
   styleUrls: ['../auth-shell.css', './sign-in.component.css']
 })
@@ -44,23 +44,13 @@ export class SignInComponent implements OnInit, OnDestroy {
     private router: Router,
     private auth: AuthenticationService,
     private locality: LocalityPreferenceService,
-    private localities: LocalityService,
     private route: ActivatedRoute,
     private toastr: ToastrService
-  ) {
-    this.units = localities.units;
-    this.cityOptions = localities.bindCityToUf(this.municipalityForm);
-  }
+  ) {}
 
   // Visitante: município obrigatório antes de entrar em qualquer tela.
   municipalityOpen = false;
-  locating = false;
-  municipalityForm = new FormGroup({
-    state: new FormControl('', Validators.required),
-    city:  new FormControl('', Validators.required),
-  });
-  units: FederativeUnit[];
-  cityOptions: CityOptions;
+  get knownMunicipality() { return this.locality.choice; }  // do GPS, se o login o detectou
 
   async ngOnInit() {
     if (this.route.snapshot.queryParamMap.has('visitante')) this.enterAnonymous();
@@ -73,37 +63,9 @@ export class SignInComponent implements OnInit, OnDestroy {
     this.locality.detect();
   }
 
-  enterAnonymous() {
-    // Já vem preenchido com o município do GPS, se o login o detectou.
-    const known = this.locality.choice;
-    if (known && !this.municipalityForm.value.city) {
-      this.municipalityForm.setValue({ state: known.state, city: known.city });
-    }
-    this.municipalityOpen = true;
-  }
+  enterAnonymous() { this.municipalityOpen = true; }
 
-  async useMyLocation() {
-    this.locating = true;
-    try {
-      const m = await this.locality.detect();
-      if (m) this.municipalityForm.setValue({ state: m.state, city: m.city });
-    } finally { this.locating = false; }
-  }
-
-  async confirmMunicipality() {
-    const f = this.municipalityForm;
-    f.markAllAsTouched();
-    const uf = this.localities.normalizeUf(f.value.state);
-    const typed = (f.value.city || '').trim();
-    if (!uf || !typed) return;
-    // Nome oficial do IBGE; se a lista não carregar, aceita o que foi digitado.
-    const list = await this.localities.cities(uf);
-    const city = list.length
-      ? list.find(c => c.localeCompare(typed, 'pt-BR', { sensitivity: 'base' }) === 0)
-      : typed;
-    if (!city) { f.controls.city.setErrors({ unknown: true }); return; }
-
-    const municipality = { city, state: uf };
+  onMunicipalityChosen(municipality: Municipality) {
     this.auth.enterAnonymous(municipality);
     this.locality.choice = municipality;
     this.router.navigate(['']);

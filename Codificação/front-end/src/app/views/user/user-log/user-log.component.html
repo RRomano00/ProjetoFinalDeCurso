@@ -29,7 +29,7 @@
     <button type="button" class="btn-toggle" (click)="clearFilters()" [disabled]="!hasFilters">Limpar</button>
   </div>
 
-  <div *ngIf="loading" class="loading-state">Carregando...</div>
+  <div *ngIf="loading" class="loading-state">Carregando<span class="loading-dots" aria-hidden="true"></span></div>
 
   <div class="table-card" *ngIf="!loading">
     <table class="user-table">

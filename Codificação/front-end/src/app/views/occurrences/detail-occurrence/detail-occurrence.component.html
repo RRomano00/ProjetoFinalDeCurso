@@ -1,5 +1,5 @@
 <div class="page-container">
-  <div *ngIf="loading" class="loading-state">Carregando...</div>
+  <div *ngIf="loading" class="loading-state">Carregando<span class="loading-dots" aria-hidden="true"></span></div>
 
   <div *ngIf="!loading && occurrence">
     <button (click)="back()" class="btn-back">← Ocorrências</button>
@@ -63,8 +63,7 @@
                     ? 'Você apoia esta ocorrência; clique para remover o apoio'
                     : 'Apoiar esta ocorrência'"
                   (click)="toggleSupport()">
-            <span class="btn-support__state">{{ supporting ? 'Salvando...'
-              : (supportedByMe ? '✓ Você apoia' : '🤝 Apoiar') }}</span>
+            <span class="btn-support__state">@if (supporting) {Salvando<span class="loading-dots" aria-hidden="true"></span>} @else { {{ (supportedByMe ? '✓ Você apoia' : '🤝 Apoiar') }} }</span>
             <span class="btn-support__undo">Não apoiar</span>
           </button>
         </div>
@@ -143,7 +142,7 @@
             <textarea id="staffMsg" [(ngModel)]="staffMessage" rows="2" maxlength="300"
                       placeholder="Escreva uma mensagem que será enviada por e-mail ao autor da ocorrência..."></textarea>
             <button (click)="sendReply()" [disabled]="updating || !staffMessage.trim()" class="btn-action">
-              {{ updating ? 'Enviando...' : '✉ Enviar resposta' }}
+              @if (updating) {Enviando<span class="loading-dots" aria-hidden="true"></span>} @else { {{ '✉ Enviar resposta' }} }
             </button>
           </div>
           <div class="preset-chips">
@@ -173,7 +172,7 @@
                       aria-label="Fechar">✕</button>
             </div>
 
-            <p *ngIf="departmentsLoading" class="forward-loading">Carregando departamentos...</p>
+            <p *ngIf="departmentsLoading" class="forward-loading">Carregando departamentos<span class="loading-dots" aria-hidden="true"></span></p>
 
             <p *ngIf="!departmentsLoading && departments.length === 0" class="forward-empty">
               Nenhum departamento cadastrado. Cadastre em Administração &rsaquo; Departamentos.
@@ -200,10 +199,9 @@
               </p>
               <button type="button" class="btn-action btn-forward-confirm"
                       [disabled]="forwardSelectedIds.size === 0 || forwarding" (click)="confirmForward()">
-                {{ forwarding ? 'Encaminhando...'
-                   : (forwardSelectedIds.size > 1
+                @if (forwarding) {Encaminhando<span class="loading-dots" aria-hidden="true"></span>} @else { {{ (forwardSelectedIds.size > 1
                       ? 'Encaminhar aos ' + forwardSelectedIds.size + ' setores e iniciar atendimento'
-                      : 'Encaminhar e iniciar atendimento') }}
+                      : 'Encaminhar e iniciar atendimento') }} }
               </button>
               <p class="forward-effect">
                 O status altera para <span class="badge badge-em_andamento">Em Andamento</span>
@@ -216,18 +214,18 @@
         <div class="status-actions">
           <button *ngIf="occurrence.status === 'PENDENTE'"
                   (click)="updateToInProgress()" [disabled]="updating" class="btn-action">
-            {{ updating ? 'Atualizando...' : '▶ Iniciar Atendimento' }}
+            @if (updating) {Atualizando<span class="loading-dots" aria-hidden="true"></span>} @else { {{ '▶ Iniciar Atendimento' }} }
           </button>
           <button *ngIf="occurrence.status === 'EM_ANDAMENTO'"
                   (click)="updateToConclude()" [disabled]="updating" class="btn-action btn-success">
-            {{ updating ? 'Atualizando...' : '✓ Marcar como Concluída' }}
+            @if (updating) {Atualizando<span class="loading-dots" aria-hidden="true"></span>} @else { {{ '✓ Marcar como Concluída' }} }
           </button>
           <span *ngIf="occurrence.status === 'CONCLUIDA'" class="concluded-label">✓ Ocorrência concluída</span>
           <span *ngIf="occurrence.status === 'INDEFERIDA'" class="rejected-label">✕ Ocorrência Indeferida</span>
           <span *ngIf="occurrence.status === 'FINALIZADA'" class="finalized-label">■ Ocorrência finalizada (excluída) — não pode mais ser alterada</span>
 
           <button *ngIf="canReopen" (click)="reopen()" [disabled]="updating" class="btn-action">
-            {{ updating ? 'Reabrindo...' : '↻ Reabrir Ocorrência' }}
+            @if (updating) {Reabrindo<span class="loading-dots" aria-hidden="true"></span>} @else { {{ '↻ Reabrir Ocorrência' }} }
           </button>
 
           <button *ngIf="(occurrence.status === 'PENDENTE' || occurrence.status === 'EM_ANDAMENTO') && !showRejectForm"
@@ -248,7 +246,7 @@
                       placeholder="Descreva o motivo do indeferimento..."></textarea>
             <div class="reject-form-actions">
               <button (click)="updateToRejected()" [disabled]="updating" class="btn-action btn-danger">
-                {{ updating ? 'Salvando...' : 'Confirmar Indeferimento' }}
+                @if (updating) {Salvando<span class="loading-dots" aria-hidden="true"></span>} @else { {{ 'Confirmar Indeferimento' }} }
               </button>
               <button (click)="showRejectForm = false; rejectObservation = ''" class="btn-secondary">
                 Cancelar

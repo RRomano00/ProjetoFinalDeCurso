@@ -81,7 +81,7 @@
           </div>
           <div class="form-actions">
             <button type="submit" class="btn-primary" [disabled]="profileForm.invalid || savingProfile">
-              {{ savingProfile ? 'Salvando...' : 'Salvar dados' }}
+              @if (savingProfile) {Salvando<span class="loading-dots" aria-hidden="true"></span>} @else { {{ 'Salvar dados' }} }
             </button>
           </div>
         </form>
@@ -281,13 +281,13 @@
             <div class="qr-actions">
               <button class="btn-secondary" (click)="cancelAppSetup()">Cancelar</button>
               <button class="btn-primary" [disabled]="savingMfa" (click)="confirmAppSetup()">
-                {{ savingMfa ? 'Ativando...' : 'Confirmar' }}
+                @if (savingMfa) {Ativando<span class="loading-dots" aria-hidden="true"></span>} @else { {{ 'Confirmar' }} }
               </button>
             </div>
           </div>
         </div>
 
-        <p class="mfa-desc" *ngIf="loadingMfa">Carregando configuração de segurança...</p>
+        <p class="mfa-desc" *ngIf="loadingMfa">Carregando configuração de segurança<span class="loading-dots" aria-hidden="true"></span></p>
       </div>
     </div>
 
@@ -326,7 +326,7 @@
       <div class="modal-actions">
         <button class="btn-secondary" [disabled]="deletingNow" (click)="cancelDeleteAccount()">Cancelar</button>
         <button class="btn-danger" [disabled]="deletingNow" (click)="confirmDeleteAccount()">
-          {{ deletingNow ? 'Excluindo...' : 'Excluir definitivamente' }}
+          @if (deletingNow) {Excluindo<span class="loading-dots" aria-hidden="true"></span>} @else { {{ 'Excluir definitivamente' }} }
         </button>
       </div>
     </div>

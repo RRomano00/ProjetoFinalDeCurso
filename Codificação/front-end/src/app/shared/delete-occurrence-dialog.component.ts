@@ -20,7 +20,7 @@ import { CopyProtocolComponent } from './copy-protocol.component';
            aria-labelledby="excluir-ocorrencia-titulo" (click)="$event.stopPropagation()">
         <h2 id="excluir-ocorrencia-titulo">Excluir ocorrência</h2>
 
-        <p *ngIf="loading">Carregando ocorrências agrupadas...</p>
+        <p *ngIf="loading">Carregando ocorrências agrupadas<span class="loading-dots" aria-hidden="true"></span></p>
 
         <ng-container *ngIf="!loading && group.length <= 1">
           <p>
@@ -69,7 +69,7 @@ import { CopyProtocolComponent } from './copy-protocol.component';
           <button type="button" class="btn-secondary" (click)="closed.emit([])" [disabled]="deleting">Cancelar</button>
           <button type="button" class="btn-danger" (click)="group.length > 1 ? confirming = true : confirm()"
                   [disabled]="loading || deleting || selected.size === 0">
-            {{ deleting ? 'Excluindo...' : selected.size > 1 ? 'Excluir ' + selected.size + ' ocorrências' : 'Excluir ocorrência' }}
+            @if (deleting) {Excluindo<span class="loading-dots" aria-hidden="true"></span>} @else { {{ selected.size > 1 ? 'Excluir ' + selected.size + ' ocorrências' : 'Excluir ocorrência' }} }
           </button>
         </div>
       </div>
@@ -88,7 +88,7 @@ import { CopyProtocolComponent } from './copy-protocol.component';
           <div class="modal-actions">
             <button type="button" class="btn-secondary" (click)="confirming = false" [disabled]="deleting">Voltar</button>
             <button type="button" class="btn-danger" (click)="confirm()" [disabled]="deleting">
-              {{ deleting ? 'Excluindo...' : 'Sim, excluir' }}
+              @if (deleting) {Excluindo<span class="loading-dots" aria-hidden="true"></span>} @else { {{ 'Sim, excluir' }} }
             </button>
           </div>
         </div>

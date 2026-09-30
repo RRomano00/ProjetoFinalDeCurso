@@ -28,7 +28,7 @@
     <button type="button" class="btn-toggle" (click)="clearFilters()" [disabled]="!hasFilters">Limpar</button>
   </div>
 
-  <div *ngIf="loading" class="loading-state">Carregando...</div>
+  <div *ngIf="loading" class="loading-state">Carregando<span class="loading-dots" aria-hidden="true"></span></div>
 
   <div class="table-card" *ngIf="!loading">
     <table class="user-table">
@@ -58,7 +58,7 @@
               </select>
               <button *ngIf="roleChanged(u)" type="button" class="btn-toggle"
                       [disabled]="savingRoleId === u.id" (click)="saveRole(u)">
-                {{ savingRoleId === u.id ? '...' : 'Salvar' }}
+                @if (savingRoleId === u.id) {<span class="loading-dots" aria-hidden="true"></span>} @else { {{ 'Salvar' }} }
               </button>
             </ng-container>
           </td>
@@ -69,11 +69,11 @@
           <td class="cell-actions">
             <button *ngIf="u.id !== myId" class="btn-toggle" [class.danger]="u.active"
                     [disabled]="togglingId === u.id" (click)="toggleActive(u)">
-              {{ togglingId === u.id ? '...' : (u.active ? 'Desativar' : 'Ativar') }}
+              @if (togglingId === u.id) {<span class="loading-dots" aria-hidden="true"></span>} @else { {{ (u.active ? 'Desativar' : 'Ativar') }} }
             </button>
             <button *ngIf="u.id !== myId && !u.active" class="btn-toggle danger"
                     [disabled]="deletingId === u.id" (click)="askRemove(u)">
-              {{ deletingId === u.id ? '...' : 'Excluir' }}
+              @if (deletingId === u.id) {<span class="loading-dots" aria-hidden="true"></span>} @else { {{ 'Excluir' }} }
             </button>
             <span *ngIf="u.id === myId" class="self-label">você</span>
           </td>
@@ -98,7 +98,7 @@
         <button type="button" class="btn-toggle" (click)="pendingDelete = null"
                 [disabled]="deletingId">Cancelar</button>
         <button type="button" class="btn-danger" (click)="confirmRemove()" [disabled]="deletingId">
-          {{ deletingId ? 'Excluindo...' : 'Excluir conta' }}
+          @if (deletingId) {Excluindo<span class="loading-dots" aria-hidden="true"></span>} @else { {{ 'Excluir conta' }} }
         </button>
       </div>
     </div>

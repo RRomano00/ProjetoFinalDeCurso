@@ -70,23 +70,26 @@ export class LocalityPreferenceService {
     }
   }
 
-  private tentativa(alta: boolean): Promise<GeolocationPosition | GeolocationPositionError> {
+  private tentativa(alta: boolean, timeout = 10000): Promise<GeolocationPosition | GeolocationPositionError> {
     return new Promise(resolve => {
       if (!navigator.geolocation) {
         resolve({ code: 2, message: 'navegador sem API de geolocalização' } as GeolocationPositionError);
         return;
       }
       navigator.geolocation.getCurrentPosition(resolve, resolve,
-        { timeout: 10000, maximumAge: 300000, enableHighAccuracy: alta });
+        { timeout, maximumAge: 300000, enableHighAccuracy: alta });
     });
   }
 
-  async position(): Promise<GeolocationPosition | null> {
-    let resultado = await this.tentativa(false);
+  /** `quick`: uma tentativa de até 5 s, para quem está esperando num popup (normal: até 2 × 10 s). */
+  async position(quick = false): Promise<GeolocationPosition | null> {
+    let resultado = await this.tentativa(false, quick ? 5000 : 10000);
     if ('coords' in resultado) return resultado;
 
-    resultado = await this.tentativa(true);
-    if ('coords' in resultado) return resultado;
+    if (!quick) {
+      resultado = await this.tentativa(true);
+      if ('coords' in resultado) return resultado;
+    }
 
     console.warn(`[localização] ${resultado.code} — ${resultado.message}`);
     const negada = resultado.code === 1;
@@ -98,8 +101,8 @@ export class LocalityPreferenceService {
     return null;
   }
 
-  async detect(): Promise<Municipality | null> {
-    const position = await this.position();
+  async detect(quick = false): Promise<Municipality | null> {
+    const position = await this.position(quick);
     if (!position) return null;
     return this.municipalityAt(position.coords.latitude, position.coords.longitude);
   }

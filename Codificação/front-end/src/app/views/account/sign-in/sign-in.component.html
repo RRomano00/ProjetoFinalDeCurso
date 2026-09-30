@@ -47,7 +47,7 @@
         </div>
 
         <button type="submit" [disabled]="loading" class="btn-primary btn-full">
-          {{ loading ? 'Aguarde...' : 'Entrar' }}
+          @if (loading) {Aguarde<span class="loading-dots" aria-hidden="true"></span>} @else { {{ 'Entrar' }} }
         </button>
 
         <button type="button" class="btn-anonymous btn-full" (click)="enterAnonymous()">
@@ -82,7 +82,7 @@
             <span class="btn-method-icon">✉️</span>
             <span class="btn-method-text">
               <strong>E-mail</strong>
-              <small>{{ loading && mfaMethod === 'EMAIL' ? 'Enviando o código...' : 'Enviaremos um código para o seu e-mail' }}</small>
+              <small>@if (loading && mfaMethod === 'EMAIL') {Enviando o código<span class="loading-dots" aria-hidden="true"></span>} @else { {{ 'Enviaremos um código para o seu e-mail' }} }</small>
             </span>
           </button>
         }
@@ -92,7 +92,7 @@
             <span class="btn-method-icon">💬</span>
             <span class="btn-method-text">
               <strong>SMS</strong>
-              <small>{{ loading && mfaMethod === 'SMS' ? 'Enviando o código...' : 'Enviaremos um código por SMS para o seu celular' }}</small>
+              <small>@if (loading && mfaMethod === 'SMS') {Enviando o código<span class="loading-dots" aria-hidden="true"></span>} @else { {{ 'Enviaremos um código por SMS para o seu celular' }} }</small>
             </span>
           </button>
         }
@@ -122,7 +122,7 @@
         </div>
 
         <button (click)="verifyMfa()" [disabled]="loading || totpCode.invalid" class="btn-primary btn-full">
-          {{ loading ? 'Verificando...' : 'Confirmar' }}
+          @if (loading) {Verificando<span class="loading-dots" aria-hidden="true"></span>} @else { {{ 'Confirmar' }} }
         </button>
 
         <button *ngIf="mfaMethod !== 'APP'"
@@ -137,55 +137,7 @@
   </div>
 
   @if (municipalityOpen) {
-    <div class="modal-overlay modal-overlay--blur">
-      <form class="modal-card municipality-card" role="dialog" aria-modal="true"
-            aria-labelledby="municipio-titulo" [formGroup]="municipalityForm" (ngSubmit)="confirmMunicipality()">
-        <h2 id="municipio-titulo">Qual é o seu município?</h2>
-        <p>O mapa e as ocorrências são mostrados para ele. Você pode trocar depois nos filtros.</p>
-
-        <button type="button" class="btn-anonymous btn-full" (click)="useMyLocation()" [disabled]="locating">
-          {{ locating ? 'Localizando...' : '📍 Usar minha localização' }}
-        </button>
-
-        <div class="field-row">
-          <div class="field-group field-uf">
-            <label for="visitor-state">UF</label>
-            <div class="input-wrapper">
-              <input type="text" id="visitor-state" formControlName="state" list="visitor-uf-options"
-                     placeholder="MG" maxlength="2" autocomplete="address-level1"
-                     autocapitalize="characters" spellcheck="false">
-            </div>
-            <datalist id="visitor-uf-options">
-              <option *ngFor="let u of units" [value]="u.uf">{{ u.name }}</option>
-            </datalist>
-          </div>
-          <div class="field-group field-city">
-            <label for="visitor-city">Município</label>
-            <div class="input-wrapper">
-              <input type="text" id="visitor-city" formControlName="city" list="visitor-city-options"
-                     [readOnly]="!cityOptions.ready" autocomplete="address-level2" spellcheck="false"
-                     [placeholder]="cityOptions.ready ? 'Comece a digitar' : 'Informe a UF primeiro'">
-            </div>
-            <datalist id="visitor-city-options">
-              <option *ngFor="let c of cityOptions.list" [value]="c"></option>
-            </datalist>
-          </div>
-        </div>
-        <span class="field-error" *ngIf="municipalityForm.controls.state.touched && municipalityForm.controls.state.invalid">
-          Informe a UF.
-        </span>
-        <span class="field-error" *ngIf="municipalityForm.controls.city.touched && municipalityForm.controls.city.hasError('required')">
-          Informe o município.
-        </span>
-        <span class="field-error" *ngIf="municipalityForm.controls.city.hasError('unknown')">
-          Município não encontrado nessa UF. Escolha um da lista.
-        </span>
-
-        <div class="modal-actions">
-          <button type="button" class="btn-link-back" (click)="municipalityOpen = false">Voltar</button>
-          <button type="submit" class="btn-primary">Entrar como anônimo</button>
-        </div>
-      </form>
-    </div>
+    <app-municipality-dialog [initial]="knownMunicipality" confirmLabel="Entrar como anônimo"
+                             (chosen)="onMunicipalityChosen($event)" (cancelled)="municipalityOpen = false" />
   }
 </div>

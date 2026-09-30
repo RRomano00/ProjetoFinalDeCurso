@@ -76,7 +76,7 @@
     <div class="new-department-actions">
       <button type="button" class="btn-secondary" (click)="closeForm()" [disabled]="saving">Cancelar</button>
       <button type="submit" class="btn-primary" [disabled]="saving">
-        {{ saving ? 'Salvando...' : (editingId == null ? 'Cadastrar departamento' : 'Salvar alterações') }}
+        @if (saving) {Salvando<span class="loading-dots" aria-hidden="true"></span>} @else { {{ (editingId == null ? 'Cadastrar departamento' : 'Salvar alterações') }} }
       </button>
     </div>
   </form>
@@ -93,7 +93,7 @@
     <button type="button" class="btn-secondary" (click)="clearFilters()" [disabled]="!hasFilters">Limpar</button>
   </div>
 
-  <div *ngIf="loading" class="loading-state">Carregando...</div>
+  <div *ngIf="loading" class="loading-state">Carregando<span class="loading-dots" aria-hidden="true"></span></div>
 
   <div class="table-card" *ngIf="!loading">
     <table class="department-table">
