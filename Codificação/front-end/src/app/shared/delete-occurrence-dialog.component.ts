@@ -146,7 +146,6 @@ export class DeleteOccurrenceDialogComponent implements OnInit {
       this.group = (await this.readService.getGroup(this.occurrence.id!))
         .filter(g => g.id != null && g.status !== 'FINALIZADA');
     } catch { this.group = []; }
-    // ponytail: um GET de histórico por ocorrência; grupos são pequenos (raio de 50 m).
     if (this.group.length > 1) {
       await Promise.all(this.group.map(async g => {
         try {

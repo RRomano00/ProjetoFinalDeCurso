@@ -131,7 +131,7 @@
 
       <div *ngIf="auth.isStaff() && groupSize > 1" class="detail-section">
         <h3>Ocorrências agrupadas ({{ groupSize }})</h3>
-        <p class="group-hint">Registros do mesmo problema num raio de 50 m, encadeados automaticamente.</p>
+        <p class="group-hint">Registros do mesmo problema num raio de 70 m, encadeados automaticamente.</p>
         <div class="group-item" *ngFor="let g of group">
           <a *ngIf="g.id !== occurrence.id" [routerLink]="['/occurrence/detail', g.id]"
              target="_blank" rel="noopener" class="group-protocol"

@@ -305,7 +305,7 @@ export class CreateOccurrenceComponent implements OnInit, AfterViewInit, OnDestr
       this.loading = false;
       if (res?.groupedWithProtocol) {
         this.toastr.info(
-          `Já havia um relato do mesmo problema a até 50 metros (${res.groupedWithProtocol}). `
+          `Já havia um relato do mesmo problema a até 70 metros (${res.groupedWithProtocol}). `
           + 'Sua ocorrência foi agrupada',
           'Ocorrência agrupada', { timeOut: 10000 });
       }
