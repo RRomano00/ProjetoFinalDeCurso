@@ -86,8 +86,9 @@
            aria-label="Pesquisar departamento por nome ou e-mail"
            placeholder="Pesquisar por nome ou e-mail" />
     <select [(ngModel)]="filterCity" class="filter-select" aria-label="Município">
-      <option value="">Todos os municípios</option>
-      <option *ngFor="let c of filterCityOptions" [value]="c">{{ c }}</option>
+      <!-- Um município só: sem "Todos"; a opção segue o filtro atual ("" ou ele), que dá o mesmo resultado. -->
+      <option *ngIf="filterCityOptions.length !== 1" value="">Todos os municípios</option>
+      <option *ngFor="let c of filterCityOptions" [value]="filterCityOptions.length === 1 ? filterCity : c">{{ c }}</option>
     </select>
     <button type="button" class="btn-secondary" (click)="clearFilters()" [disabled]="!hasFilters">Limpar</button>
   </div>

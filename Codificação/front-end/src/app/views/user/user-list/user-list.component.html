@@ -16,8 +16,9 @@
       <option *ngFor="let r of roleOptions" [value]="r">{{ roleLabel(r) }}</option>
     </select>
     <select [(ngModel)]="filterCity" class="filter-select" aria-label="Município">
-      <option value="">Todos os municípios</option>
-      <option *ngFor="let c of cityOptions" [value]="c">{{ c }}</option>
+      <!-- Um município só: sem "Todos"; a opção segue o filtro atual ("" ou ele), que dá o mesmo resultado. -->
+      <option *ngIf="cityOptions.length !== 1" value="">Todos os municípios</option>
+      <option *ngFor="let c of cityOptions" [value]="cityOptions.length === 1 ? filterCity : c">{{ c }}</option>
     </select>
     <select [(ngModel)]="filterActive" class="filter-select" aria-label="Situação da conta">
       <option value="">Ativas e inativas</option>

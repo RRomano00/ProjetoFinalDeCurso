@@ -21,8 +21,9 @@
 
       <div class="map-filters">
         <select class="select-city" [(ngModel)]="filterCity" (ngModelChange)="onCityChange()">
-          <option value="">Todos os municípios</option>
-          <option *ngFor="let m of municipalityOptions" [value]="cityKey(m.city)">{{ municipalityLabel(m) }}</option>
+          <!-- Um município só: sem "Todos"; a opção segue o filtro atual ("" ou ele), que dá o mesmo resultado. -->
+          <option *ngIf="municipalityOptions.length !== 1" value="">Todos os municípios</option>
+          <option *ngFor="let m of municipalityOptions" [value]="municipalityOptions.length === 1 ? filterCity : cityKey(m.city)">{{ municipalityLabel(m) }}</option>
         </select>
         <select [(ngModel)]="mapFilterNeighborhood" (ngModelChange)="refreshMarkers()">
           <option value="">Todos os bairros</option>

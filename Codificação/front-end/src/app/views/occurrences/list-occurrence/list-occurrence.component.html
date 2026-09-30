@@ -13,8 +13,9 @@
            placeholder="Pesquisar ocorrência (protocolo ou título)" class="filter-input" />
     <select [(ngModel)]="filterCity" (ngModelChange)="onCityChange()" class="filter-select filter-select--city"
             aria-label="Município em exibição">
-      <option value="">Todos os municípios</option>
-      <option *ngFor="let m of municipalityOptions" [value]="cityKey(m.city)">{{ municipalityLabel(m) }}</option>
+      <!-- Um município só: sem "Todos"; a opção segue o filtro atual ("" ou ele), que dá o mesmo resultado. -->
+      <option *ngIf="municipalityOptions.length !== 1" value="">Todos os municípios</option>
+      <option *ngFor="let m of municipalityOptions" [value]="municipalityOptions.length === 1 ? filterCity : cityKey(m.city)">{{ municipalityLabel(m) }}</option>
     </select>
     <select [(ngModel)]="filterStatus" (ngModelChange)="applyFilters()" class="filter-select">
       <option value="">Todos os status</option>
