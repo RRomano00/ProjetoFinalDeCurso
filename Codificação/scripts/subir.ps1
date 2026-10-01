@@ -106,7 +106,9 @@ try {
     Sucesso 'backend ja esta no ar na 8080'
   } else {
     Write-Host '== subindo backend (mvnw spring-boot:run)'
-    $b = Bg 'backend' (Join-Path $Raiz 'backend\mvnw.cmd') @('-q', 'spring-boot:run') (Join-Path $Raiz 'backend')
+    # reset-on-startup: zera a verificacao em duas etapas de todas as contas (cada PC tem o seu banco);
+    # entre aspas porque o cmd do mvnw.cmd separa argumentos no '='
+    $b = Bg 'backend' (Join-Path $Raiz 'backend\mvnw.cmd') @('-q', 'spring-boot:run', '"-Dspring-boot.run.arguments=--app.mfa.reset-on-startup=true"') (Join-Path $Raiz 'backend')
     Espera 'backend' 8080 180 $b
     Sucesso 'backend no ar na 8080'
   }

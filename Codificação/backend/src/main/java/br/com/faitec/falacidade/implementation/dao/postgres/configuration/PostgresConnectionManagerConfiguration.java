@@ -40,6 +40,11 @@ public class PostgresConnectionManagerConfiguration {
     @Autowired
     private ResourceFileService resourceFileService;
 
+    // Ambiente de demonstração: cada computador tem o seu banco, e o autenticador do celular
+    // fica com o segredo do último em que foi configurado. Os scripts subir.sh/subir.ps1 ligam.
+    @Value("${app.mfa.reset-on-startup:false}")
+    private boolean resetMfaOnStartup;
+
     private HikariDataSource hikariDataSource;
 
     @Bean
@@ -120,9 +125,23 @@ public class PostgresConnectionManagerConfiguration {
                 ps.execute();
                 log.info("Dados iniciais inseridos (ON CONFLICT DO NOTHING).");
             }
+
+            int reset = resetMfa(connection, resetMfaOnStartup);
+            if (resetMfaOnStartup) log.warning("app.mfa.reset-on-startup=true: verificação em duas etapas "
+                + "desligada em " + reset + " conta(s). Cada usuário pode ativá-la de novo no Meu Perfil.");
         }
 
         return true;
+    }
+
+    /** Desliga todos os métodos da verificação em duas etapas de todas as contas; devolve quantas mudaram. */
+    public static int resetMfa(Connection connection, boolean enabled) throws SQLException {
+        if (!enabled) return 0;
+        try (PreparedStatement ps = connection.prepareStatement(
+                "UPDATE \"user\" SET mfa_enabled=false, mfa_setup_done=false, mfa_secret=NULL, "
+              + "mfa_email_enabled=false, mfa_sms_phone=NULL")) {
+            return ps.executeUpdate();
+        }
     }
 
     private String resolveSeedPassword(String sql) {
