@@ -95,7 +95,8 @@ if porta_ativa 8080; then
   sucesso "backend ja esta no ar na 8080"
 else
   echo "== subindo backend (mvnw spring-boot:run)"
-  bg backend bash -c 'cd backend && ./mvnw -q spring-boot:run'
+  # reset-on-startup: zera a verificação em duas etapas de todas as contas (cada PC tem o seu banco)
+  bg backend bash -c 'cd backend && ./mvnw -q spring-boot:run -Dspring-boot.run.arguments=--app.mfa.reset-on-startup=true'
   espera backend 8080 180
   sucesso "backend no ar na 8080"
 fi
