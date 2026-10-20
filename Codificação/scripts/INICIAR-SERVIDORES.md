@@ -4,6 +4,14 @@ Guia rápido para subir back-end + front-end, tanto no PC quanto no celular.
 
 ---
 
+## Antes da primeira subida
+
+- `backend/src/main/resources/application.properties`: troque cada `ALTERE_AQUI` (banco, Cloudinary, SMTP, SMS, JWT) — só na cópia local.
+- `export FALACIDADE_SEED_PASSWORD='...'` (PowerShell: `$env:FALACIDADE_SEED_PASSWORD='...'`) — senha das contas de demonstração; sem ela, vale a padrão do projeto.
+- Equipe (funcionário, administrador, Super Admin) sempre entra com código no e-mail no 1º acesso.
+
+---
+
 ## Atalho: um comando só (Linux/macOS/WSL)
 
 ```bash

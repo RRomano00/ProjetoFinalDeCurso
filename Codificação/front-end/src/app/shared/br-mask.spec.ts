@@ -1,5 +1,6 @@
 import { FormControl } from '@angular/forms';
-import { maskCep, maskPhone, maskUf, cepValidator, mobileValidator, personNameValidator } from './br-mask';
+import { maskCep, maskPhone, maskUf, cepValidator, mobileValidator, personNameValidator,
+         PASSWORD_MIN_LENGTH, PASSWORD_PATTERN } from './br-mask';
 
 describe('máscaras brasileiras', () => {
   it('CEP: só dígitos, no máximo 8, hífen automático', () => {
@@ -44,5 +45,12 @@ describe('máscaras brasileiras', () => {
     expect(personNameValidator(new FormControl("Maria D'Ávila Souza-Lima Jr."))).toBeNull();
     expect(personNameValidator(new FormControl('João 2'))).toEqual({ personName: true });
     expect(personNameValidator(new FormControl('@@'))).toEqual({ personName: true });
+  });
+
+  // Os mesmos casos de PasswordPolicyTest.java: front e back não podem divergir.
+  it('senha: mesma regra do backend (letra, número e qualquer outro caractere)', () => {
+    const valida = (v: string) => v.length >= PASSWORD_MIN_LENGTH && PASSWORD_PATTERN.test(v);
+    ['Senha@123', 'Senha_123', 'Senha 123', 'Éssenha1!'].forEach(v => expect(valida(v)).withContext(v).toBeTrue());
+    ['senha123', 'Senha@ab', '1234567@', 'Se@1', ''].forEach(v => expect(valida(v)).withContext(v).toBeFalse());
   });
 });

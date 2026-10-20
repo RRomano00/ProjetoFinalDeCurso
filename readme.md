@@ -64,6 +64,7 @@ O **Fala, Cidade!** é uma solução digital desenvolvida para estreitar a comun
 2. Configurar o Backend:
  * Acesse a pasta `Codificação/backend`.
  * Em `src/main/resources/application.properties`, troque cada `ALTERE_AQUI` pelas credenciais do banco, do Cloudinary, do SMTP, do gateway de SMS (`app.sms.*`) e pelo segredo do JWT (`app.jwt.secret`). Os valores reais ficam só na sua cópia local — não os commite.
+ * Defina `FALACIDADE_SEED_PASSWORD` antes da primeira subida: é a senha das contas de demonstração (sem ela, vale a padrão do projeto).
  * Execute o projeto via Maven ou sua IDE de preferência.
  * Opcional: `app.frontend-url` — endereço do app nos links de e-mail quando a requisição não informa (padrão `http://localhost:4173`).
 

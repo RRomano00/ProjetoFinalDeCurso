@@ -6,6 +6,7 @@ import { PasswordResetService } from '../../../services/security/password-reset.
 import { ToastrService } from 'ngx-toastr';
 import { PasswordRevealDirective } from '../../../shared/password-reveal.directive';
 import { ClipboardCodeDirective } from '../../../shared/clipboard-code.directive';
+import { PASSWORD_MIN_LENGTH, PASSWORD_PATTERN } from '../../../shared/br-mask';
 
 type ResetStep = 'request' | 'code' | 'password';
 
@@ -23,8 +24,8 @@ export class RecoverPasswordComponent {
 
   token = new FormControl('', [Validators.required]);
   newPassword = new FormControl('', [
-    Validators.required, Validators.minLength(8),
-    Validators.pattern(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])/)
+    Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH),
+    Validators.pattern(PASSWORD_PATTERN)
   ]);
   confirmPassword = new FormControl('', [Validators.required]);
 

@@ -9,14 +9,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.sql.DataSource;
 
 public class UserPostgresDao implements UserDao {
 
     private static final Logger logger = Logger.getLogger(UserPostgresDao.class.getName());
-    private final Connection connection;
+    private final DataSource dataSource;
 
-    public UserPostgresDao(Connection connection) {
-        this.connection = connection;
+    public UserPostgresDao(DataSource dataSource) {
+        this.dataSource = dataSource;
     }
 
     @Override
@@ -26,42 +27,35 @@ public class UserPostgresDao implements UserDao {
             "(password, fullname, email, date_of_birth, phone_number, " +
             " street, neighborhood, number, cep, city, state, role, is_active, accepts_terms, mfa_email_enabled) " +
             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        try {
-            connection.setAutoCommit(false);
-            try (PreparedStatement ps =
-                     connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-                ps.setString(1, entity.getPassword());
-                ps.setString(2, entity.getFullname());
-                ps.setString(3, entity.getEmail());
-                if (entity.getDateOfBirth() != null)
-                    ps.setDate(4, Date.valueOf(entity.getDateOfBirth()));
-                else ps.setNull(4, Types.DATE);
-                ps.setString(5, entity.getPhoneNumber());
-                ps.setString(6, entity.getStreet());
-                ps.setString(7, entity.getNeighborhood());
-                ps.setString(8, entity.getNumber());
-                ps.setString(9, entity.getCep());
-                ps.setString(10, entity.getCity());
-                ps.setString(11, entity.getState());
-                ps.setString(12, entity.getRole().name());
-                ps.setBoolean(13, entity.isActive());
-                ps.setBoolean(14, entity.isAcceptsTerms());
-                ps.setBoolean(15, entity.isMfaEmailEnabled());
-                ps.execute();
-                ResultSet keys = ps.getGeneratedKeys();
-                int id = 0;
-                if (keys.next()) id = keys.getInt(1);
-                connection.commit();
-                return id;
-            }
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setString(1, entity.getPassword());
+            ps.setString(2, entity.getFullname());
+            ps.setString(3, entity.getEmail());
+            if (entity.getDateOfBirth() != null)
+                ps.setDate(4, Date.valueOf(entity.getDateOfBirth()));
+            else ps.setNull(4, Types.DATE);
+            ps.setString(5, entity.getPhoneNumber());
+            ps.setString(6, entity.getStreet());
+            ps.setString(7, entity.getNeighborhood());
+            ps.setString(8, entity.getNumber());
+            ps.setString(9, entity.getCep());
+            ps.setString(10, entity.getCity());
+            ps.setString(11, entity.getState());
+            ps.setString(12, entity.getRole().name());
+            ps.setBoolean(13, entity.isActive());
+            ps.setBoolean(14, entity.isAcceptsTerms());
+            ps.setBoolean(15, entity.isMfaEmailEnabled());
+            ps.execute();
+            ResultSet keys = ps.getGeneratedKeys();
+            int id = 0;
+            if (keys.next()) id = keys.getInt(1);
+            return id;
         } catch (SQLException e) {
-            rollback();
             if (isPhoneTaken(e)) throw new DuplicateFieldException("phoneNumber", PHONE_TAKEN, e);
             if ("23505".equals(e.getSQLState()))
                 throw new DuplicateFieldException("email", "Este e-mail já está cadastrado.", e);
             throw new RuntimeException("Erro ao inserir usuário: " + e.getMessage(), e);
-        } finally {
-            restoreAutoCommit();
         }
     }
 
@@ -80,7 +74,8 @@ public class UserPostgresDao implements UserDao {
     public List<UserModel> readall() {
         List<UserModel> users = new ArrayList<>();
         String sql = "SELECT * FROM \"user\" WHERE is_active = true ORDER BY fullname";
-        try (PreparedStatement ps = connection.prepareStatement(sql);
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) users.add(mapRow(rs));
         } catch (SQLException e) {
@@ -93,7 +88,8 @@ public class UserPostgresDao implements UserDao {
     public List<UserModel> readAllUsers() {
         List<UserModel> users = new ArrayList<>();
         String sql = "SELECT * FROM \"user\" ORDER BY fullname";
-        try (PreparedStatement ps = connection.prepareStatement(sql);
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) users.add(mapRow(rs));
         } catch (SQLException e) {
@@ -105,7 +101,8 @@ public class UserPostgresDao implements UserDao {
     @Override
     public void setActive(int userId, boolean active) {
         String sql = "UPDATE \"user\" SET is_active=?, updated_at=NOW() WHERE id=?";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setBoolean(1, active);
             ps.setInt(2, userId);
             ps.execute();
@@ -119,7 +116,8 @@ public class UserPostgresDao implements UserDao {
         String sql =
             "UPDATE \"user\" SET fullname=?, phone_number=?, street=?, " +
             "neighborhood=?, number=?, cep=?, city=?, state=?, updated_at=NOW() WHERE id=?";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, entity.getFullname());
             ps.setString(2, entity.getPhoneNumber());
             ps.setString(3, entity.getStreet());
@@ -156,7 +154,8 @@ public class UserPostgresDao implements UserDao {
         String key = digits.substring(Math.max(0, digits.length() - 11));
         String sql = "SELECT 1 FROM \"user\" WHERE id <> ? AND (" + LAST_11.formatted("phone_number")
                    + " = ? OR " + LAST_11.formatted("mfa_sms_phone") + " = ?) LIMIT 1";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, exceptUserId);
             ps.setString(2, key);
             ps.setString(3, key);
@@ -171,7 +170,8 @@ public class UserPostgresDao implements UserDao {
     @Override
     public void setRole(int userId, UserModel.UserRole role) {
         String sql = "UPDATE \"user\" SET role=?, updated_at=NOW() WHERE id=?";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, role.name());
             ps.setInt(2, userId);
             ps.execute();
@@ -188,7 +188,8 @@ public class UserPostgresDao implements UserDao {
     @Override
     public boolean updatePassword(int id, String encodedPassword) {
         String sql = "UPDATE \"user\" SET password=?, updated_at=NOW() WHERE id=?";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, encodedPassword);
             ps.setInt(2, id);
             return ps.executeUpdate() > 0;
@@ -200,7 +201,8 @@ public class UserPostgresDao implements UserDao {
     @Override
     public void updateMfaSecret(int userId, String secret) {
         String sql = "UPDATE \"user\" SET mfa_secret=?, mfa_setup_done=false, updated_at=NOW() WHERE id=?";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, secret);
             ps.setInt(2, userId);
             ps.execute();
@@ -212,7 +214,8 @@ public class UserPostgresDao implements UserDao {
     @Override
     public void enableMfa(int userId) {
         String sql = "UPDATE \"user\" SET mfa_enabled=true, mfa_setup_done=true, updated_at=NOW() WHERE id=?";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, userId);
             ps.execute();
         } catch (SQLException e) {
@@ -223,7 +226,8 @@ public class UserPostgresDao implements UserDao {
     @Override
     public void disableMfa(int userId) {
         String sql = "UPDATE \"user\" SET mfa_enabled=false, mfa_setup_done=false, mfa_secret=NULL, updated_at=NOW() WHERE id=?";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, userId);
             ps.execute();
         } catch (SQLException e) {
@@ -234,7 +238,8 @@ public class UserPostgresDao implements UserDao {
     @Override
     public void setEmailMfa(int userId, boolean enabled) {
         String sql = "UPDATE \"user\" SET mfa_email_enabled=?, updated_at=NOW() WHERE id=?";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setBoolean(1, enabled);
             ps.setInt(2, userId);
             ps.execute();
@@ -246,7 +251,8 @@ public class UserPostgresDao implements UserDao {
     @Override
     public void setSmsMfa(int userId, String phone) {
         String sql = "UPDATE \"user\" SET mfa_sms_phone=?, updated_at=NOW() WHERE id=?";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
             if (phone != null) ps.setString(1, phone); else ps.setNull(1, Types.VARCHAR);
             ps.setInt(2, userId);
             ps.execute();
@@ -263,7 +269,8 @@ public class UserPostgresDao implements UserDao {
         String sql = "SELECT 1 FROM \"user\" WHERE is_active = true " +
                      "AND role IN ('EMPLOYEE','ADMINISTRATOR') AND lower(city) = lower(?) " +
                      "AND (? = '' OR state IS NULL OR upper(state) = upper(?)) LIMIT 1";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
             String uf = state == null ? "" : state.trim();
             ps.setString(1, city.trim());
             ps.setString(2, uf);
@@ -280,7 +287,8 @@ public class UserPostgresDao implements UserDao {
     public void log(String action, UserModel actor, Integer targetId, UserModel target) {
         String sql = "INSERT INTO user_log (action, actor_id, actor_role, target_id, target_role, city, state) " +
                      "VALUES (?, ?, ?, ?, ?, ?, ?)";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, action);
             ps.setInt(2, actor.getId());
             ps.setString(3, actor.getRole().name());
@@ -300,7 +308,8 @@ public class UserPostgresDao implements UserDao {
     public void logOccurrenceDeletion(UserModel actor, String protocol, String title, String city, String state) {
         String sql = "INSERT INTO user_log (action, actor_id, actor_role, occurrence_protocol, occurrence_title, city, state) "
                    + "VALUES ('DELETE', ?, ?, ?, ?, ?, ?)";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, actor.getId());
             ps.setString(2, actor.getRole().name());
             ps.setString(3, protocol);
@@ -322,7 +331,8 @@ public class UserPostgresDao implements UserDao {
                      "LEFT JOIN \"user\" t ON t.id = l.target_id " +
                      "ORDER BY l.created_at DESC, l.id DESC";
         List<java.util.Map<String, Object>> rows = new ArrayList<>();
-        try (PreparedStatement ps = connection.prepareStatement(sql);
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 java.util.Map<String, Object> r = new java.util.LinkedHashMap<>();
@@ -348,7 +358,8 @@ public class UserPostgresDao implements UserDao {
     }
 
     private UserModel queryOne(String sql, Object param) {
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
             if (param instanceof Integer i) ps.setInt(1, i);
             else ps.setString(1, param.toString());
             ResultSet rs = ps.executeQuery();
@@ -360,7 +371,8 @@ public class UserPostgresDao implements UserDao {
     }
 
     private void execute(String sql, int id) {
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, id);
             ps.execute();
         } catch (SQLException e) {
@@ -401,13 +413,5 @@ public class UserPostgresDao implements UserDao {
         u.setMfaSecret(secret);
 
         return u;
-    }
-
-    private void restoreAutoCommit() {
-        try { connection.setAutoCommit(true); } catch (SQLException ignored) {}
-    }
-
-    private void rollback() {
-        try { connection.rollback(); } catch (SQLException ignored) {}
     }
 }

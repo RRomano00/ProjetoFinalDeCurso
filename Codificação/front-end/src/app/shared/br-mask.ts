@@ -42,3 +42,7 @@ export function personNameValidator(c: AbstractControl): ValidationErrors | null
   const v = (c.value || '').trim();
   return !v || /^\p{L}[\p{L}\p{M} '’.-]*$/u.test(v) ? null : { personName: true };
 }
+
+/** Mesma regra do backend (PasswordPolicy.java): letra, número e qualquer outro caractere. */
+export const PASSWORD_MIN_LENGTH = 8;
+export const PASSWORD_PATTERN = /^(?=.*\p{L})(?=.*\d)(?=.*[^\p{L}\d])/u;

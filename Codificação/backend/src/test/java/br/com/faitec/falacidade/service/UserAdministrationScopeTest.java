@@ -420,4 +420,73 @@ class UserAdministrationScopeTest {
             verify(userService).log("DELETE", admin, null, alvo);
         }
     }
+
+    @Nested
+    @DisplayName("Leitura dos dados pessoais de uma conta")
+    class Leitura {
+
+        private UserModel cidadao(int id, String email) {
+            UserModel u = user(id, email, UserModel.UserRole.CITIZEN, "Santa Rita do Sapucaí", "MG");
+            u.setPhoneNumber("35999990000"); u.setStreet("Rua Secreta");
+            return u;
+        }
+
+        @Test
+        @DisplayName("cidadão não lê os dados de outra conta")
+        void citizenCannotReadOthers() {
+            when(userService.findByEmail("a@email.com")).thenReturn(cidadao(5, "a@email.com"));
+            when(userService.findById(6)).thenReturn(cidadao(6, "b@email.com"));
+
+            assertThat(sut.getById(6, auth("a@email.com")).getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        }
+
+        @Test
+        @DisplayName("titular lê os próprios dados, sem senha nem segredo do 2FA")
+        void ownerReadsOwnData() {
+            UserModel eu = cidadao(5, "a@email.com");
+            eu.setPassword("$2a$HASH"); eu.setMfaSecret("SEGREDO");
+            when(userService.findByEmail("a@email.com")).thenReturn(eu);
+
+            ResponseEntity<UserModel> r = sut.getById(5, auth("a@email.com"));
+
+            assertThat(r.getStatusCode()).isEqualTo(HttpStatus.OK);
+            assertThat(r.getBody().getStreet()).isEqualTo("Rua Secreta");
+            assertThat(r.getBody().getPassword()).isNull();
+            assertThat(r.getBody().getMfaSecret()).isNull();
+        }
+
+        @Test
+        @DisplayName("administrador lê as contas do seu município")
+        void adminReadsOwnMunicipality() {
+            when(userService.findByEmail("admin.sr@falacidade.com")).thenReturn(adminSantaRita());
+            when(userService.findById(6)).thenReturn(cidadao(6, "b@email.com"));
+
+            assertThat(sut.getById(6, auth("admin.sr@falacidade.com")).getStatusCode()).isEqualTo(HttpStatus.OK);
+        }
+
+        @Test
+        @DisplayName("sem sessão, nada é lido")
+        void anonymousIsUnauthorized() {
+            assertThat(sut.getById(6, null).getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+            verify(userService, never()).findById(anyInt());
+        }
+    }
+
+    @Nested
+    @DisplayName("Exclusão da própria conta")
+    class ExclusaoPropria {
+
+        @Test
+        @DisplayName("titular não exclui a si mesmo pela rota da administração, que não pede o segundo fator")
+        void ownerCannotBypassMfaRoute() {
+            UserModel eu = user(5, "a@email.com", UserModel.UserRole.CITIZEN, null, null);
+            eu.setMfaEmailEnabled(true);
+            when(userService.findByEmail("a@email.com")).thenReturn(eu);
+
+            ResponseEntity<Void> r = sut.delete(5, auth("a@email.com"));
+
+            assertThat(r.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+            verify(userService, never()).delete(anyInt());
+        }
+    }
 }

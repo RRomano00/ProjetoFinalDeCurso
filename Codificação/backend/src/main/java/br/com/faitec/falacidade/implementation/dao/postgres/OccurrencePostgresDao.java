@@ -10,12 +10,13 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.security.SecureRandom;
 import java.util.List;
+import javax.sql.DataSource;
 
 public class OccurrencePostgresDao implements OccurrenceDao {
 
-    private final Connection connection;
+    private final DataSource dataSource;
 
-    public OccurrencePostgresDao(Connection connection) { this.connection = connection; }
+    public OccurrencePostgresDao(DataSource dataSource) { this.dataSource = dataSource; }
 
     private static final String SELECT_FIELDS =
         "SELECT o.*, u.fullname, u.email AS user_email, " +
@@ -27,25 +28,23 @@ public class OccurrencePostgresDao implements OccurrenceDao {
     private static final int    SORTEADOS = 5;
     private static final SecureRandom SORTE = new SecureRandom();
 
-    private String generateProtocol() {
+    private String generateProtocol(Connection connection) throws SQLException {
         String ano = String.format("%02d", java.time.Year.now().getValue() % 100);
         for (int tentativa = 0; tentativa < 10; tentativa++) {
             StringBuilder sorteio = new StringBuilder(SORTEADOS);
             for (int i = 0; i < SORTEADOS; i++)
                 sorteio.append(ALFABETO.charAt(SORTE.nextInt(ALFABETO.length())));
             String protocolo = "FC-" + ano + "-" + sorteio;
-            if (!protocoloEmUso(protocolo)) return protocolo;
+            if (!protocoloEmUso(connection, protocolo)) return protocolo;
         }
         throw new IllegalStateException("Não foi possível sortear um protocolo livre");
     }
 
-    private boolean protocoloEmUso(String protocolo) {
+    private boolean protocoloEmUso(Connection connection, String protocolo) throws SQLException {
         try (PreparedStatement ps = connection.prepareStatement(
                  "SELECT 1 FROM occurrence WHERE protocol_number = ?")) {
             ps.setString(1, protocolo);
             try (ResultSet rs = ps.executeQuery()) { return rs.next(); }
-        } catch (SQLException e) {
-            throw new RuntimeException("Falha ao conferir o protocolo", e);
         }
     }
 
@@ -59,7 +58,9 @@ public class OccurrencePostgresDao implements OccurrenceDao {
             " type,status,priority,is_anonymous,anonymous_tracking_code_hash,user_id,ip_address,group_id," +
             " state)" +
             " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
-        try {
+        // Uma conexão do pool por chamada; ao fechar, o Hikari desfaz o que não
+        // foi confirmado e devolve a conexão com autoCommit ligado.
+        try (Connection connection = dataSource.getConnection()) {
             connection.setAutoCommit(false);
             Integer userId = null;
             if (entity.getEmail() != null && !entity.getEmail().isBlank()
@@ -74,7 +75,7 @@ public class OccurrencePostgresDao implements OccurrenceDao {
             if (entity.getPriority() == null && entity.getType() != null)
                 entity.setPriority(Occurrence.Priority.fromType(entity.getType()));
 
-            String protocol = generateProtocol();
+            String protocol = generateProtocol(connection);
             try (PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
                 ps.setString(1, protocol);
                 ps.setString(2, entity.getTitle());
@@ -104,16 +105,15 @@ public class OccurrencePostgresDao implements OccurrenceDao {
                 ps.execute();
                 ResultSet keys = ps.getGeneratedKeys();
                 int id = keys.next() ? keys.getInt(1) : 0;
-                insertMedia(id, entity.getMedia());
+                insertMedia(connection, id, entity.getMedia());
                 entity.setProtocolNumber(protocol);
                 connection.commit();
                 return id;
             }
-        } catch (SQLException e) { rollback(); throw new RuntimeException("Erro ao inserir ocorrência", e); }
-        finally { restoreAutoCommit(); }
+        } catch (SQLException e) { throw new RuntimeException("Erro ao inserir ocorrência", e); }
     }
 
-    private void insertMedia(int occurrenceId, List<OccurrenceMedia> media) throws SQLException {
+    private void insertMedia(Connection connection, int occurrenceId, List<OccurrenceMedia> media) throws SQLException {
         if (media == null || media.isEmpty()) return;
         String sql = "INSERT INTO occurrence_media(occurrence_id, url, cloudinary_public_id, image_blurred) VALUES(?,?,?,?)";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
@@ -144,7 +144,8 @@ public class OccurrencePostgresDao implements OccurrenceDao {
                    + "UNION SELECT attachment_public_id FROM occurrence_history "
                    + "WHERE occurrence_id=? AND attachment_public_id IS NOT NULL";
         List<String> ids = new ArrayList<>();
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, id);
             ps.setInt(2, id);
             ps.setInt(3, id);
@@ -156,7 +157,8 @@ public class OccurrencePostgresDao implements OccurrenceDao {
 
     @Override
     public void clearMedia(int id) {
-        try (PreparedStatement fotos = connection.prepareStatement("DELETE FROM occurrence_media WHERE occurrence_id=?");
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement fotos = connection.prepareStatement("DELETE FROM occurrence_media WHERE occurrence_id=?");
              PreparedStatement principal = connection.prepareStatement(
                  "UPDATE occurrence SET url_media=NULL, cloudinary_public_id=NULL, updated_at=NOW() WHERE id=?");
              PreparedStatement anexos = connection.prepareStatement(
@@ -173,7 +175,8 @@ public class OccurrencePostgresDao implements OccurrenceDao {
     private List<OccurrenceMedia> readMedia(int occurrenceId) {
         List<OccurrenceMedia> list = new ArrayList<>();
         String sql = "SELECT url, cloudinary_public_id, image_blurred FROM occurrence_media WHERE occurrence_id=? ORDER BY id";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, occurrenceId);
             ResultSet rs = ps.executeQuery();
             while (rs.next())
@@ -189,7 +192,8 @@ public class OccurrencePostgresDao implements OccurrenceDao {
         String sql = SELECT_FIELDS +
                      "LEFT JOIN \"user\" u ON o.user_id=u.id " +
                      "WHERE o.id=? OR o.group_id=? ORDER BY o.created_at";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, rootId);
             ps.setInt(2, rootId);
             ResultSet rs = ps.executeQuery();
@@ -206,7 +210,8 @@ public class OccurrencePostgresDao implements OccurrenceDao {
                      "FROM occurrence_history h LEFT JOIN \"user\" u ON h.changed_by=u.id " +
                      "LEFT JOIN department d ON h.department_id=d.id " +
                      "WHERE h.occurrence_id=? ORDER BY h.changed_at DESC";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, occurrenceId);
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
@@ -235,7 +240,8 @@ public class OccurrencePostgresDao implements OccurrenceDao {
         String sql = "INSERT INTO occurrence_history(occurrence_id,changed_by,old_status,new_status,observation," +
                      "department_id,kind,attachment_url,attachment_public_id) " +
                      "SELECT o.id,NULL,o.status,o.status,?,?,'COMPLETION_REQUEST',?,? FROM occurrence o WHERE o.id=?";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, message);
             ps.setInt(2, departmentId);
             ps.setString(3, attachmentUrl);
@@ -280,7 +286,8 @@ public class OccurrencePostgresDao implements OccurrenceDao {
                       "WHERE o.status NOT IN ('CONCLUIDA','INDEFERIDA','FINALIZADA') AND o.type=? " +
                       "AND o.latitude BETWEEN ? AND ? AND o.longitude BETWEEN ? AND ?";
         List<GetOccurrenceDto> list = new ArrayList<>();
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, type);
             ps.setDouble(2, lat - dLat); ps.setDouble(3, lat + dLat);
             ps.setDouble(4, lon - dLon); ps.setDouble(5, lon + dLon);
@@ -295,7 +302,7 @@ public class OccurrencePostgresDao implements OccurrenceDao {
 
     @Override public void updateStatus(int id, String newStatus, int changedBy, String obs,
                                        Integer departmentId) {
-        try {
+        try (Connection connection = dataSource.getConnection()) {
             connection.setAutoCommit(false);
             String old = null;
             try (PreparedStatement ps = connection.prepareStatement("SELECT status FROM occurrence WHERE id=?")) {
@@ -315,19 +322,20 @@ public class OccurrencePostgresDao implements OccurrenceDao {
                 ps.execute();
             }
             connection.commit();
-        } catch (SQLException e) { rollback(); throw new RuntimeException("Erro ao atualizar status", e); }
-        finally { restoreAutoCommit(); }
+        } catch (SQLException e) { throw new RuntimeException("Erro ao atualizar status", e); }
     }
 
     private void simpleUpdate(int id, String status) {
-        try (PreparedStatement ps = connection.prepareStatement(
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(
                 "UPDATE occurrence SET status=?,updated_at=NOW() WHERE id=?")) {
             ps.setString(1, status); ps.setInt(2, id); ps.execute();
         } catch (SQLException e) { throw new RuntimeException("Erro ao atualizar status", e); }
     }
 
     private GetOccurrenceDto queryOne(String sql, Object param) {
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
             if (param instanceof Integer i) ps.setInt(1, i); else ps.setString(1, param.toString());
             ResultSet rs = ps.executeQuery();
             return rs.next() ? mapRow(rs) : null;
@@ -336,7 +344,8 @@ public class OccurrencePostgresDao implements OccurrenceDao {
 
     private List<GetOccurrenceDto> queryList(String sql) {
         List<GetOccurrenceDto> list = new ArrayList<>();
-        try (PreparedStatement ps = connection.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
             while (rs.next()) list.add(mapRow(rs));
         } catch (SQLException e) { throw new RuntimeException("Erro ao listar ocorrências", e); }
         return list;
@@ -378,7 +387,8 @@ public class OccurrencePostgresDao implements OccurrenceDao {
         String sql = SELECT_FIELDS +
                      "LEFT JOIN \"user\" u ON o.user_id=u.id " +
                      "WHERE u.email=? ORDER BY o.created_at DESC";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, email);
             ResultSet rs = ps.executeQuery();
             while (rs.next()) list.add(mapRow(rs));
@@ -392,7 +402,8 @@ public class OccurrencePostgresDao implements OccurrenceDao {
         String sql = SELECT_FIELDS +
                      "LEFT JOIN \"user\" u ON o.user_id=u.id " +
                      "WHERE o.city=? ORDER BY o.created_at DESC";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, city);
             ResultSet rs = ps.executeQuery();
             while (rs.next()) list.add(mapRow(rs));
@@ -405,7 +416,8 @@ public class OccurrencePostgresDao implements OccurrenceDao {
         String sql = "SELECT COUNT(*) FROM occurrence o " +
                      "JOIN \"user\" u ON o.user_id = u.id " +
                      "WHERE u.email = ? AND o.is_anonymous = false AND DATE(o.created_at) = CURRENT_DATE";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, email);
             ResultSet rs = ps.executeQuery();
             return rs.next() ? rs.getInt(1) : 0;
@@ -416,16 +428,11 @@ public class OccurrencePostgresDao implements OccurrenceDao {
     public int countTodayAnonymousByIp(String ip) {
         String sql = "SELECT COUNT(*) FROM occurrence " +
                      "WHERE ip_address = ? AND is_anonymous = true AND DATE(created_at) = CURRENT_DATE";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, ip);
             ResultSet rs = ps.executeQuery();
             return rs.next() ? rs.getInt(1) : 0;
         } catch (SQLException e) { throw new RuntimeException("Erro ao contar ocorrências anônimas do dia", e); }
     }
-
-    private void restoreAutoCommit() {
-        try { connection.setAutoCommit(true); } catch (SQLException ignored) {}
-    }
-
-    private void rollback() { try { connection.rollback(); } catch (SQLException ignored) {} }
 }

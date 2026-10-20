@@ -27,7 +27,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.sql.Connection;
+import javax.sql.DataSource;
 import java.util.Arrays;
 import java.util.logging.Logger;
 
@@ -53,33 +53,33 @@ public class AppConfiguration {
     }
 
     @Bean
-    public UserDao getUserDao(Connection connection) {
-        return new UserPostgresDao(connection);
+    public UserDao getUserDao(DataSource dataSource) {
+        return new UserPostgresDao(dataSource);
     }
 
     @Bean
-    public OccurrenceDao getOccurrenceDao(Connection connection) {
-        return new OccurrencePostgresDao(connection);
+    public OccurrenceDao getOccurrenceDao(DataSource dataSource) {
+        return new OccurrencePostgresDao(dataSource);
     }
 
     @Bean
-    public OccurrenceSupportDao getOccurrenceSupportDao(Connection connection) {
-        return new OccurrenceSupportPostgresDao(connection);
+    public OccurrenceSupportDao getOccurrenceSupportDao(DataSource dataSource) {
+        return new OccurrenceSupportPostgresDao(dataSource);
     }
 
     @Bean
-    public PasswordResetTokenDao getPasswordResetTokenDao(Connection connection) {
-        return new PasswordResetTokenPostgresDao(connection);
+    public PasswordResetTokenDao getPasswordResetTokenDao(DataSource dataSource) {
+        return new PasswordResetTokenPostgresDao(dataSource);
     }
 
     @Bean
-    public ContactMessageDao getContactMessageDao(Connection connection) {
-        return new ContactMessagePostgresDao(connection);
+    public ContactMessageDao getContactMessageDao(DataSource dataSource) {
+        return new ContactMessagePostgresDao(dataSource);
     }
 
     @Bean
-    public DepartmentDao getDepartmentDao(Connection connection) {
-        return new DepartmentPostgresDao(connection);
+    public DepartmentDao getDepartmentDao(DataSource dataSource) {
+        return new DepartmentPostgresDao(dataSource);
     }
 
     @Bean

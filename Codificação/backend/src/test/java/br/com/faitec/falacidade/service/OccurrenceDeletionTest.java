@@ -56,6 +56,7 @@ class OccurrenceDeletionTest {
     private Authentication as(UserModel.UserRole role) {
         UserModel u = new UserModel();
         u.setId(1); u.setEmail("quem@falacidade.com"); u.setRole(role);
+        u.setCity("Santa Rita do Sapucaí"); u.setState("MG");
         when(userService.findByEmail("quem@falacidade.com")).thenReturn(u);
         return new UsernamePasswordAuthenticationToken("quem@falacidade.com", null,
             List.of(new SimpleGrantedAuthority("ROLE_" + role.name())));

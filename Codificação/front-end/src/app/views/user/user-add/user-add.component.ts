@@ -1,5 +1,5 @@
 import { MaskDirective } from '../../../shared/mask.directive';
-import { personNameValidator } from '../../../shared/br-mask';
+import { personNameValidator, PASSWORD_MIN_LENGTH, PASSWORD_PATTERN } from '../../../shared/br-mask';
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -46,8 +46,8 @@ export class UserAddComponent implements OnInit {
       email:          ['', [Validators.required, Validators.email]],
       state:          ['', [Validators.required]],
       city:           ['', [Validators.required]],
-      password:       ['', [Validators.required, Validators.minLength(8),
-                            Validators.pattern(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])/)]],
+      password:       ['', [Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH),
+                            Validators.pattern(PASSWORD_PATTERN)]],
       repeatPassword: ['', Validators.required],
       role:           ['EMPLOYEE', Validators.required]
     });

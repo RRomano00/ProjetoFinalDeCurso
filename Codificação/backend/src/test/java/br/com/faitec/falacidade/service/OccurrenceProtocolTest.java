@@ -6,17 +6,21 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import javax.sql.DataSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -28,6 +32,7 @@ class OccurrenceProtocolTest {
 
     private static final String FORMATO = "FC-\\d{2}-[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{5}";
 
+    @Mock DataSource        dataSource;
     @Mock Connection        connection;
     @Mock PreparedStatement conferencia;
     @Mock PreparedStatement insercao;
@@ -38,7 +43,8 @@ class OccurrenceProtocolTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        sut = new OccurrencePostgresDao(connection);
+        lenient().when(dataSource.getConnection()).thenReturn(connection);
+        sut = new OccurrencePostgresDao(dataSource);
         when(connection.prepareStatement(anyString())).thenReturn(conferencia);
         when(conferencia.executeQuery()).thenReturn(jaExiste);
         when(connection.prepareStatement(anyString(), eq(Statement.RETURN_GENERATED_KEYS)))
@@ -95,5 +101,31 @@ class OccurrenceProtocolTest {
 
         assertThat(o.getProtocolNumber()).matches(FORMATO);
         verify(conferencia, times(2)).executeQuery();
+    }
+
+    @Test
+    @DisplayName("grava numa transação só, na mesma conexão, e a devolve ao pool")
+    void gravaNumaTransacaoSo() throws Exception {
+        when(jaExiste.next()).thenReturn(false);
+
+        sut.add(ocorrenciaAnonima());
+
+        verify(dataSource, times(1)).getConnection();
+        InOrder ordem = inOrder(connection);
+        ordem.verify(connection).setAutoCommit(false);
+        ordem.verify(connection).commit();
+        ordem.verify(connection).close();
+    }
+
+    @Test
+    @DisplayName("falha na inserção não confirma nada e ainda devolve a conexão")
+    void falhaNaoConfirma() throws Exception {
+        when(jaExiste.next()).thenReturn(false);
+        when(insercao.execute()).thenThrow(new SQLException("falha"));
+
+        assertThatThrownBy(() -> sut.add(ocorrenciaAnonima())).isInstanceOf(RuntimeException.class);
+
+        verify(connection, never()).commit();
+        verify(connection).close();
     }
 }

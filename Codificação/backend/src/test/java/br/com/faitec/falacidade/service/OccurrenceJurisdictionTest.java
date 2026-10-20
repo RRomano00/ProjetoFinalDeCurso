@@ -203,4 +203,62 @@ class OccurrenceJurisdictionTest {
         verify(occurrenceService).forwardToDepartment(eq(10), eq(java.util.List.of(3)), anyInt(),
             eq("https://duration.ngrok-free.dev"), eq(java.util.List.of("carlos@prefeitura.com", "adm@pref.br")));
     }
+
+    @Nested
+    @DisplayName("Leitura: a mesma regra das ações")
+    class Leitura {
+
+        private GetOccurrenceDto identificada(int id, String city, String state) {
+            GetOccurrenceDto o = occurrence(city, state);
+            o.setId(id);
+            o.setEmail("autor@email.com");
+            o.setFullname("Autor da Silva");
+            return o;
+        }
+
+        @Test
+        @DisplayName("listagem da equipe não mistura cidade homônima de outra UF")
+        void listingSkipsHomonymInAnotherState() {
+            when(userService.findByEmail("carlos@prefeitura.com")).thenReturn(staff("Valparaíso", "SP"));
+            when(occurrenceService.findAllByCity("Valparaíso")).thenReturn(new java.util.ArrayList<>(List.of(
+                identificada(1, "Valparaíso", "SP"), identificada(2, "Valparaíso", "GO"))));
+
+            List<GetOccurrenceDto> r = sut.getAll(auth("carlos@prefeitura.com", UserModel.UserRole.EMPLOYEE)).getBody();
+
+            assertThat(r).extracting(GetOccurrenceDto::getId).containsExactly(1);
+        }
+
+        @Test
+        @DisplayName("funcionário de outro município lê a ocorrência sem o autor")
+        void otherMunicipalityReadsWithoutAuthor() {
+            when(occurrenceService.findById(2)).thenReturn(identificada(2, "Valparaíso", "GO"));
+            when(userService.findByEmail("carlos@prefeitura.com")).thenReturn(staff("Valparaíso", "SP"));
+
+            GetOccurrenceDto r = sut.getById(2, auth("carlos@prefeitura.com", UserModel.UserRole.EMPLOYEE)).getBody();
+
+            assertThat(r.getEmail()).isNull();
+            assertThat(r.getFullname()).isNull();
+        }
+
+        @Test
+        @DisplayName("funcionário do município lê a ocorrência com o autor")
+        void sameMunicipalityReadsWithAuthor() {
+            when(occurrenceService.findById(1)).thenReturn(identificada(1, "Valparaíso", "SP"));
+            when(userService.findByEmail("carlos@prefeitura.com")).thenReturn(staff("Valparaíso", "SP"));
+
+            GetOccurrenceDto r = sut.getById(1, auth("carlos@prefeitura.com", UserModel.UserRole.EMPLOYEE)).getBody();
+
+            assertThat(r.getEmail()).isEqualTo("autor@email.com");
+        }
+
+        @Test
+        @DisplayName("super administrador lê o autor em qualquer município")
+        void superAdminReadsAuthorAnywhere() {
+            when(occurrenceService.findById(2)).thenReturn(identificada(2, "Valparaíso", "GO"));
+
+            GetOccurrenceDto r = sut.getById(2, auth("admin@falacidade.com", UserModel.UserRole.SUPER_ADMIN)).getBody();
+
+            assertThat(r.getEmail()).isEqualTo("autor@email.com");
+        }
+    }
 }

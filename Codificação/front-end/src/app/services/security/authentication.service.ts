@@ -3,35 +3,36 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Municipality } from '../local/locality-preference.service';
+import { LoginResponse } from '../../domain/model/login-response';
 
 @Injectable({ providedIn: 'root' })
 export class AuthenticationService {
 
   constructor(private http: HttpClient) {}
 
-  authenticate(email: string, password: string): Observable<any> {
-    return this.http.post<any>(
+  authenticate(email: string, password: string): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>(
       `${environment.authentication_api_endpoint}/authenticate`,
       { email, password },
       { headers: new HttpHeaders({ 'Content-Type': 'application/json' }) }
     );
   }
 
-  verifyMfa(mfaToken: string, totpCode: string, method: 'APP' | 'EMAIL' | 'SMS' = 'APP'): Observable<any> {
-    return this.http.post<any>(
+  verifyMfa(mfaToken: string, totpCode: string, method: 'APP' | 'EMAIL' | 'SMS' = 'APP'): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>(
       `${environment.authentication_api_endpoint}/authenticate/mfa`,
       { mfaToken, totpCode, method }
     );
   }
 
-  sendEmailCode(mfaToken: string): Observable<any> {
-    return this.http.post<any>(
+  sendEmailCode(mfaToken: string): Observable<void> {
+    return this.http.post<void>(
       `${environment.authentication_api_endpoint}/authenticate/mfa/send-email`,
       { mfaToken }
     );
   }
-  sendSmsCode(mfaToken: string): Observable<any> {
-    return this.http.post<any>(
+  sendSmsCode(mfaToken: string): Observable<void> {
+    return this.http.post<void>(
       `${environment.authentication_api_endpoint}/authenticate/mfa/send-sms`,
       { mfaToken }
     );

@@ -14,7 +14,6 @@ import br.com.faitec.falacidade.port.service.email.EmailService;
 import br.com.faitec.falacidade.port.service.mfa.MfaService;
 import br.com.faitec.falacidade.port.service.user.UserService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +21,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-import java.util.Arrays;
 import java.util.logging.Logger;
 
 @Profile("jwt")
@@ -42,9 +40,6 @@ public class JwtAuthenticationRestController {
     private final EmailMfaCodeStore     emailMfaCodeStore;
     private final ActiveSessionStore    activeSessions;
     private final SmsCodeSender         smsSender;
-
-    @Value("${app.mfa.exempt-emails:admin@falacidade.com}")
-    private String mfaExemptEmails;
 
     public JwtAuthenticationRestController(
             AuthenticationService authenticationService, JwtService jwtService,
@@ -127,7 +122,7 @@ public class JwtAuthenticationRestController {
         mfaTokenStore.consume(dto.getMfaToken());
 
         UserModel user = userService.findById(userId);
-        if ("EMAIL".equals(method) && !user.isEmailMfaActive() && isMfaMandatory(user)) {
+        if ("EMAIL".equals(method) && !user.isEmailMfaActive() && user.isStaff()) {
             mfaService.setEmailMfa(userId, true);
             log.info("2FA por e-mail ativado no primeiro acesso: " + user.getEmail());
         }
@@ -139,16 +134,6 @@ public class JwtAuthenticationRestController {
         return ResponseEntity.ok().build();
     }
 
-    private boolean isMfaMandatory(UserModel user) {
-        return user.isStaff() && !isMfaExempt(user.getEmail());
-    }
-
-    private boolean isMfaExempt(String email) {
-        return Arrays.stream(mfaExemptEmails.split(","))
-            .map(String::trim).filter(e -> !e.isEmpty())
-            .anyMatch(e -> e.equalsIgnoreCase(email));
-    }
-
     /**
      * E-mail vale quando está ativo, no primeiro acesso da equipe e como reserva
      * de quem só tem SMS com o envio desligado — sem ela a conta ficaria sem
@@ -158,7 +143,7 @@ public class JwtAuthenticationRestController {
         if (user.isEmailMfaActive()) return true;
         if (user.isAppMfaActive()) return false;
         if (user.isSmsMfaActive()) return !smsSender.isEnabled();
-        return isMfaMandatory(user);
+        return user.isStaff();   // 2FA é obrigatório para toda a equipe, sem conta dispensada
     }
 
     private boolean validSmsCode(int userId, String code) {

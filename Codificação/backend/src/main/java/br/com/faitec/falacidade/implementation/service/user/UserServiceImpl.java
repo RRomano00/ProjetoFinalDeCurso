@@ -1,5 +1,6 @@
 package br.com.faitec.falacidade.implementation.service.user;
 
+import br.com.faitec.falacidade.domain.PasswordPolicy;
 import br.com.faitec.falacidade.domain.DuplicateFieldException;
 import br.com.faitec.falacidade.domain.UserModel;
 import br.com.faitec.falacidade.port.dao.user.UserDao;
@@ -27,7 +28,7 @@ public class UserServiceImpl implements UserService {
 
         if (entity.getRole() == UserModel.UserRole.CITIZEN && !entity.isAcceptsTerms()) return -1;
 
-        if (!isPasswordValid(entity.getPassword())) return -1;
+        if (!PasswordPolicy.isValid(entity.getPassword())) return -1;
 
         rejectPhoneOfAnotherAccount(0, entity.getPhoneNumber());
 
@@ -127,7 +128,7 @@ public class UserServiceImpl implements UserService {
         UserModel user = findById(id);
         if (user == null) return false;
         if (!passwordEncoder.matches(oldPassword, user.getPassword())) return false;
-        if (!isPasswordValid(newPassword)) return false;
+        if (!PasswordPolicy.isValid(newPassword)) return false;
         return userDao.updatePassword(id, passwordEncoder.encode(newPassword));
     }
 
@@ -135,14 +136,6 @@ public class UserServiceImpl implements UserService {
     public boolean updatePasswordEncoded(int userId, String encodedPassword) {
         if (userId < 0 || isBlank(encodedPassword)) return false;
         return userDao.updatePassword(userId, encodedPassword);
-    }
-
-    private boolean isPasswordValid(String password) {
-        if (password == null || password.length() < 8) return false;
-        boolean hasLetter  = password.chars().anyMatch(Character::isLetter);
-        boolean hasDigit   = password.chars().anyMatch(Character::isDigit);
-        boolean hasSpecial = password.chars().anyMatch(c -> !Character.isLetterOrDigit(c));
-        return hasLetter && hasDigit && hasSpecial;
     }
 
     private boolean isBlank(String s) {

@@ -6,21 +6,23 @@ import br.com.faitec.falacidade.port.dao.department.DepartmentDao;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import javax.sql.DataSource;
 
 public class DepartmentPostgresDao implements DepartmentDao {
 
     private static final String FIELDS = "id, name, email, city, state";
 
-    private final Connection connection;
+    private final DataSource dataSource;
 
-    public DepartmentPostgresDao(Connection connection) {
-        this.connection = connection;
+    public DepartmentPostgresDao(DataSource dataSource) {
+        this.dataSource = dataSource;
     }
 
     @Override
     public int add(Department entity) {
         String sql = "INSERT INTO department (name, email, city, state) VALUES (?, ?, ?, ?)";
-        try (PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, entity.getName());
             ps.setString(2, entity.getEmail());
             ps.setString(3, entity.getCity());
@@ -39,7 +41,8 @@ public class DepartmentPostgresDao implements DepartmentDao {
     @Override
     public boolean update(Department entity) {
         String sql = "UPDATE department SET name=?, email=?, city=?, state=? WHERE id=?";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, entity.getName());
             ps.setString(2, entity.getEmail());
             ps.setString(3, entity.getCity());
@@ -67,7 +70,8 @@ public class DepartmentPostgresDao implements DepartmentDao {
     @Override
     public Department readById(int id) {
         String sql = "SELECT " + FIELDS + " FROM department WHERE id = ?";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, id);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) return mapRow(rs);
@@ -91,7 +95,8 @@ public class DepartmentPostgresDao implements DepartmentDao {
 
     private List<Department> query(String sql, String... params) {
         List<Department> departments = new ArrayList<>();
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
             for (int i = 0; i < params.length; i++) ps.setString(i + 1, params[i]);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) departments.add(mapRow(rs));
@@ -103,7 +108,8 @@ public class DepartmentPostgresDao implements DepartmentDao {
     }
 
     private boolean exists(String sql, String... params) {
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
             for (int i = 0; i < params.length; i++) ps.setString(i + 1, params[i]);
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next();

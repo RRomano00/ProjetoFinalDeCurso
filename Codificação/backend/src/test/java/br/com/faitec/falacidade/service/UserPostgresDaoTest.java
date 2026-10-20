@@ -8,12 +8,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.sql.*;
 import java.util.List;
+import javax.sql.DataSource;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -23,6 +23,7 @@ import static org.mockito.Mockito.*;
 @DisplayName("UserPostgresDao")
 class UserPostgresDaoTest {
 
+    @Mock DataSource        dataSource;
     @Mock Connection        connection;
     @Mock PreparedStatement ps;
     @Mock ResultSet         rs;
@@ -31,8 +32,9 @@ class UserPostgresDaoTest {
     UserPostgresDao sut;
 
     @BeforeEach
-    void setUp() {
-        sut = new UserPostgresDao(connection);
+    void setUp() throws Exception {
+        lenient().when(dataSource.getConnection()).thenReturn(connection);
+        sut = new UserPostgresDao(dataSource);
     }
 
     @Nested
@@ -64,12 +66,11 @@ class UserPostgresDaoTest {
             verify(ps).setString(11, "SP");
             verify(ps).setString(12, "CITIZEN");
             verify(ps).setBoolean(14, true);
-            verify(connection).commit();
         }
 
         @Test
-        @DisplayName("faz rollback e lança RuntimeException quando SQLException ocorre")
-        void rollsBackOnSQLException() throws Exception {
+        @DisplayName("lança RuntimeException quando SQLException ocorre")
+        void wrapsSQLException() throws Exception {
             when(connection.prepareStatement(anyString(), eq(Statement.RETURN_GENERATED_KEYS)))
                 .thenThrow(new SQLException("constraint violation"));
 
@@ -82,8 +83,6 @@ class UserPostgresDaoTest {
             assertThatThrownBy(() -> sut.add(user))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Erro ao inserir");
-
-            verify(connection).rollback();
         }
     }
 
@@ -284,8 +283,8 @@ class UserPostgresDaoTest {
     }
 
     @Nested
-    @DisplayName("autocommit da conexão compartilhada")
-    class AutoCommitState {
+    @DisplayName("conexão do pool")
+    class PooledConnection {
 
         private UserModel citizen() {
             UserModel user = new UserModel();
@@ -297,30 +296,40 @@ class UserPostgresDaoTest {
         }
 
         @Test
-        @DisplayName("devolve a conexão ao autocommit depois de inserir")
-        void restoresAutoCommitAfterInsert() throws Exception {
+        @DisplayName("devolve a conexão ao pool depois de inserir, sem mexer no autocommit")
+        void closesConnectionAfterInsert() throws Exception {
             when(connection.prepareStatement(anyString(), eq(Statement.RETURN_GENERATED_KEYS))).thenReturn(ps);
             when(ps.getGeneratedKeys()).thenReturn(generatedKeys);
             when(generatedKeys.next()).thenReturn(true);
 
             sut.add(citizen());
 
-            InOrder order = inOrder(connection);
-            order.verify(connection).setAutoCommit(false);
-            order.verify(connection).commit();
-            order.verify(connection).setAutoCommit(true);
+            verify(connection).close();
+            verify(connection, never()).setAutoCommit(anyBoolean());
         }
 
         @Test
-        @DisplayName("devolve a conexão ao autocommit mesmo quando o insert falha")
-        void restoresAutoCommitOnFailure() throws Exception {
+        @DisplayName("devolve a conexão ao pool mesmo quando o insert falha")
+        void closesConnectionOnFailure() throws Exception {
             when(connection.prepareStatement(anyString(), eq(Statement.RETURN_GENERATED_KEYS)))
                 .thenThrow(new SQLException("falha"));
 
             assertThatThrownBy(() -> sut.add(citizen())).isInstanceOf(RuntimeException.class);
 
-            verify(connection).rollback();
-            verify(connection).setAutoCommit(true);
+            verify(connection).close();
+        }
+
+        @Test
+        @DisplayName("cada chamada pega a sua própria conexão")
+        void eachCallBorrowsItsOwnConnection() throws Exception {
+            when(connection.prepareStatement(anyString())).thenReturn(ps);
+            when(ps.executeQuery()).thenReturn(rs);
+
+            sut.readById(1);
+            sut.readById(2);
+
+            verify(dataSource, times(2)).getConnection();
+            verify(connection, times(2)).close();
         }
     }
 

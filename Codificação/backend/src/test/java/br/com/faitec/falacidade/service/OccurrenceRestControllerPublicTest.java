@@ -171,6 +171,7 @@ class OccurrenceRestControllerPublicTest {
             o.setId(id);
             o.setEmail(authorEmail);
             o.setFullname("Autor " + id);
+            o.setCity("Santa Rita do Sapucaí");   // o banco devolve só linhas da cidade consultada
             return o;
         }
 
@@ -338,7 +339,7 @@ class OccurrenceRestControllerPublicTest {
     @DisplayName("histórico: solicitação de conclusão só para a equipe")
     void completionRequestOnlyForStaff() {
         GetOccurrenceDto o = new GetOccurrenceDto();
-        o.setId(10); o.setStatus(Occurrence.OccurrenceStatus.EM_ANDAMENTO);
+        o.setId(10); o.setStatus(Occurrence.OccurrenceStatus.EM_ANDAMENTO); o.setCity("Itajubá");
         when(occurrenceService.findById(10)).thenReturn(o);
         var pedido = new br.com.faitec.falacidade.domain.dto.occurrence.OccurrenceHistoryDto();
         pedido.setKind("COMPLETION_REQUEST"); pedido.setNewStatus("EM_ANDAMENTO");
@@ -350,6 +351,9 @@ class OccurrenceRestControllerPublicTest {
 
         Authentication staff = new UsernamePasswordAuthenticationToken("f@pref.br", null,
             List.of(new SimpleGrantedAuthority("ROLE_EMPLOYEE")));
+        UserModel funcionario = new UserModel();
+        funcionario.setCity("Itajubá");
+        when(userService.findByEmail("f@pref.br")).thenReturn(funcionario);
         when(occurrenceService.getHistory(10)).thenReturn(new java.util.ArrayList<>(List.of(pedido, status)));
         assertThat(sut.getHistory(10, staff).getBody()).hasSize(2);
     }

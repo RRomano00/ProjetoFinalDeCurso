@@ -84,11 +84,11 @@ export class SignInComponent implements OnInit, OnDestroy {
     this.isLoginIncorrect = false;
 
     this.auth.authenticate(this.email.value!, this.password.value!).subscribe({
-      next: (res: any) => {
+      next: res => {
         this.loading = false;
         if (res.token) { this.finishLogin(res.token); return; }
 
-        this.mfaToken = res.mfaToken;
+        this.mfaToken = res.mfaToken ?? '';
 
         if (res.requiresMfa) {
           this.mfaAppAvailable   = !!res.mfaAppAvailable;
@@ -180,7 +180,7 @@ export class SignInComponent implements OnInit, OnDestroy {
     this.mfaError = false;
     this.loading  = true;
     this.auth.verifyMfa(this.mfaToken, this.totpCode.value!, this.mfaMethod).subscribe({
-      next: (res: any) => { this.loading = false; this.finishLogin(res.token); },
+      next: res => { this.loading = false; this.finishLogin(res.token!); },   // código aceito sempre traz o token
       error: () => {
         this.loading  = false;
         this.mfaError = true;

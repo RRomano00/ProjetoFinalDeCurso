@@ -127,7 +127,6 @@ public class JwtSecurityConfiguration {
                 .requestMatchers(HttpMethod.DELETE, "/api/user/account").authenticated()
                 .requestMatchers(HttpMethod.DELETE, "/api/user/**")
                     .hasAnyRole(
-                        UserModel.UserRole.CITIZEN.name(),
                         UserModel.UserRole.ADMINISTRATOR.name(),
                         UserModel.UserRole.SUPER_ADMIN.name())
                 .anyRequest().authenticated()

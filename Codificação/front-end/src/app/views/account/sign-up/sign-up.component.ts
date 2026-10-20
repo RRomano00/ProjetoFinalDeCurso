@@ -8,7 +8,7 @@ import { LocalityService, CityOptions } from '../../../services/local/locality.s
 import { ToastrService } from 'ngx-toastr';
 import { PasswordRevealDirective } from '../../../shared/password-reveal.directive';
 import { brBirthDateValidator, brDateToIso, maskBrDate } from '../../../shared/br-date';
-import { mobileValidator, personNameValidator } from '../../../shared/br-mask';
+import { mobileValidator, personNameValidator, PASSWORD_MIN_LENGTH, PASSWORD_PATTERN } from '../../../shared/br-mask';
 
 @Component({
   selector: 'app-sign-up',
@@ -66,8 +66,8 @@ export class SignUpComponent {
       phoneNumber:    ['', [mobileValidator]],
       state:          ['', [Validators.required]],
       city:           ['', [Validators.required]],
-      password:       ['', [Validators.required, Validators.minLength(8),
-                            Validators.pattern(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])/)]],
+      password:       ['', [Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH),
+                            Validators.pattern(PASSWORD_PATTERN)]],
       repeatPassword: ['', Validators.required],
       acceptsTerms:   [false, Validators.requiredTrue],
       mfaEmailEnabled: [false]

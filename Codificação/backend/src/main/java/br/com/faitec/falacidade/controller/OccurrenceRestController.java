@@ -139,7 +139,11 @@ public class OccurrenceRestController {
         if (hasRole(auth, UserModel.UserRole.EMPLOYEE)
          || hasRole(auth, UserModel.UserRole.ADMINISTRATOR)) {
             UserModel user = safeFindUser(auth);
-            return ResponseEntity.ok(visibleTo(occurrenceService.findAllByCity(user != null ? user.getCity() : null), auth));
+            if (user == null) return ResponseEntity.ok(List.of());
+            // O banco busca pelo nome da cidade; a UF desempata aqui, com a mesma regra das ações.
+            return ResponseEntity.ok(visibleTo(occurrenceService.findAllByCity(user.getCity()), auth).stream()
+                .filter(o -> inJurisdiction(user, o))
+                .toList());
         }
 
         List<GetOccurrenceDto> all = visibleTo(occurrenceService.findAll(), auth).stream()
@@ -307,15 +311,16 @@ public class OccurrenceRestController {
     @GetMapping("/{id}/group")
     public ResponseEntity<List<GetOccurrenceDto>> getGroup(@PathVariable int id, Authentication auth) {
         List<GetOccurrenceDto> group = visibleTo(occurrenceService.getGroup(id), auth);
-        if (!isPrivileged(auth)) group.forEach(this::maskAuthor);
+        group.forEach(o -> { if (!isPrivileged(auth, o)) maskAuthor(o); });
         return ResponseEntity.ok(group);
     }
 
     @GetMapping("/{id}/history")
     public ResponseEntity<List<OccurrenceHistoryDto>> getHistory(@PathVariable int id, Authentication auth) {
-        if (hiddenFrom(occurrenceService.findById(id), auth)) return ResponseEntity.notFound().build();
+        GetOccurrenceDto occurrence = occurrenceService.findById(id);
+        if (hiddenFrom(occurrence, auth)) return ResponseEntity.notFound().build();
         List<OccurrenceHistoryDto> history = new java.util.ArrayList<>(occurrenceService.getHistory(id));
-        if (!isPrivileged(auth)) {
+        if (!isPrivileged(auth, occurrence)) {
             // Solicitação de conclusão do departamento é assunto interno da equipe.
             history.removeIf(OccurrenceHistoryDto::isCompletionRequest);
             history.forEach(h -> h.setChangedByName(null));
@@ -341,7 +346,7 @@ public class OccurrenceRestController {
     }
 
     private void maskIfNotPrivileged(GetOccurrenceDto e, Authentication auth) {
-        if (isPrivileged(auth)) return;
+        if (isPrivileged(auth, e)) return;
         if (auth != null && e.getEmail() != null && e.getEmail().equals(auth.getName())) return;
         maskAuthor(e);
     }
@@ -351,10 +356,16 @@ public class OccurrenceRestController {
         e.setFullname(null);
     }
 
-    private boolean isPrivileged(Authentication auth) {
-        return hasRole(auth, UserModel.UserRole.SUPER_ADMIN)
-            || hasRole(auth, UserModel.UserRole.ADMINISTRATOR)
-            || hasRole(auth, UserModel.UserRole.EMPLOYEE);
+    /** Autor e andamento interno: a equipe vê só no próprio município; o Super Administrador, em todos. */
+    private boolean isPrivileged(Authentication auth, GetOccurrenceDto o) {
+        if (hasRole(auth, UserModel.UserRole.SUPER_ADMIN)) return true;
+        if (!hasRole(auth, UserModel.UserRole.ADMINISTRATOR) && !hasRole(auth, UserModel.UserRole.EMPLOYEE))
+            return false;
+        return o != null && inJurisdiction(safeFindUser(auth), o);
+    }
+
+    private boolean inJurisdiction(UserModel user, GetOccurrenceDto o) {
+        return user != null && Municipality.same(user.getCity(), user.getState(), o.getCity(), o.getState());
     }
 
     private boolean hasRole(Authentication auth, UserModel.UserRole role) {

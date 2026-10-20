@@ -12,6 +12,7 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
 import java.sql.*;
+import javax.sql.DataSource;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -22,12 +23,16 @@ import static org.mockito.Mockito.*;
 @DisplayName("OccurrencePostgresDao – solicitação de conclusão no histórico")
 class OccurrenceHistoryDaoTest {
 
+    @Mock DataSource dataSource;
     @Mock Connection connection;
     @Mock PreparedStatement ps;
     @Mock ResultSet rs;
     OccurrencePostgresDao sut;
 
-    @BeforeEach void setUp() { sut = new OccurrencePostgresDao(connection); }
+    @BeforeEach void setUp() throws Exception {
+        lenient().when(dataSource.getConnection()).thenReturn(connection);
+        sut = new OccurrencePostgresDao(dataSource);
+    }
 
     @Test
     @DisplayName("grava a solicitação sem autor, com departamento, anexo e o status atual repetido")

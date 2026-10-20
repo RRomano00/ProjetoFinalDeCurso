@@ -1,5 +1,5 @@
 import { MaskDirective } from '../../../shared/mask.directive';
-import { cepValidator, mobileValidator, personNameValidator } from '../../../shared/br-mask';
+import { cepValidator, mobileValidator, personNameValidator, PASSWORD_MIN_LENGTH, PASSWORD_PATTERN } from '../../../shared/br-mask';
 import { ClipboardCodeDirective } from '../../../shared/clipboard-code.directive';
 import { Component } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
@@ -32,7 +32,7 @@ export class MyProfileComponent {
   profileForm!: FormGroup;
   savingProfile = false;
   id? = localStorage.getItem('id');
-  passwordMinLength = 8;
+  passwordMinLength = PASSWORD_MIN_LENGTH;
 
   mfaAppActive = false;
   mfaEmailActive = false;
@@ -461,7 +461,7 @@ export class MyProfileComponent {
     this.form = this.formBuilder.group({
       oldPassword: ['', [Validators.required]],
       newPassword: ['', [Validators.required, Validators.minLength(this.passwordMinLength),
-                         Validators.pattern(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])/)]],
+                         Validators.pattern(PASSWORD_PATTERN)]],
       confirmPassword: ['', [Validators.required]]
     });
     this.profileForm = this.formBuilder.group({

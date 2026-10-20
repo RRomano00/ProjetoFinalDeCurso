@@ -13,6 +13,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import javax.sql.DataSource;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -22,14 +23,16 @@ import static org.mockito.Mockito.*;
 @DisplayName("ContactMessagePostgresDao")
 class ContactMessagePostgresDaoTest {
 
+    @Mock DataSource        dataSource;
     @Mock Connection        connection;
     @Mock PreparedStatement ps;
 
     ContactMessagePostgresDao sut;
 
     @BeforeEach
-    void setUp() {
-        sut = new ContactMessagePostgresDao(connection);
+    void setUp() throws Exception {
+        lenient().when(dataSource.getConnection()).thenReturn(connection);
+        sut = new ContactMessagePostgresDao(dataSource);
     }
 
     @Nested

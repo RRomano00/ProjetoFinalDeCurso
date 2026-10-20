@@ -27,7 +27,6 @@ import org.mockito.quality.Strictness;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 
@@ -59,7 +58,6 @@ class JwtAuthenticationRestControllerMfaTest {
         sut = new JwtAuthenticationRestController(authenticationService, jwtService, userDetailsService,
             mfaService, new MfaTokenStore(), userService, emailService, codes,
             new ActiveSessionStore(), new SmsCodeSender(smsService, codes));
-        ReflectionTestUtils.setField(sut, "mfaExemptEmails", "admin@falacidade.com");
         when(userDetailsService.loadUserByUsername(anyString()))
             .thenReturn(new User("x", "y", List.of()));
         when(jwtService.generateToken(any(), any(), any(), anyString(), anyInt(), anyString())).thenReturn("jwt-fake");
@@ -90,21 +88,13 @@ class JwtAuthenticationRestControllerMfaTest {
     }
 
     @Test
-    @DisplayName("conta dispensada entra direto, sem código")
-    void exemptAccountSkipsMfa() {
-        LoginResponseDto r = login("admin@falacidade.com", UserModel.UserRole.ADMINISTRATOR);
+    @DisplayName("Super Administrador de demonstração também passa pelo 2FA: não há conta dispensada")
+    void demoSuperAdminIsNotExempt() {
+        LoginResponseDto r = login("admin@falacidade.com", UserModel.UserRole.SUPER_ADMIN);
 
-        assertThat(r.getToken()).isEqualTo("jwt-fake");
-        assertThat(r.isRequiresMfa()).isFalse();
-        verify(emailService, never()).sendMfaCodeEmail(anyString(), anyString());
-    }
-
-    @Test
-    @DisplayName("lista de dispensa vazia não dispensa ninguém")
-    void emptyExemptionListExemptsNobody() {
-        ReflectionTestUtils.setField(sut, "mfaExemptEmails", "");
-
-        assertThat(login("admin@falacidade.com", UserModel.UserRole.ADMINISTRATOR).isRequiresMfa()).isTrue();
+        assertThat(r.getToken()).isNull();
+        assertThat(r.isRequiresMfa()).isTrue();
+        verify(emailService).sendMfaCodeEmail(eq("admin@falacidade.com"), anyString());
     }
 
     @Test

@@ -214,9 +214,14 @@ public class UserRestController {
         return ResponseEntity.noContent().build();
     }
 
+    /** Endereço, telefone e nascimento: só o titular ou quem administra a conta. */
     @GetMapping("/{id}")
-    public ResponseEntity<UserModel> getById(@PathVariable int id) {
-        UserModel entity = userService.findById(id);
+    public ResponseEntity<UserModel> getById(@PathVariable int id, Authentication auth) {
+        UserModel requester = getAuthenticatedUser(auth);
+        if (requester == null) return ResponseEntity.status(401).build();
+        UserModel entity = requester.getId() == id ? requester : userService.findById(id);
+        if (requester.getId() != id && !canManage(requester, entity))
+            return ResponseEntity.status(403).build();
         if (entity == null) return ResponseEntity.notFound().build();
         entity.setPassword(null);
         entity.setMfaSecret(null);
@@ -224,22 +229,20 @@ public class UserRestController {
         return ResponseEntity.ok(entity);
     }
 
+    /** Exclusão feita pela administração. A própria conta sai por DELETE /account, que pede o segundo fator. */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable int id, Authentication auth) {
         UserModel requester = getAuthenticatedUser(auth);
+        if (requester != null && requester.getId() == id) return ResponseEntity.status(403).build();
         UserModel target    = userService.findById(id);
         if (target == null) return ResponseEntity.noContent().build();
-        if (requester == null || (requester.getId() != id && !canManage(requester, target)))
-            return ResponseEntity.status(403).build();
-        if (requester.getId() != id && target.isActive())
-            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        if (!canManage(requester, target)) return ResponseEntity.status(403).build();
+        if (target.isActive()) return ResponseEntity.status(HttpStatus.CONFLICT).build();
         userService.delete(id);
         // A exclusão vai ao log sem o id do alvo: a linha não existe mais, e o
         // registro não pode guardar nada que identifique a pessoa.
-        if (requester.getId() != id) {
-            try { userService.log("DELETE", requester, null, target); }
-            catch (Exception ignored) {}
-        }
+        try { userService.log("DELETE", requester, null, target); }
+        catch (Exception ignored) {}
         return ResponseEntity.noContent().build();
     }
 
@@ -342,16 +345,6 @@ public class UserRestController {
     public ResponseEntity<Void> updatePassword(@RequestBody UpdatePasswordDto data) {
         boolean ok = userService.updatePassword(data.getId(), data.getOldPassword(), data.getNewPassword());
         return ok ? ResponseEntity.ok().build() : ResponseEntity.badRequest().build();
-    }
-
-    @GetMapping("/email/{email}")
-    public ResponseEntity<UserModel> getByEmail(@PathVariable String email) {
-        UserModel entity = userService.findByEmail(email);
-        if (entity == null) return ResponseEntity.notFound().build();
-        entity.setPassword(null);
-        entity.setMfaSecret(null);
-        entity.setMfaSmsPhone(null);
-        return ResponseEntity.ok(entity);
     }
 
     @PostMapping("/password-reset/request")

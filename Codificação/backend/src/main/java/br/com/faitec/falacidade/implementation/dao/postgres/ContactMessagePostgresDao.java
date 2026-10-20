@@ -6,19 +6,21 @@ import br.com.faitec.falacidade.port.dao.contact.ContactMessageDao;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import javax.sql.DataSource;
 
 public class ContactMessagePostgresDao implements ContactMessageDao {
 
-    private final Connection connection;
+    private final DataSource dataSource;
 
-    public ContactMessagePostgresDao(Connection connection) {
-        this.connection = connection;
+    public ContactMessagePostgresDao(DataSource dataSource) {
+        this.dataSource = dataSource;
     }
 
     @Override
     public void save(ContactMessage msg) {
         String sql = "INSERT INTO contact_message (name, email, subject, message) VALUES (?, ?, ?, ?)";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, msg.getName());
             ps.setString(2, msg.getEmail());
             ps.setString(3, msg.getSubject());

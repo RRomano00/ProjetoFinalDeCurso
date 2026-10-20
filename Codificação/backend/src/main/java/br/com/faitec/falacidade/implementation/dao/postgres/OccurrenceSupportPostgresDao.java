@@ -8,18 +8,20 @@ import java.util.List;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import javax.sql.DataSource;
 
 public class OccurrenceSupportPostgresDao implements OccurrenceSupportDao {
 
-    private final Connection connection;
+    private final DataSource dataSource;
 
-    public OccurrenceSupportPostgresDao(Connection connection) { this.connection = connection; }
+    public OccurrenceSupportPostgresDao(DataSource dataSource) { this.dataSource = dataSource; }
 
     @Override
     public boolean addSupport(int occurrenceId, int citizenId) {
         String sql = "INSERT INTO occurrence_support(occurrence_id, citizen_id) VALUES(?,?) " +
                      "ON CONFLICT (occurrence_id, citizen_id) DO NOTHING";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, occurrenceId);
             ps.setInt(2, citizenId);
             return ps.executeUpdate() > 0;
@@ -29,7 +31,8 @@ public class OccurrenceSupportPostgresDao implements OccurrenceSupportDao {
     @Override
     public boolean removeSupport(int occurrenceId, int citizenId) {
         String sql = "DELETE FROM occurrence_support WHERE occurrence_id = ? AND citizen_id = ?";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, occurrenceId);
             ps.setInt(2, citizenId);
             return ps.executeUpdate() > 0;
@@ -39,7 +42,8 @@ public class OccurrenceSupportPostgresDao implements OccurrenceSupportDao {
     @Override
     public int countByOccurrence(int occurrenceId) {
         String sql = "SELECT COUNT(*) FROM occurrence_support WHERE occurrence_id = ?";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, occurrenceId);
             ResultSet rs = ps.executeQuery();
             return rs.next() ? rs.getInt(1) : 0;
@@ -50,7 +54,8 @@ public class OccurrenceSupportPostgresDao implements OccurrenceSupportDao {
     public List<Integer> findOccurrenceIdsByCitizen(int citizenId) {
         String sql = "SELECT occurrence_id FROM occurrence_support WHERE citizen_id = ?";
         List<Integer> ids = new ArrayList<>();
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, citizenId);
             ResultSet rs = ps.executeQuery();
             while (rs.next()) ids.add(rs.getInt(1));
@@ -61,7 +66,8 @@ public class OccurrenceSupportPostgresDao implements OccurrenceSupportDao {
     @Override
     public boolean hasSupported(int occurrenceId, int citizenId) {
         String sql = "SELECT 1 FROM occurrence_support WHERE occurrence_id = ? AND citizen_id = ? LIMIT 1";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, occurrenceId);
             ps.setInt(2, citizenId);
             return ps.executeQuery().next();

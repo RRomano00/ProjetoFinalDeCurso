@@ -1,5 +1,6 @@
 package br.com.faitec.falacidade.implementation.service.password;
 
+import br.com.faitec.falacidade.domain.PasswordPolicy;
 import br.com.faitec.falacidade.domain.PasswordResetToken;
 import br.com.faitec.falacidade.domain.UserModel;
 import br.com.faitec.falacidade.implementation.service.tracking.AnonymousTrackingCodeService;
@@ -67,7 +68,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
         PasswordResetToken token = findUsable(rawToken);
         if (token == null) return false;
 
-        if (!isPasswordValid(newPassword)) {
+        if (!PasswordPolicy.isValid(newPassword)) {
             return false;
         }
 
@@ -85,13 +86,5 @@ public class PasswordResetServiceImpl implements PasswordResetService {
         if (rawToken == null || rawToken.isBlank()) return null;
         PasswordResetToken token = tokenDao.findByToken(rawToken.trim().toUpperCase());
         return token == null || token.isExpired() || token.isUsed() ? null : token;
-    }
-
-    private boolean isPasswordValid(String password) {
-        if (password == null || password.length() < 8) return false;
-        boolean hasLetter  = password.chars().anyMatch(Character::isLetter);
-        boolean hasDigit   = password.chars().anyMatch(Character::isDigit);
-        boolean hasSpecial = password.chars().anyMatch(c -> !Character.isLetterOrDigit(c));
-        return hasLetter && hasDigit && hasSpecial;
     }
 }

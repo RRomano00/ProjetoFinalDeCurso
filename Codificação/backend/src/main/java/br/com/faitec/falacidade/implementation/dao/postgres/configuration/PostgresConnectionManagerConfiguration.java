@@ -98,15 +98,6 @@ public class PostgresConnectionManagerConfiguration {
 
     @Bean
     @DependsOn("dataSource")
-    public Connection getConnection() throws SQLException {
-        if (hikariDataSource == null) {
-            throw new IllegalStateException("DataSource ainda não foi inicializado");
-        }
-        return hikariDataSource.getConnection();
-    }
-
-    @Bean
-    @DependsOn("getConnection")
     public boolean createTablesAndInsertData() throws SQLException, IOException {
         final String basePath = "fala-cidade-db-scripts";
 
@@ -148,8 +139,9 @@ public class PostgresConnectionManagerConfiguration {
         String password = System.getenv("FALACIDADE_SEED_PASSWORD");
         if (password == null || password.isBlank()) {
             password = DEFAULT_SEED_PASSWORD;
-            log.info("FALACIDADE_SEED_PASSWORD não definida. Contas de demonstração usam "
-                + "a senha padrão " + DEFAULT_SEED_PASSWORD + " — altere-a no primeiro acesso.");
+            // A senha nunca vai ao log: o log é lido por quem não deveria conhecê-la.
+            log.warning("FALACIDADE_SEED_PASSWORD não definida: contas de demonstração criadas agora "
+                + "usam a senha padrão do projeto. Altere-a no primeiro acesso.");
         }
         if (password.contains("'")) {
             throw new IllegalArgumentException("FALACIDADE_SEED_PASSWORD não pode conter apóstrofo");

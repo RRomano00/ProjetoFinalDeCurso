@@ -11,9 +11,9 @@
 -- ${FALACIDADE_SEED_PASSWORD} é substituído em tempo de
 -- execução pelo valor da variável de ambiente de mesmo nome
 -- (ver PostgresConnectionManagerConfiguration). Se a variável
--- não estiver definida, a aplicação gera uma senha aleatória
--- e a registra uma única vez no log de inicialização, devendo
--- ser alterada no primeiro acesso.
+-- não estiver definida, as contas criadas usam a senha padrão
+-- do projeto (nunca escrita no log), que deve ser alterada no
+-- primeiro acesso.
 --
 -- Execução manual (fora da aplicação):
 --   FALACIDADE_SEED_PASSWORD='<senha>' \

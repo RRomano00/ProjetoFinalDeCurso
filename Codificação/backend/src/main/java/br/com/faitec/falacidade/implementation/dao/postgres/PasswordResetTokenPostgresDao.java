@@ -4,19 +4,21 @@ import br.com.faitec.falacidade.domain.PasswordResetToken;
 import br.com.faitec.falacidade.port.dao.password.PasswordResetTokenDao;
 
 import java.sql.*;
+import javax.sql.DataSource;
 
 public class PasswordResetTokenPostgresDao implements PasswordResetTokenDao {
 
-    private final Connection connection;
+    private final DataSource dataSource;
 
-    public PasswordResetTokenPostgresDao(Connection connection) {
-        this.connection = connection;
+    public PasswordResetTokenPostgresDao(DataSource dataSource) {
+        this.dataSource = dataSource;
     }
 
     @Override
     public void save(PasswordResetToken token) {
         String sql = "INSERT INTO password_reset_token (user_id, token, expires_at) VALUES (?, ?, ?)";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, token.getUserId());
             ps.setString(2, token.getToken());
             ps.setTimestamp(3, Timestamp.valueOf(token.getExpiresAt()));
@@ -29,7 +31,8 @@ public class PasswordResetTokenPostgresDao implements PasswordResetTokenDao {
     @Override
     public PasswordResetToken findByToken(String token) {
         String sql = "SELECT * FROM password_reset_token WHERE token = ? AND used = false LIMIT 1";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, token);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
@@ -50,7 +53,8 @@ public class PasswordResetTokenPostgresDao implements PasswordResetTokenDao {
     @Override
     public void markUsed(int tokenId) {
         String sql = "UPDATE password_reset_token SET used = true WHERE id = ?";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, tokenId);
             ps.execute();
         } catch (SQLException e) {
@@ -61,7 +65,8 @@ public class PasswordResetTokenPostgresDao implements PasswordResetTokenDao {
     @Override
     public void deleteExpiredByUserId(int userId) {
         String sql = "DELETE FROM password_reset_token WHERE user_id = ? AND (expires_at < NOW() OR used = true)";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, userId);
             ps.execute();
         } catch (SQLException e) {
