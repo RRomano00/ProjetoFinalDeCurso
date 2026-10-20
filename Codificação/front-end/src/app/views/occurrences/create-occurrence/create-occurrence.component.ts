@@ -162,7 +162,7 @@ export class CreateOccurrenceComponent implements OnInit, AfterViewInit, OnDestr
     this.form.patchValue({ latitude: lat, longitude: lng });
 
     if (this.marker) this.marker.setLatLng([lat, lng]);
-    else this.marker = L.marker([lat, lng]).addTo(this.map);
+    else this.marker = L.marker([lat, lng], { alt: 'Local marcado para a ocorrência' }).addTo(this.map);
 
     if (!fillAddress) return;
 

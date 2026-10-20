@@ -176,13 +176,14 @@ export class DetailOccurrenceComponent implements OnInit, OnDestroy {
         if (g.id === o.id || g.status === 'FINALIZADA' || g.latitude == null || g.longitude == null) continue;
         const p: [number, number] = [g.latitude, g.longitude];
         points.push(p);
-        L.marker(p, { icon: this.pointIcon(statusColor(g.status), false) }).addTo(this.map!)
+        L.marker(p, { icon: this.pointIcon(statusColor(g.status), false), title: g.title || 'Ocorrência agrupada' }).addTo(this.map!)
           .bindPopup(occurrencePopup(g));
       }
 
       if (hasPoint) {
         points.push(center);
-        L.marker(center, { icon: this.pointIcon(statusColor(o.status), true), zIndexOffset: 1000 })
+        L.marker(center, { icon: this.pointIcon(statusColor(o.status), true), zIndexOffset: 1000,
+                            title: o.title || 'Local desta ocorrência' })
           .addTo(this.map!)
           .bindPopup(occurrencePopup(o, { current: true }));
       }

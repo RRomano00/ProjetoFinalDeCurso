@@ -3,7 +3,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormControl, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { AuthenticationService } from '../../../services/security/authentication.service';
+import { AuthenticationService, jwtPayload } from '../../../services/security/authentication.service';
 import { LocalityPreferenceService, Municipality } from '../../../services/local/locality-preference.service';
 import { MunicipalityDialogComponent } from '../../../shared/municipality-dialog.component';
 import { ToastrService } from 'ngx-toastr';
@@ -231,9 +231,9 @@ export class SignInComponent implements OnInit, OnDestroy {
 
   private finishLogin(token: string) {
     try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      this.auth.saveSession(token, payload.email, payload.fullname, payload.role,
-                            payload.id != null ? String(payload.id) : undefined);
+      const payload = jwtPayload(token);
+      this.auth.saveSession(token, String(payload['email']), String(payload['fullname']), String(payload['role']),
+                            payload['id'] != null ? String(payload['id']) : undefined);
       this.toastr.success('Login efetuado com sucesso!');
       this.router.navigate(['']);
     } catch {

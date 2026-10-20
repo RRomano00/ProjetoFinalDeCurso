@@ -90,10 +90,12 @@
       <div *ngIf="occurrence.media?.length || occurrence.urlMedia" class="detail-section">
         <h3>Foto{{ (occurrence.media?.length || 1) > 1 ? 's' : '' }}</h3>
         <div class="photo-gallery" *ngIf="occurrence.media?.length; else singlePhoto">
-          <img *ngFor="let m of occurrence.media" [src]="m.url" alt="Foto da ocorrência" class="occurrence-photo" />
+          <img *ngFor="let m of occurrence.media; let i = index" [src]="m.url" class="occurrence-photo"
+               [alt]="'Foto ' + (i + 1) + ' de ' + occurrence.media!.length + ' enviada com a ocorrência: ' + (occurrence.title || 'sem título')" />
         </div>
         <ng-template #singlePhoto>
-          <img [src]="occurrence.urlMedia" alt="Foto da ocorrência" class="occurrence-photo" />
+          <img [src]="occurrence.urlMedia" class="occurrence-photo"
+               [alt]="'Foto enviada com a ocorrência: ' + (occurrence.title || 'sem título')" />
         </ng-template>
         <div *ngIf="occurrence.imageBlurred" class="blur-warning">
           ⚠️ A foto pode estar borrada.
@@ -172,16 +174,16 @@
         <div class="forward" *ngIf="occurrence.status !== 'CONCLUIDA' && occurrence.status !== 'FINALIZADA'">
           <button type="button" class="btn-action btn-forward" (click)="toggleForward()"
                   [attr.aria-expanded]="forwardOpen" aria-controls="forward-panel">
-            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none"
+            <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none"
               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="15 17 20 12 15 7"/><path d="M4 18v-2a4 4 0 0 1 4-4h12"/>
             </svg>
-            Encaminhar a departamento
+            Encaminhar ao departamento responsável
           </button>
 
           <div class="forward-panel" id="forward-panel" *ngIf="forwardOpen">
             <div class="forward-head">
-              <h4>Para qual departamento?</h4>
+              <h4>Para qual departamento responsável?</h4>
               <button type="button" class="forward-close" (click)="closeForward()"
                       aria-label="Fechar">✕</button>
             </div>

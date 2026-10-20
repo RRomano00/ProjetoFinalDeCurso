@@ -28,7 +28,7 @@
 
       <div class="dept-photos" *ngIf="view.occurrence.media?.length || view.occurrence.urlMedia">
         <img *ngFor="let m of (view.occurrence.media?.length ? view.occurrence.media : [{ url: view.occurrence.urlMedia! }])"
-             [src]="m.url" alt="Foto da ocorrência" />
+             [src]="m.url" [alt]="'Foto enviada com a ocorrência: ' + (view.occurrence.title || 'sem título')" />
       </div>
 
       <section class="dept-request">
@@ -71,7 +71,7 @@
           <input type="file" accept="image/*" capture="environment" (change)="onFile($event)" required />
           {{ file ? 'Trocar foto' : 'Escolher ou tirar foto' }}
         </label>
-        <img *ngIf="preview" [src]="preview" alt="Prévia da foto" class="dept-preview" />
+        <img *ngIf="preview" [src]="preview" alt="Prévia da foto do serviço executado que será enviada" class="dept-preview" />
         <label for="dept-msg">Mensagem (opcional)</label>
         <textarea id="dept-msg" name="message" [(ngModel)]="message" rows="3" maxlength="1000"
                   placeholder="Ex.: buraco tapado e asfalto refeito."></textarea>

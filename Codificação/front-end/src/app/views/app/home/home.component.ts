@@ -370,7 +370,7 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
       iconSize: [32, 32], iconAnchor: [16, 16]
     });
 
-    const marker = L.marker([lat, lng], { icon }).bindPopup(this.popupHtml(o));
+    const marker = L.marker([lat, lng], { icon, title: o.title || 'Ocorrência' }).bindPopup(this.popupHtml(o));
     this.markers.push(marker);
     if (o.id != null) this.markerById.set(o.id, marker);
 

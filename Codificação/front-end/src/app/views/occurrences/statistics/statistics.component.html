@@ -10,11 +10,17 @@
   <div class="stats-filters">
     <div class="filter-field">
       <label for="f-de">De</label>
-      <input id="f-de" type="date" [(ngModel)]="filterDateFrom" (ngModelChange)="recompute()" />
+      <input id="f-de" type="text" appMask="date" placeholder="dd/mm/aaaa" autocomplete="off"
+             [(ngModel)]="filterDateFrom" (ngModelChange)="recompute()"
+             [attr.aria-invalid]="invalidDate(filterDateFrom)" [attr.aria-describedby]="invalidDate(filterDateFrom) ? 'f-de-erro' : null" />
+      <span id="f-de-erro" class="filter-error" *ngIf="invalidDate(filterDateFrom)">Data inválida.</span>
     </div>
     <div class="filter-field">
       <label for="f-ate">Até</label>
-      <input id="f-ate" type="date" [(ngModel)]="filterDateTo" (ngModelChange)="recompute()" />
+      <input id="f-ate" type="text" appMask="date" placeholder="dd/mm/aaaa" autocomplete="off"
+             [(ngModel)]="filterDateTo" (ngModelChange)="recompute()"
+             [attr.aria-invalid]="invalidDate(filterDateTo)" [attr.aria-describedby]="invalidDate(filterDateTo) ? 'f-ate-erro' : null" />
+      <span id="f-ate-erro" class="filter-error" *ngIf="invalidDate(filterDateTo)">Data inválida.</span>
     </div>
     <div class="filter-field">
       <label for="f-bairro">Bairro</label>

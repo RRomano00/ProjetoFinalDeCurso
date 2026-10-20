@@ -137,6 +137,13 @@ html.dark-theme .a11y-controls {
 .login-prompt-actions { display: flex; justify-content: flex-end; gap: 0.5rem; }
 .login-prompt-actions .btn-primary { margin: 0; width: auto; }
 
+/* O leaflet.css (1.9) soma os ladrilhos com mix-blend-mode: plus-lighter. Quando a borda
+   de um ladrilho não cai inteira num pixel da tela (escala do Windows/zoom do navegador
+   fracionários, mapa em posição fracionária), o Chrome soma as duas meias-bordas com o
+   fundo e sai uma faixa clara atravessando o mapa. Com a mistura normal eles emendam.
+   O seletor é mais específico que o do leaflet.css, que entra depois no angular.json. */
+.leaflet-container .leaflet-tile-pane img.leaflet-tile { mix-blend-mode: normal; }
+
 .leaflet-popup .leaflet-popup-content-wrapper {
   border-radius: var(--r-card);
   box-shadow: var(--lift);

@@ -5,6 +5,16 @@ import { environment } from '../../../environments/environment';
 import { Municipality } from '../local/locality-preference.service';
 import { LoginResponse } from '../../domain/model/login-response';
 
+/**
+ * Lê o payload do JWT. O trecho vem em base64url e o JSON em UTF-8: o atob sozinho
+ * recusa "-" e "_" e devolve "JoÃ£o" para "João".
+ */
+export function jwtPayload(token: string): { [k: string]: unknown } {
+  const b64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+  const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthenticationService {
 
@@ -60,9 +70,8 @@ export class AuthenticationService {
     const token = this.getToken();
     if (token == null) return false;
     try {
-      const part    = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
-      const payload = JSON.parse(atob(part));
-      if (payload.exp && payload.exp * 1000 > Date.now()) return true;
+      const exp = jwtPayload(token)['exp'];
+      if (typeof exp === 'number' && exp * 1000 > Date.now()) return true;
     } catch { }
     this.endSession();
     return false;

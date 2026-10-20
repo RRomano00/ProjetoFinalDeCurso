@@ -78,7 +78,7 @@
                   [attr.aria-busy]="locating"
                   [attr.aria-label]="locating ? 'Procurando a sua localização' : 'Ir para a minha localização'"
                   [title]="locating ? 'Procurando a sua localização...' : 'Ir para a minha localização'">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
+            <svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none"
                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="10"/>
               <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
@@ -122,7 +122,7 @@
           </span>
         </div>
         <div class="form-group">
-          <label>Cidade *</label>
+          <label>Município *</label>
           <input type="text" formControlName="city" maxlength="100" list="occ-city-options"
                  [readOnly]="!cityOptions.ready" spellcheck="false" autocomplete="off"
                  [placeholder]="cityOptions.ready ? 'Comece a digitar o município' : 'Informe a UF primeiro'" />
@@ -130,14 +130,14 @@
             <option *ngFor="let c of cityOptions.list" [value]="c"></option>
           </datalist>
           <span *ngIf="form.get('city')?.touched && form.get('city')?.invalid" class="field-error">
-            Cidade é obrigatória.
+            Município é obrigatório.
           </span>
           <span *ngIf="!cityOptions.ready" class="field-hint">Selecione a UF para ver os municípios.</span>
         </div>
       </div>
 
       <div class="coverage-notice" *ngIf="cityServed === false" role="status">
-        <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none"
+        <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
           <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
@@ -161,13 +161,14 @@
 
     <div class="form-section">
       <h3>Fotos (opcional — até {{ MAX_PHOTOS }})</h3>
-      <p class="photo-note">Rostos são desfocados automaticamente para preservar a privacidade (LGPD).</p>
+      <p class="photo-note">Os rostos de pessoas e as placas de veículos serão desfocados automaticamente para preservar a privacidade (LGPD).</p>
 
       <div class="photo-grid" *ngIf="photos.length > 0">
         <div class="photo-thumb" *ngFor="let ph of photos; let i = index">
-          <img [src]="ph.url" alt="Foto {{ i + 1 }}" />
+          <img [src]="ph.url" alt="Foto {{ i + 1 }} anexada à ocorrência" />
           <span *ngIf="ph.imageBlurred" class="photo-warn">⚠️ borrada</span>
-          <button type="button" class="btn-thumb-remove" (click)="removePhoto(i)" title="Remover foto">✕</button>
+          <button type="button" class="btn-thumb-remove" (click)="removePhoto(i)" title="Remover foto"
+                  [attr.aria-label]="'Remover a foto ' + (i + 1)">✕</button>
         </div>
       </div>
 

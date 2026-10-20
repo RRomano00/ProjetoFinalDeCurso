@@ -7,6 +7,8 @@ import { Occurrence } from '../../../domain/model/occurrence';
 import { typeLabel, typeColor } from '../../../domain/occurrence-labels';
 import { persistFilters } from '../../../shared/persist-filters';
 import { CopyProtocolComponent } from '../../../shared/copy-protocol.component';
+import { MaskDirective } from '../../../shared/mask.directive';
+import { brDateToIso } from '../../../shared/br-date';
 
 export interface ChartBar          { label: string; value: number; color: string; pct: number; }
 export interface NeighborhoodStat  { neighborhood: string; total: number; pct: number; }
@@ -18,7 +20,7 @@ const DIA = 86_400_000;
 
 @Component({
   selector: 'app-statistics',
-  imports: [CommonModule, FormsModule, RouterModule, CopyProtocolComponent],
+  imports: [CommonModule, FormsModule, RouterModule, CopyProtocolComponent, MaskDirective],
   templateUrl: './statistics.component.html',
   styleUrl: './statistics.component.css'
 })
@@ -48,6 +50,10 @@ export class StatisticsComponent implements OnInit {
   constructor(private occurrenceReadService: OccurrenceReadService) {
     persistFilters(this, 'statistics',
       ['filterDateFrom', 'filterDateTo', 'filterNeighborhood', 'filterType']);
+    // Filtro salvo quando o campo era type=date (aaaa-mm-dd) vira dd/mm/aaaa.
+    const toBr = (v: string) => v.replace(/^(\d{4})-(\d{2})-(\d{2})$/, '$3/$2/$1');
+    this.filterDateFrom = toBr(this.filterDateFrom);
+    this.filterDateTo   = toBr(this.filterDateTo);
   }
 
   async ngOnInit() {
@@ -81,11 +87,19 @@ export class StatisticsComponent implements OnInit {
     return Array.from(set).sort().map(t => ({ value: t, label: typeLabel(t) }));
   }
 
+  /** Só avisa depois da data completa: enquanto a pessoa digita, o campo não é erro. */
+  invalidDate(value: string): boolean {
+    return value.length === 10 && !brDateToIso(value);
+  }
+
   private filtrar(): Occurrence[] {
+    // Os campos são dd/mm/aaaa; data incompleta ou inexistente não filtra.
+    const de  = brDateToIso(this.filterDateFrom);
+    const ate = brDateToIso(this.filterDateTo);
     return this.occurrences.filter(o => {
       const criada = o.createdAt ? o.createdAt.substring(0, 10) : '';
-      return (!this.filterDateFrom || (criada && criada >= this.filterDateFrom))
-          && (!this.filterDateTo   || (criada && criada <= this.filterDateTo))
+      return (!de  || (criada && criada >= de))
+          && (!ate || (criada && criada <= ate))
           && (!this.filterNeighborhood ||
               (o.neighborhood?.trim() || 'Não informado') === this.filterNeighborhood)
           && (!this.filterType || o.type === this.filterType);

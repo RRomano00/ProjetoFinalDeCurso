@@ -1,12 +1,14 @@
 import { Directive, ElementRef, HostBinding, HostListener, Input, OnInit, Optional, Self } from '@angular/core';
 import { NgControl } from '@angular/forms';
 import { maskCep, maskPhone, maskUf } from './br-mask';
+import { maskBrDate } from './br-date';
 
-type MaskKind = 'cep' | 'phone' | 'uf';
+type MaskKind = 'cep' | 'phone' | 'uf' | 'date';
 const MASKS: Record<MaskKind, { fn: (v: string) => string; max: number; mode: string }> = {
   cep:   { fn: maskCep,   max: 9,  mode: 'numeric' },
   phone: { fn: maskPhone, max: 15, mode: 'tel' },
   uf:    { fn: maskUf,    max: 2,  mode: 'text' },
+  date:  { fn: maskBrDate, max: 10, mode: 'numeric' },
 };
 
 // Formata o campo enquanto a pessoa digita (e o valor que vem do banco, ao carregar).
